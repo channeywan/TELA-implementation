@@ -1,0 +1,796 @@
+2025-08-22 15:52:35,424 - main.py - 205 - 运行TELA放置策略分析（请补充实现）
+2025-08-22 15:53:26,672 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-22 15:53:26,672 - base_algorithm.py - 42 - Episode 1/1
+2025-08-22 15:53:26,672 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 15:53:26,684 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-22 15:53:26,701 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-22 15:53:26,716 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-22 15:53:26,718 - TELA.py - 368 - TELA模型文件未找到,开始训练
+2025-08-22 15:53:26,718 - TELA.py - 46 - 开始训练TELA模型
+2025-08-22 15:53:26,718 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 15:53:26,733 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-22 15:53:26,748 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-22 15:53:26,764 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-22 15:53:26,768 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-22 15:53:31,877 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-22 15:53:31,878 - TELA.py - 97 - 准确率:0.608470710398514
+2025-08-22 15:53:31,879 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-22 15:53:32,880 - TELA.py - 126 - 稳定型聚类轮廓系数:0.9114316611382214
+2025-08-22 15:53:33,372 - TELA.py - 131 - 突发型聚类轮廓系数:0.695244884326525
+2025-08-22 15:53:36,332 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 15:53:36,332 - TELA.py - 148 - 准确率:1.0
+2025-08-22 15:53:36,332 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 15:53:36,332 - TELA.py - 150 - 准确率:1.0
+2025-08-22 15:54:23,201 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-22 15:54:23,201 - base_algorithm.py - 42 - Episode 1/1
+2025-08-22 15:54:23,201 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 15:54:23,213 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-22 15:54:23,230 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-22 15:54:23,245 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-22 15:54:23,246 - TELA.py - 368 - TELA模型文件未找到,开始训练
+2025-08-22 15:54:23,246 - TELA.py - 46 - 开始训练TELA模型
+2025-08-22 15:54:23,246 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 15:54:23,262 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-22 15:54:23,277 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-22 15:54:23,293 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-22 15:54:23,296 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-22 15:54:28,336 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': 'log2', 'min_samples_leaf': 2, 'min_samples_split': 4}
+2025-08-22 15:54:28,337 - TELA.py - 97 - 准确率:0.6092363150531265
+2025-08-22 15:54:28,338 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-22 15:54:29,440 - TELA.py - 126 - 稳定型聚类轮廓系数:0.8884423994019759
+2025-08-22 15:54:29,963 - TELA.py - 131 - 突发型聚类轮廓系数:0.6941445029860263
+2025-08-22 15:54:33,303 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 15:54:33,303 - TELA.py - 148 - 准确率:1.0
+2025-08-22 15:54:33,303 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 15:54:33,303 - TELA.py - 150 - 准确率:1.0
+2025-08-22 15:54:44,424 - base_algorithm.py - 138 - Placed 500 items.
+2025-08-22 15:54:54,947 - base_algorithm.py - 138 - Placed 1000 items.
+2025-08-22 15:55:05,287 - base_algorithm.py - 138 - Placed 1500 items.
+2025-08-22 15:55:15,800 - base_algorithm.py - 138 - Placed 2000 items.
+2025-08-22 15:55:26,653 - base_algorithm.py - 138 - Placed 2500 items.
+2025-08-22 15:55:37,408 - base_algorithm.py - 138 - Placed 3000 items.
+2025-08-22 15:55:47,580 - base_algorithm.py - 138 - Placed 3500 items.
+2025-08-22 15:55:57,993 - base_algorithm.py - 138 - Placed 4000 items.
+2025-08-22 15:56:08,194 - base_algorithm.py - 138 - Placed 4500 items.
+2025-08-22 15:56:18,494 - base_algorithm.py - 138 - Placed 5000 items.
+2025-08-22 15:56:28,555 - base_algorithm.py - 138 - Placed 5500 items.
+2025-08-22 15:56:39,295 - base_algorithm.py - 138 - Placed 6000 items.
+2025-08-22 15:56:49,531 - base_algorithm.py - 138 - Placed 6500 items.
+2025-08-22 15:56:59,890 - base_algorithm.py - 138 - Placed 7000 items.
+2025-08-22 15:57:10,134 - base_algorithm.py - 138 - Placed 7500 items.
+2025-08-22 15:57:20,619 - base_algorithm.py - 138 - Placed 8000 items.
+2025-08-22 15:57:20,619 - base_algorithm.py - 140 - Placed 8000 items. Total items: 14364, Disk number: 8000, Warehouse number: 9
+2025-08-22 16:04:22,636 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-22 16:04:22,636 - base_algorithm.py - 42 - Episode 1/1
+2025-08-22 16:04:22,636 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 16:04:22,648 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-22 16:04:22,665 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-22 16:04:22,680 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-22 16:04:22,681 - TELA.py - 368 - TELA模型文件未找到,开始训练
+2025-08-22 16:04:22,682 - TELA.py - 46 - 开始训练TELA模型
+2025-08-22 16:04:22,682 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 16:04:22,697 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-22 16:04:22,713 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-22 16:04:22,729 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-22 16:04:22,732 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-22 16:04:27,982 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': 'log2', 'min_samples_leaf': 4, 'min_samples_split': 4}
+2025-08-22 16:04:27,983 - TELA.py - 97 - 准确率:0.6084009997993033
+2025-08-22 16:04:27,983 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-22 16:04:28,949 - TELA.py - 126 - 稳定型聚类轮廓系数:0.8684492609459951
+2025-08-22 16:04:29,474 - TELA.py - 131 - 突发型聚类轮廓系数:0.6960115552017275
+2025-08-22 16:04:32,733 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 16:04:32,733 - TELA.py - 148 - 准确率:1.0
+2025-08-22 16:04:32,733 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 16:04:32,733 - TELA.py - 150 - 准确率:1.0
+2025-08-22 16:04:39,856 - base_algorithm.py - 138 - Placed 500 items.
+2025-08-22 16:04:46,571 - base_algorithm.py - 138 - Placed 1000 items.
+2025-08-22 16:04:52,972 - base_algorithm.py - 138 - Placed 1500 items.
+2025-08-22 16:04:59,672 - base_algorithm.py - 138 - Placed 2000 items.
+2025-08-22 16:05:06,391 - base_algorithm.py - 138 - Placed 2500 items.
+2025-08-22 16:05:12,794 - base_algorithm.py - 138 - Placed 3000 items.
+2025-08-22 16:05:19,496 - base_algorithm.py - 138 - Placed 3500 items.
+2025-08-22 16:05:26,002 - base_algorithm.py - 138 - Placed 4000 items.
+2025-08-22 16:05:32,845 - base_algorithm.py - 138 - Placed 4500 items.
+2025-08-22 16:05:39,225 - base_algorithm.py - 138 - Placed 5000 items.
+2025-08-22 16:05:45,819 - base_algorithm.py - 138 - Placed 5500 items.
+2025-08-22 16:05:52,488 - base_algorithm.py - 138 - Placed 6000 items.
+2025-08-22 16:05:59,312 - base_algorithm.py - 138 - Placed 6500 items.
+2025-08-22 16:06:05,882 - base_algorithm.py - 138 - Placed 7000 items.
+2025-08-22 16:06:12,747 - base_algorithm.py - 138 - Placed 7500 items.
+2025-08-22 16:06:18,903 - base_algorithm.py - 138 - Placed 8000 items.
+2025-08-22 16:06:18,904 - base_algorithm.py - 140 - Placed 8000 items. Total items: 14364, Disk number: 8000, Warehouse number: 9
+2025-08-22 16:18:43,790 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-22 16:18:43,790 - base_algorithm.py - 42 - Episode 1/1
+2025-08-22 16:18:43,790 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 16:18:43,802 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-22 16:18:43,819 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-22 16:18:43,834 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-22 16:18:43,835 - TELA.py - 377 - TELA模型文件未找到,开始训练
+2025-08-22 16:18:43,835 - TELA.py - 46 - 开始训练TELA模型
+2025-08-22 16:18:43,835 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 16:18:43,850 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-22 16:18:43,866 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-22 16:18:43,882 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-22 16:18:43,886 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-22 16:18:49,216 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-22 16:18:49,216 - TELA.py - 97 - 准确率:0.6084009270831011
+2025-08-22 16:18:49,217 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-22 16:18:50,287 - TELA.py - 126 - 稳定型聚类轮廓系数:0.8642974031431704
+2025-08-22 16:18:50,807 - TELA.py - 131 - 突发型聚类轮廓系数:0.5906683394910311
+2025-08-22 16:18:54,132 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 16:18:54,132 - TELA.py - 148 - 准确率:1.0
+2025-08-22 16:18:54,132 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 16:18:54,132 - TELA.py - 150 - 准确率:1.0
+2025-08-22 16:19:00,165 - base_algorithm.py - 138 - Placed 500 items.
+2025-08-22 16:19:05,781 - base_algorithm.py - 138 - Placed 1000 items.
+2025-08-22 16:19:11,005 - base_algorithm.py - 138 - Placed 1500 items.
+2025-08-22 16:19:16,397 - base_algorithm.py - 138 - Placed 2000 items.
+2025-08-22 16:19:22,104 - base_algorithm.py - 138 - Placed 2500 items.
+2025-08-22 16:19:27,623 - base_algorithm.py - 138 - Placed 3000 items.
+2025-08-22 16:19:33,093 - base_algorithm.py - 138 - Placed 3500 items.
+2025-08-22 16:19:38,575 - base_algorithm.py - 138 - Placed 4000 items.
+2025-08-22 16:19:44,344 - base_algorithm.py - 138 - Placed 4500 items.
+2025-08-22 16:19:50,173 - base_algorithm.py - 138 - Placed 5000 items.
+2025-08-22 16:19:55,829 - base_algorithm.py - 138 - Placed 5500 items.
+2025-08-22 16:21:21,263 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-22 16:21:21,263 - base_algorithm.py - 42 - Episode 1/1
+2025-08-22 16:21:21,263 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 16:21:21,275 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-22 16:21:21,292 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-22 16:21:21,307 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-22 16:21:21,308 - TELA.py - 377 - TELA模型文件未找到,开始训练
+2025-08-22 16:21:21,308 - TELA.py - 46 - 开始训练TELA模型
+2025-08-22 16:21:21,308 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-22 16:21:21,323 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-22 16:21:21,339 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-22 16:21:21,355 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-22 16:21:21,359 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-22 16:21:26,358 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-22 16:21:26,358 - TELA.py - 97 - 准确率:0.6084705407273753
+2025-08-22 16:21:26,359 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-22 16:21:27,444 - TELA.py - 126 - 稳定型聚类轮廓系数:0.9114316611382214
+2025-08-22 16:21:27,977 - TELA.py - 131 - 突发型聚类轮廓系数:0.6952251897135769
+2025-08-22 16:21:31,371 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 16:21:31,371 - TELA.py - 148 - 准确率:1.0
+2025-08-22 16:21:31,371 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-22 16:21:31,371 - TELA.py - 150 - 准确率:1.0
+2025-08-22 16:21:36,828 - base_algorithm.py - 138 - Placed 500 items.
+2025-08-22 16:21:42,175 - base_algorithm.py - 138 - Placed 1000 items.
+2025-08-22 16:21:47,349 - base_algorithm.py - 138 - Placed 1500 items.
+2025-08-22 16:21:52,564 - base_algorithm.py - 138 - Placed 2000 items.
+2025-08-22 16:21:57,781 - base_algorithm.py - 138 - Placed 2500 items.
+2025-08-22 16:22:03,205 - base_algorithm.py - 138 - Placed 3000 items.
+2025-08-22 16:22:08,450 - base_algorithm.py - 138 - Placed 3500 items.
+2025-08-22 16:22:13,897 - base_algorithm.py - 138 - Placed 4000 items.
+2025-08-22 16:22:19,035 - base_algorithm.py - 138 - Placed 4500 items.
+2025-08-22 16:22:24,136 - base_algorithm.py - 138 - Placed 5000 items.
+2025-08-22 16:22:29,539 - base_algorithm.py - 138 - Placed 5500 items.
+2025-08-22 16:22:34,644 - base_algorithm.py - 138 - Placed 6000 items.
+2025-08-22 16:22:39,929 - base_algorithm.py - 138 - Placed 6500 items.
+2025-08-22 16:22:44,985 - base_algorithm.py - 138 - Placed 7000 items.
+2025-08-22 16:22:50,295 - base_algorithm.py - 138 - Placed 7500 items.
+2025-08-22 16:22:55,723 - base_algorithm.py - 138 - Placed 8000 items.
+2025-08-22 16:22:55,723 - base_algorithm.py - 140 - Placed 8000 items. Total items: 14364, Disk number: 8000, Warehouse number: 9
+2025-08-23 03:49:05,177 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-23 03:49:05,177 - base_algorithm.py - 42 - Episode 1/1
+2025-08-23 03:49:05,177 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-23 03:49:05,189 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-23 03:49:05,205 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-23 03:49:05,221 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-23 03:49:05,222 - TELA.py - 377 - TELA模型文件未找到,开始训练
+2025-08-23 03:49:05,222 - TELA.py - 46 - 开始训练TELA模型
+2025-08-23 03:49:05,222 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-23 03:49:05,237 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-23 03:49:05,252 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-23 03:49:05,269 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-23 03:49:05,272 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-23 03:49:10,730 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-23 03:49:10,730 - TELA.py - 97 - 准确率:0.6084705407273753
+2025-08-23 03:49:10,730 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-23 03:49:11,674 - TELA.py - 126 - 稳定型聚类轮廓系数:0.9114316611382214
+2025-08-23 03:49:12,209 - TELA.py - 131 - 突发型聚类轮廓系数:0.6960115552017275
+2025-08-23 03:49:19,575 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-23 03:49:19,575 - TELA.py - 148 - 准确率:1.0
+2025-08-23 03:49:19,575 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-23 03:49:19,575 - TELA.py - 150 - 准确率:1.0
+2025-08-23 03:49:24,649 - base_algorithm.py - 138 - Placed 500 items.
+2025-08-23 03:49:29,120 - base_algorithm.py - 138 - Placed 1000 items.
+2025-08-23 03:49:33,607 - base_algorithm.py - 138 - Placed 1500 items.
+2025-08-23 03:49:38,282 - base_algorithm.py - 138 - Placed 2000 items.
+2025-08-23 03:49:42,768 - base_algorithm.py - 138 - Placed 2500 items.
+2025-08-23 03:49:47,373 - base_algorithm.py - 138 - Placed 3000 items.
+2025-08-23 03:49:52,023 - base_algorithm.py - 138 - Placed 3500 items.
+2025-08-23 03:49:56,438 - base_algorithm.py - 138 - Placed 4000 items.
+2025-08-23 03:50:00,717 - base_algorithm.py - 138 - Placed 4500 items.
+2025-08-23 03:50:05,169 - base_algorithm.py - 138 - Placed 5000 items.
+2025-08-23 03:50:09,467 - base_algorithm.py - 138 - Placed 5500 items.
+2025-08-23 03:50:14,017 - base_algorithm.py - 138 - Placed 6000 items.
+2025-08-23 03:50:18,390 - base_algorithm.py - 138 - Placed 6500 items.
+2025-08-23 03:50:23,006 - base_algorithm.py - 138 - Placed 7000 items.
+2025-08-23 03:50:27,453 - base_algorithm.py - 138 - Placed 7500 items.
+2025-08-23 03:50:31,934 - base_algorithm.py - 138 - Placed 8000 items.
+2025-08-23 03:50:31,934 - base_algorithm.py - 140 - Placed 8000 items. Total items: 14364, Disk number: 8000, Warehouse number: 9
+2025-08-23 03:51:43,710 - TELA.py - 160 - 开始训练负载拟合模型
+2025-08-30 11:13:18,729 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 11:13:18,729 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 11:13:18,729 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 11:13:18,742 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 11:13:18,758 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 11:13:18,774 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 11:13:18,775 - TELA.py - 377 - TELA模型文件未找到,开始训练
+2025-08-30 11:13:18,775 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 11:13:18,775 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 11:13:18,790 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 11:13:18,805 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 11:13:18,821 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 11:13:18,825 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 11:13:24,204 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2}
+2025-08-30 11:13:24,204 - TELA.py - 97 - 准确率:0.6097236348017805
+2025-08-30 11:13:24,204 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 11:13:25,208 - TELA.py - 126 - 稳定型聚类轮廓系数:0.9114316611382214
+2025-08-30 11:13:25,748 - TELA.py - 131 - 突发型聚类轮廓系数:0.589692757532369
+2025-08-30 11:13:33,112 - TELA.py - 147 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 11:13:33,113 - TELA.py - 148 - 准确率:1.0
+2025-08-30 11:13:33,113 - TELA.py - 149 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 11:13:33,113 - TELA.py - 150 - 准确率:1.0
+2025-08-30 11:13:37,911 - base_algorithm.py - 138 - Placed 500 items.
+2025-08-30 11:13:42,415 - base_algorithm.py - 138 - Placed 1000 items.
+2025-08-30 11:13:46,825 - base_algorithm.py - 138 - Placed 1500 items.
+2025-08-30 11:13:51,328 - base_algorithm.py - 138 - Placed 2000 items.
+2025-08-30 11:13:55,723 - base_algorithm.py - 138 - Placed 2500 items.
+2025-08-30 11:14:00,219 - base_algorithm.py - 138 - Placed 3000 items.
+2025-08-30 11:14:04,849 - base_algorithm.py - 138 - Placed 3500 items.
+2025-08-30 11:14:09,313 - base_algorithm.py - 138 - Placed 4000 items.
+2025-08-30 11:14:13,741 - base_algorithm.py - 138 - Placed 4500 items.
+2025-08-30 11:14:18,243 - base_algorithm.py - 138 - Placed 5000 items.
+2025-08-30 11:14:22,816 - base_algorithm.py - 138 - Placed 5500 items.
+2025-08-30 11:14:27,133 - base_algorithm.py - 138 - Placed 6000 items.
+2025-08-30 11:14:31,430 - base_algorithm.py - 138 - Placed 6500 items.
+2025-08-30 11:14:35,970 - base_algorithm.py - 138 - Placed 7000 items.
+2025-08-30 11:14:40,391 - base_algorithm.py - 138 - Placed 7500 items.
+2025-08-30 11:14:44,850 - base_algorithm.py - 138 - Placed 8000 items.
+2025-08-30 11:14:44,850 - base_algorithm.py - 140 - Placed 8000 items. Total items: 14364, Disk number: 8000, Warehouse number: 9
+2025-08-30 11:15:56,182 - TELA.py - 160 - 开始训练负载拟合模型
+2025-08-30 12:04:26,672 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 12:04:26,672 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 12:04:26,672 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:04:26,684 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 12:04:26,701 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 12:04:26,716 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 12:04:26,717 - TELA.py - 379 - TELA模型文件未找到,开始训练
+2025-08-30 12:04:26,717 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 12:04:26,717 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:04:26,732 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 12:04:26,747 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 12:04:26,763 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 12:04:26,767 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 12:04:32,187 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-30 12:04:32,187 - TELA.py - 97 - 准确率:0.6084009270831011
+2025-08-30 12:04:32,187 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 12:04:32,190 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 12:04:32,190 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 12:04:33,259 - TELA.py - 128 - 稳定型聚类轮廓系数:0.8639748630113493
+2025-08-30 12:04:33,784 - TELA.py - 133 - 突发型聚类轮廓系数:0.5905648520670265
+2025-08-30 12:04:41,164 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:04:41,164 - TELA.py - 150 - 准确率:1.0
+2025-08-30 12:04:41,164 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:04:41,164 - TELA.py - 152 - 准确率:1.0
+2025-08-30 12:04:45,726 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 12:04:50,086 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 12:04:54,695 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 12:04:58,892 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 12:05:03,450 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 12:05:07,876 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 12:05:12,488 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 12:05:17,100 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 12:05:21,658 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 12:05:26,074 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 12:05:30,411 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 12:05:34,929 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 12:05:39,310 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 12:05:43,662 - base_algorithm.py - 141 - Placed 7000 items.
+2025-08-30 12:05:48,178 - base_algorithm.py - 141 - Placed 7500 items.
+2025-08-30 12:05:52,653 - base_algorithm.py - 141 - Placed 8000 items.
+2025-08-30 12:05:52,653 - base_algorithm.py - 143 - Placed 8000 items. Total items: 14364, Disk number: 8000, Warehouse number: 9
+2025-08-30 12:07:03,544 - TELA.py - 162 - 开始训练负载拟合模型
+2025-08-30 12:24:34,478 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 12:24:34,478 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 12:24:34,478 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:24:34,490 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 12:24:34,507 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 12:24:34,522 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 12:24:34,523 - TELA.py - 379 - TELA模型文件未找到,开始训练
+2025-08-30 12:24:34,523 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 12:24:34,523 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:24:34,538 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 12:24:34,553 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 12:24:34,569 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 12:24:34,573 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 12:24:39,966 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': 'log2', 'min_samples_leaf': 2, 'min_samples_split': 2}
+2025-08-30 12:24:39,967 - TELA.py - 97 - 准确率:0.6087490680206746
+2025-08-30 12:24:39,967 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 12:24:39,969 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 12:24:39,969 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 12:24:40,994 - TELA.py - 128 - 稳定型聚类轮廓系数:0.8661432265338534
+2025-08-30 12:24:41,525 - TELA.py - 133 - 突发型聚类轮廓系数:0.5905648520670265
+2025-08-30 12:24:48,827 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:24:48,827 - TELA.py - 150 - 准确率:1.0
+2025-08-30 12:24:48,827 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:24:48,827 - TELA.py - 152 - 准确率:1.0
+2025-08-30 12:24:53,490 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 12:24:57,936 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 12:25:02,450 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 12:25:06,890 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 12:25:11,398 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 12:25:15,678 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 12:25:19,916 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 12:25:24,288 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 12:25:28,835 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 12:25:33,099 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 12:25:37,576 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 12:25:41,782 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 12:25:46,219 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 12:25:48,049 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-30 12:26:15,310 - TELA.py - 162 - 开始训练负载拟合模型
+2025-08-30 12:39:10,519 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 12:39:10,519 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 12:39:10,519 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:39:10,531 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 12:39:10,548 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 12:39:10,563 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 12:39:10,564 - TELA.py - 380 - TELA模型文件未找到,开始训练
+2025-08-30 12:39:10,564 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 12:39:10,564 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:39:10,579 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 12:39:10,594 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 12:39:10,610 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 12:39:10,614 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 12:39:16,041 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-30 12:39:16,041 - TELA.py - 97 - 准确率:0.6084705407273754
+2025-08-30 12:39:16,041 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 12:39:16,044 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 12:39:16,044 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 12:39:17,060 - TELA.py - 128 - 稳定型聚类轮廓系数:0.8642974031431704
+2025-08-30 12:39:17,626 - TELA.py - 133 - 突发型聚类轮廓系数:0.6962300706465561
+2025-08-30 12:39:24,938 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:39:24,938 - TELA.py - 150 - 准确率:1.0
+2025-08-30 12:39:24,938 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:39:24,939 - TELA.py - 152 - 准确率:1.0
+2025-08-30 12:39:29,547 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 12:39:34,051 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 12:39:38,480 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 12:39:42,784 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 12:39:47,324 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 12:39:51,576 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 12:39:56,155 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 12:40:00,444 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 12:40:04,866 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 12:40:09,240 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 12:40:13,646 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 12:40:18,241 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 12:40:22,588 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 12:40:24,301 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-30 12:40:51,672 - TELA.py - 163 - 开始训练负载拟合模型
+2025-08-30 12:43:23,281 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 12:43:23,282 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 12:43:23,282 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:43:23,294 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 12:43:23,310 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 12:43:23,325 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 12:43:23,326 - TELA.py - 380 - TELA模型文件未找到,开始训练
+2025-08-30 12:43:23,326 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 12:43:23,326 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:43:23,341 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 12:43:23,355 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 12:43:23,371 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 12:43:23,374 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 12:43:28,741 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 4}
+2025-08-30 12:43:28,741 - TELA.py - 97 - 准确率:0.6088880771606165
+2025-08-30 12:43:28,741 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 12:43:28,744 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 12:43:28,744 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 12:43:29,833 - TELA.py - 128 - 稳定型聚类轮廓系数:0.8683365644481176
+2025-08-30 12:43:30,369 - TELA.py - 133 - 突发型聚类轮廓系数:0.5905648520670265
+2025-08-30 12:43:37,689 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:43:37,689 - TELA.py - 150 - 准确率:1.0
+2025-08-30 12:43:37,689 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:43:37,689 - TELA.py - 152 - 准确率:1.0
+2025-08-30 12:43:42,153 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 12:43:46,677 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 12:43:51,104 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 12:43:55,492 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 12:43:59,860 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 12:44:04,121 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 12:44:08,706 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 12:44:13,119 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 12:44:17,609 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 12:44:21,965 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 12:44:26,329 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 12:44:30,725 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 12:44:35,111 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 12:44:36,972 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-30 12:45:04,380 - TELA.py - 163 - 开始训练负载拟合模型
+2025-08-30 12:45:28,209 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 12:45:28,209 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 12:45:28,209 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:45:28,221 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 12:45:28,238 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 12:45:28,253 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 12:45:28,254 - TELA.py - 380 - TELA模型文件未找到,开始训练
+2025-08-30 12:45:28,254 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 12:45:28,254 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 12:45:28,269 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 12:45:28,285 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 12:45:28,300 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 12:45:28,304 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 12:45:33,683 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-30 12:45:33,683 - TELA.py - 97 - 准确率:0.6084705407273753
+2025-08-30 12:45:33,684 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 12:45:33,686 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 12:45:33,686 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 12:45:34,713 - TELA.py - 128 - 稳定型聚类轮廓系数:0.9114316611382214
+2025-08-30 12:45:35,246 - TELA.py - 133 - 突发型聚类轮廓系数:0.5894958676106075
+2025-08-30 12:45:42,605 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:45:42,606 - TELA.py - 150 - 准确率:1.0
+2025-08-30 12:45:42,606 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 12:45:42,606 - TELA.py - 152 - 准确率:1.0
+2025-08-30 12:45:47,030 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 12:45:51,489 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 12:45:56,139 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 12:46:00,614 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 12:46:04,980 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 12:46:09,468 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 12:46:13,568 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 12:46:17,962 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 12:46:22,407 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 12:46:26,894 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 12:46:31,294 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 12:46:35,851 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 12:46:40,312 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 12:46:41,865 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-30 12:47:09,146 - TELA.py - 163 - 开始训练负载拟合模型
+2025-08-30 13:02:24,100 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 13:02:24,100 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 13:02:24,100 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 13:02:24,112 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 13:02:24,128 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 13:02:24,144 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 13:02:24,145 - TELA.py - 394 - TELA模型文件未找到,开始训练
+2025-08-30 13:02:24,145 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 13:02:24,145 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 13:02:24,159 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 13:02:24,175 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 13:02:24,191 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 13:02:24,195 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 13:02:29,569 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-30 13:02:29,569 - TELA.py - 97 - 准确率:0.6084705407273754
+2025-08-30 13:02:29,570 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 13:02:29,572 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 13:02:29,572 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 13:02:30,587 - TELA.py - 128 - 稳定型聚类轮廓系数:0.8642974031431704
+2025-08-30 13:02:31,109 - TELA.py - 133 - 突发型聚类轮廓系数:0.6941445029860263
+2025-08-30 13:02:38,428 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 13:02:38,429 - TELA.py - 150 - 准确率:1.0
+2025-08-30 13:02:38,429 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 13:02:38,429 - TELA.py - 152 - 准确率:1.0
+2025-08-30 13:02:42,891 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 13:02:47,431 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 13:02:51,947 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 13:02:56,375 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 13:03:00,753 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 13:03:05,034 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 13:03:09,612 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 13:03:13,967 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 13:03:18,207 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 13:03:22,605 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 13:03:27,036 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 13:03:31,559 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 13:03:35,938 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 13:03:37,637 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-30 13:04:05,119 - TELA.py - 163 - 开始训练负载拟合模型
+2025-08-30 14:17:15,145 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-30 14:17:15,146 - base_algorithm.py - 42 - Episode 1/1
+2025-08-30 14:17:15,146 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 14:17:15,158 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-30 14:17:15,174 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-30 14:17:15,189 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-30 14:17:15,190 - TELA.py - 401 - TELA模型文件未找到,开始训练
+2025-08-30 14:17:15,190 - TELA.py - 46 - 开始训练TELA模型
+2025-08-30 14:17:15,190 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-30 14:17:15,205 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-30 14:17:15,220 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-30 14:17:15,236 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-30 14:17:15,240 - TELA.py - 78 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-30 14:17:20,621 - TELA.py - 96 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-30 14:17:20,622 - TELA.py - 97 - 准确率:0.6084705407273753
+2025-08-30 14:17:20,622 - TELA.py - 103 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-30 14:17:20,624 - TELA.py - 115 - 稳定型磁盘数量：7664
+2025-08-30 14:17:20,624 - TELA.py - 116 - 突发型磁盘数量：6700
+2025-08-30 14:17:21,678 - TELA.py - 128 - 稳定型聚类轮廓系数:0.8901783544935128
+2025-08-30 14:17:22,221 - TELA.py - 133 - 突发型聚类轮廓系数:0.5905648520670265
+2025-08-30 14:17:29,528 - TELA.py - 149 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 14:17:29,528 - TELA.py - 150 - 准确率:1.0
+2025-08-30 14:17:29,528 - TELA.py - 151 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-30 14:17:29,528 - TELA.py - 152 - 准确率:1.0
+2025-08-30 14:17:33,992 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-30 14:17:38,702 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-30 14:17:43,193 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-30 14:17:47,700 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-30 14:17:52,137 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-30 14:17:56,632 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-30 14:18:01,046 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-30 14:18:05,532 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-30 14:18:09,813 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-30 14:18:14,285 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-30 14:18:18,831 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-30 14:18:23,135 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-30 14:18:27,487 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-30 14:18:29,223 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-30 14:18:56,865 - TELA.py - 163 - 开始训练负载拟合模型
+2025-08-30 14:18:56,869 - TELA.py - 171 - 负载拟合模型训练数据形状: (6700, 5)
+2025-08-30 14:18:56,869 - TELA.py - 172 - 负载拟合模型预测数据形状: (6700,)
+2025-08-31 13:22:59,958 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-31 13:22:59,959 - base_algorithm.py - 42 - Episode 1/1
+2025-08-31 13:22:59,959 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 13:22:59,974 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-31 13:22:59,992 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-31 13:23:00,008 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-31 13:23:00,009 - TELA.py - 398 - TELA模型文件未找到,开始训练
+2025-08-31 13:23:00,009 - TELA.py - 47 - 开始训练TELA模型
+2025-08-31 13:23:00,010 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 13:23:00,026 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-08-31 13:23:00,042 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-08-31 13:23:00,059 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-08-31 13:23:00,063 - TELA.py - 79 - 开始训练第一阶段分类器：区分稳定型和突发型磁盘
+2025-08-31 13:23:04,667 - TELA.py - 97 - 区分磁盘负载类型分类器:{'max_depth': 8, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 5}
+2025-08-31 13:23:04,667 - TELA.py - 98 - 准确率:0.6084705407273754
+2025-08-31 13:23:04,667 - TELA.py - 104 - 开始训练第二阶段模型：每个类别内部的聚类和分类
+2025-08-31 13:23:04,668 - TELA.py - 116 - 稳定型磁盘数量：7664
+2025-08-31 13:23:04,668 - TELA.py - 117 - 突发型磁盘数量：6700
+2025-08-31 13:23:06,774 - TELA.py - 129 - 稳定型聚类轮廓系数:0.8639748630113493
+2025-08-31 13:23:08,573 - TELA.py - 134 - 突发型聚类轮廓系数:0.6960115552017275
+2025-08-31 13:23:13,841 - TELA.py - 150 - 稳定型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-31 13:23:13,842 - TELA.py - 151 - 准确率:1.0
+2025-08-31 13:23:13,842 - TELA.py - 152 - 突发型分类器:{'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2}
+2025-08-31 13:23:13,842 - TELA.py - 153 - 准确率:1.0
+2025-08-31 13:24:24,855 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-31 13:25:35,520 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-31 13:26:49,266 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-31 13:28:02,836 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-31 13:29:12,455 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-31 13:30:25,320 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-31 13:31:38,918 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-31 13:32:53,904 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-31 13:34:06,486 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-31 13:35:23,538 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-31 13:36:37,378 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-31 13:37:50,207 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-31 13:39:08,710 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-31 13:39:39,321 - base_algorithm.py - 143 - Placed 6700 items. Total items: 6700, Disk number: 8000, Warehouse number: 9
+2025-08-31 13:47:33,183 - TELA.py - 164 - 开始训练负载拟合模型
+2025-08-31 13:47:33,459 - TELA.py - 357 - TELA模型已保存
+2025-08-31 13:47:33,459 - TELA.py - 75 - TELA模型训练完成
+2025-08-31 13:47:33,462 - TELA.py - 394 - TELA模型加载成功
+2025-08-31 14:16:17,111 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-31 14:16:17,112 - base_algorithm.py - 42 - Episode 1/1
+2025-08-31 14:16:17,112 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 14:16:17,125 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-31 14:16:17,142 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-31 14:16:17,158 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-31 14:16:17,162 - TELA.py - 394 - TELA模型加载成功
+2025-08-31 14:16:17,165 - TELA.py - 252 - 决策树预测准确率: 0.6319
+2025-08-31 14:16:17,332 - base_algorithm.py - 124 - No warehouse can place cluster5.0 item e7717eaf-2d11-4947-8e0c-3761c3dd3708 at No.1.
+2025-08-31 15:05:10,078 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-31 15:05:10,078 - base_algorithm.py - 42 - Episode 1/1
+2025-08-31 15:05:10,078 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 15:05:10,091 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-31 15:05:10,109 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-31 15:05:10,125 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-31 15:05:10,129 - TELA.py - 399 - TELA模型加载成功
+2025-08-31 15:05:10,132 - TELA.py - 252 - 决策树预测准确率: 0.6319
+2025-08-31 15:09:25,935 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-31 15:09:25,935 - base_algorithm.py - 42 - Episode 1/1
+2025-08-31 15:09:25,935 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 15:09:25,948 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-31 15:09:25,965 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-31 15:09:25,981 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-31 15:09:25,987 - TELA.py - 399 - TELA模型加载成功
+2025-08-31 15:09:25,989 - TELA.py - 252 - 决策树预测准确率: 0.6319
+2025-08-31 15:13:06,620 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-31 15:13:06,620 - base_algorithm.py - 42 - Episode 1/1
+2025-08-31 15:13:06,620 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 15:13:06,633 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-31 15:13:06,650 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-31 15:13:06,666 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-31 15:13:06,670 - TELA.py - 401 - TELA模型加载成功
+2025-08-31 15:13:06,673 - TELA.py - 252 - 决策树预测准确率: 0.6319
+2025-08-31 15:14:23,201 - base_algorithm.py - 141 - Placed 500 items.
+2025-08-31 15:15:35,369 - base_algorithm.py - 141 - Placed 1000 items.
+2025-08-31 15:16:50,030 - base_algorithm.py - 141 - Placed 1500 items.
+2025-08-31 15:18:01,047 - base_algorithm.py - 141 - Placed 2000 items.
+2025-08-31 15:19:12,156 - base_algorithm.py - 141 - Placed 2500 items.
+2025-08-31 15:20:24,397 - base_algorithm.py - 141 - Placed 3000 items.
+2025-08-31 15:21:40,066 - base_algorithm.py - 141 - Placed 3500 items.
+2025-08-31 15:22:53,048 - base_algorithm.py - 141 - Placed 4000 items.
+2025-08-31 15:24:08,171 - base_algorithm.py - 141 - Placed 4500 items.
+2025-08-31 15:25:21,099 - base_algorithm.py - 141 - Placed 5000 items.
+2025-08-31 15:26:34,659 - base_algorithm.py - 141 - Placed 5500 items.
+2025-08-31 15:27:46,441 - base_algorithm.py - 141 - Placed 6000 items.
+2025-08-31 15:28:57,660 - base_algorithm.py - 141 - Placed 6500 items.
+2025-08-31 15:30:10,004 - base_algorithm.py - 141 - Placed 7000 items.
+2025-08-31 15:31:22,216 - base_algorithm.py - 141 - Placed 7500 items.
+2025-08-31 15:32:35,147 - base_algorithm.py - 141 - Placed 8000 items.
+2025-08-31 15:32:35,147 - base_algorithm.py - 143 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-08-31 15:35:22,545 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-08-31 15:35:22,546 - base_algorithm.py - 42 - Episode 1/1
+2025-08-31 15:35:22,546 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-08-31 15:35:22,559 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-08-31 15:35:22,576 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-08-31 15:35:22,591 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-08-31 15:35:22,595 - TELA.py - 404 - TELA模型加载成功
+2025-08-31 15:35:22,595 - TELA.py - 248 - 开始决策树分类磁盘类型，区分稳定型和突发型
+2025-08-31 15:35:22,598 - TELA.py - 253 - 稳定突发区分决策树预测准确率: 0.6319
+2025-08-31 15:35:22,598 - TELA.py - 256 - 开始突发型和稳定型磁盘分别分类到对应聚类中的某一簇
+2025-08-31 15:35:22,763 - TELA.py - 291 - 预测磁盘类型和负载完成
+2025-08-31 15:37:44,970 - base_algorithm.py - 141 - 已模拟放置 1000 云盘.
+2025-08-31 15:40:12,349 - base_algorithm.py - 141 - 已模拟放置 2000 云盘.
+2025-08-31 15:42:32,593 - base_algorithm.py - 141 - 已模拟放置 3000 云盘.
+2025-08-31 15:44:55,808 - base_algorithm.py - 141 - 已模拟放置 4000 云盘.
+2025-08-31 15:47:19,546 - base_algorithm.py - 141 - 已模拟放置 5000 云盘.
+2025-08-31 15:49:44,977 - base_algorithm.py - 141 - 已模拟放置 6000 云盘.
+2025-08-31 15:52:10,367 - base_algorithm.py - 141 - 已模拟放置 7000 云盘.
+2025-08-31 15:54:29,902 - base_algorithm.py - 141 - 已模拟放置 8000 云盘.
+2025-08-31 15:54:29,902 - base_algorithm.py - 143 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-08-31 15:54:31,332 - base_algorithm.py - 371 - 结果已写入 /home/wcl/cycle_dete/output/placement/Tela/TELA_result.txt
+2025-09-02 01:19:29,003 - main.py - 199 - 运行ODA放置策略分析
+2025-09-02 01:19:29,003 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 01:19:29,003 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 01:19:29,016 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 01:19:29,034 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 01:19:29,050 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 01:19:29,051 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 01:21:16,663 - main.py - 202 - 运行SCDA放置策略分析）
+2025-09-02 01:21:16,663 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 01:21:16,663 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 01:21:16,676 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 01:21:16,693 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 01:21:16,709 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 01:21:55,325 - base_algorithm.py - 142 - 已模拟放置 1000 云盘.
+2025-09-02 01:24:20,869 - base_algorithm.py - 142 - 已模拟放置 2000 云盘.
+2025-09-02 01:26:41,115 - base_algorithm.py - 142 - 已模拟放置 3000 云盘.
+2025-09-02 01:29:01,414 - base_algorithm.py - 142 - 已模拟放置 4000 云盘.
+2025-09-02 01:31:22,328 - base_algorithm.py - 142 - 已模拟放置 5000 云盘.
+2025-09-02 01:33:45,953 - base_algorithm.py - 142 - 已模拟放置 6000 云盘.
+2025-09-02 01:36:09,216 - base_algorithm.py - 142 - 已模拟放置 7000 云盘.
+2025-09-02 01:38:31,252 - base_algorithm.py - 142 - 已模拟放置 8000 云盘.
+2025-09-02 01:38:31,252 - base_algorithm.py - 144 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-09-02 01:38:32,691 - base_algorithm.py - 372 - 结果已写入 /home/wcl/cycle_dete/output/placement/ODA/ODA_result.txt
+2025-09-02 03:02:52,417 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-09-02 03:02:52,417 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 03:02:52,417 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 03:02:52,429 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 03:02:52,446 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 03:02:52,462 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 03:02:52,465 - TELA.py - 404 - TELA模型加载成功
+2025-09-02 03:02:52,465 - TELA.py - 248 - 开始决策树分类磁盘类型，区分稳定型和突发型
+2025-09-02 03:02:52,468 - TELA.py - 253 - 稳定突发区分决策树预测准确率: 0.6319
+2025-09-02 03:02:52,468 - TELA.py - 256 - 开始突发型和稳定型磁盘分别分类到对应聚类中的某一簇
+2025-09-02 03:02:52,621 - TELA.py - 291 - 预测磁盘类型和负载完成
+2025-09-02 03:02:52,621 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 03:03:22,804 - main.py - 202 - 运行SCDA放置策略分析）
+2025-09-02 03:03:22,804 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 03:03:22,804 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 03:03:22,816 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 03:03:22,833 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 03:03:22,849 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 03:05:19,111 - base_algorithm.py - 142 - 已模拟放置 1000 云盘.
+2025-09-02 03:05:46,547 - main.py - 202 - 运行SCDA放置策略分析）
+2025-09-02 03:05:46,549 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 03:05:46,549 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 03:05:46,561 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 03:05:46,577 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 03:05:46,593 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 03:05:46,594 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 03:05:46,609 - loader.py - 59 - 集群 0 加载了 4843 个突发性磁盘
+2025-09-02 03:05:46,624 - loader.py - 59 - 集群 2 加载了 4774 个突发性磁盘
+2025-09-02 03:05:46,640 - loader.py - 59 - 集群 4 加载了 4747 个突发性磁盘
+2025-09-02 03:05:50,682 - SCDA.py - 83 - Silhouette score: 0.7889998622456214
+2025-09-02 03:05:54,904 - SCDA.py - 114 - DecisionTree model: {'max_depth': 6, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 5}
+2025-09-02 03:05:54,904 - SCDA.py - 115 - 准确率: 0.92307108154201
+2025-09-02 03:05:55,014 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 03:06:42,753 - main.py - 202 - 运行SCDA放置策略分析）
+2025-09-02 03:06:42,753 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 03:06:42,754 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 03:06:42,766 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 03:06:42,782 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 03:06:42,797 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 03:06:42,880 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 03:07:33,475 - main.py - 202 - 运行SCDA放置策略分析）
+2025-09-02 03:07:33,475 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 03:07:33,475 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 03:07:33,487 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 03:07:33,504 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 03:07:33,519 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 03:07:33,590 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 03:07:50,034 - base_algorithm.py - 142 - 已模拟放置 2000 云盘.
+2025-09-02 03:09:55,707 - base_algorithm.py - 142 - 已模拟放置 1000 云盘.
+2025-09-02 03:10:13,575 - base_algorithm.py - 142 - 已模拟放置 3000 云盘.
+2025-09-02 03:12:16,898 - base_algorithm.py - 142 - 已模拟放置 2000 云盘.
+2025-09-02 03:12:38,817 - base_algorithm.py - 142 - 已模拟放置 4000 云盘.
+2025-09-02 03:14:37,816 - base_algorithm.py - 142 - 已模拟放置 3000 云盘.
+2025-09-02 03:15:03,342 - base_algorithm.py - 142 - 已模拟放置 5000 云盘.
+2025-09-02 03:16:59,851 - base_algorithm.py - 142 - 已模拟放置 4000 云盘.
+2025-09-02 03:17:25,732 - base_algorithm.py - 142 - 已模拟放置 6000 云盘.
+2025-09-02 03:19:19,431 - base_algorithm.py - 142 - 已模拟放置 5000 云盘.
+2025-09-02 03:19:49,949 - base_algorithm.py - 142 - 已模拟放置 7000 云盘.
+2025-09-02 03:21:45,376 - base_algorithm.py - 142 - 已模拟放置 6000 云盘.
+2025-09-02 03:22:14,115 - base_algorithm.py - 142 - 已模拟放置 8000 云盘.
+2025-09-02 03:22:14,115 - base_algorithm.py - 144 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-09-02 03:22:15,561 - base_algorithm.py - 372 - 结果已写入 /home/wcl/cycle_dete/output/placement/Tela/TELA_result.txt
+2025-09-02 03:24:10,296 - base_algorithm.py - 142 - 已模拟放置 7000 云盘.
+2025-09-02 03:26:32,447 - base_algorithm.py - 142 - 已模拟放置 8000 云盘.
+2025-09-02 03:26:32,447 - base_algorithm.py - 144 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-09-02 03:26:33,922 - base_algorithm.py - 372 - 结果已写入 /home/wcl/cycle_dete/output/placement/SCDA/SCDA_result.txt
+2025-09-02 07:08:59,746 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-09-02 07:08:59,746 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 07:08:59,746 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 07:08:59,760 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 07:08:59,778 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 07:08:59,794 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 07:08:59,797 - TELA.py - 404 - TELA模型加载成功
+2025-09-02 07:08:59,797 - TELA.py - 248 - 开始决策树分类磁盘类型，区分稳定型和突发型
+2025-09-02 07:08:59,799 - TELA.py - 253 - 稳定突发区分决策树预测准确率: 0.6319
+2025-09-02 07:08:59,799 - TELA.py - 256 - 开始突发型和稳定型磁盘分别分类到对应聚类中的某一簇
+2025-09-02 07:08:59,957 - TELA.py - 291 - 预测磁盘类型和负载完成
+2025-09-02 07:08:59,959 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 07:09:22,147 - main.py - 202 - 运行SCDA放置策略分析）
+2025-09-02 07:09:22,147 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 07:09:22,147 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 07:09:22,159 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 07:09:22,176 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 07:09:22,192 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 07:09:22,264 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 07:10:16,924 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-09-02 07:10:16,924 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 07:10:16,924 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 07:10:16,937 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 07:10:16,953 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 07:10:16,969 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 07:10:16,972 - TELA.py - 404 - TELA模型加载成功
+2025-09-02 07:10:16,973 - TELA.py - 248 - 开始决策树分类磁盘类型，区分稳定型和突发型
+2025-09-02 07:10:16,975 - TELA.py - 253 - 稳定突发区分决策树预测准确率: 0.6319
+2025-09-02 07:10:16,975 - TELA.py - 256 - 开始突发型和稳定型磁盘分别分类到对应聚类中的某一簇
+2025-09-02 07:10:17,130 - TELA.py - 291 - 预测磁盘类型和负载完成
+2025-09-02 07:10:17,130 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 07:11:56,012 - base_algorithm.py - 142 - 已模拟放置 1000 云盘.
+2025-09-02 07:13:58,557 - main.py - 206 - 运行TELA放置策略分析（请补充实现）
+2025-09-02 07:13:58,558 - base_algorithm.py - 42 - Episode 1/1
+2025-09-02 07:13:58,558 - loader.py - 36 - 正在加载both磁盘数据,用途为train
+2025-09-02 07:13:58,570 - loader.py - 59 - 集群 1 加载了 2209 个突发性磁盘
+2025-09-02 07:13:58,587 - loader.py - 59 - 集群 3 加载了 5301 个突发性磁盘
+2025-09-02 07:13:58,602 - loader.py - 59 - 集群 5 加载了 4492 个突发性磁盘
+2025-09-02 07:13:58,606 - TELA.py - 404 - TELA模型加载成功
+2025-09-02 07:13:58,606 - TELA.py - 248 - 开始决策树分类磁盘类型，区分稳定型和突发型
+2025-09-02 07:13:58,608 - TELA.py - 253 - 稳定突发区分决策树预测准确率: 0.6319
+2025-09-02 07:13:58,608 - TELA.py - 256 - 开始突发型和稳定型磁盘分别分类到对应聚类中的某一簇
+2025-09-02 07:13:58,774 - TELA.py - 291 - 预测磁盘类型和负载完成
+2025-09-02 07:13:58,776 - base_algorithm.py - 94 - 开始模拟放置云盘
+2025-09-02 07:14:29,497 - base_algorithm.py - 142 - 已模拟放置 2000 云盘.
+2025-09-02 07:16:32,030 - base_algorithm.py - 142 - 已模拟放置 1000 云盘.
+2025-09-02 07:17:01,006 - base_algorithm.py - 142 - 已模拟放置 3000 云盘.
+2025-09-02 07:19:01,184 - base_algorithm.py - 142 - 已模拟放置 2000 云盘.
+2025-09-02 07:19:32,620 - base_algorithm.py - 142 - 已模拟放置 4000 云盘.
+2025-09-02 07:21:30,640 - base_algorithm.py - 142 - 已模拟放置 3000 云盘.
+2025-09-02 07:22:04,128 - base_algorithm.py - 142 - 已模拟放置 5000 云盘.
+2025-09-02 07:23:56,023 - base_algorithm.py - 142 - 已模拟放置 4000 云盘.
+2025-09-02 07:24:31,039 - base_algorithm.py - 142 - 已模拟放置 6000 云盘.
+2025-09-02 07:26:24,418 - base_algorithm.py - 142 - 已模拟放置 5000 云盘.
+2025-09-02 07:27:01,609 - base_algorithm.py - 142 - 已模拟放置 7000 云盘.
+2025-09-02 07:28:49,277 - base_algorithm.py - 142 - 已模拟放置 6000 云盘.
+2025-09-02 07:29:27,892 - base_algorithm.py - 142 - 已模拟放置 8000 云盘.
+2025-09-02 07:29:27,892 - base_algorithm.py - 144 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-09-02 07:29:29,347 - base_algorithm.py - 372 - 结果已写入 /home/wcl/cycle_dete/output/placement/SCDA/SCDA_result.txt
+2025-09-02 07:31:16,464 - base_algorithm.py - 142 - 已模拟放置 7000 云盘.
+2025-09-02 07:33:43,106 - base_algorithm.py - 142 - 已模拟放置 8000 云盘.
+2025-09-02 07:33:43,106 - base_algorithm.py - 144 - Placed 8000 items. Total items: 12002, Disk number: 8000, Warehouse number: 9
+2025-09-02 07:33:44,598 - base_algorithm.py - 372 - 结果已写入 /home/wcl/cycle_dete/output/placement/Tela/TELA_result.txt
