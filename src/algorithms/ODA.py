@@ -27,7 +27,7 @@ class ODA(BaseAlgorithm):
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
-        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT, purpose="train")
+        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ODA, purpose="train")
 
     def select_warehouse(self, item: pd.Series, warehouses_resource_allocated: np.ndarray,
                          warehouses_cannot_use_by_monitor: np.ndarray, additional_state: Any) -> int:

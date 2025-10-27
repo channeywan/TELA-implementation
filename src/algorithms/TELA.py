@@ -60,11 +60,14 @@ class TELA(BaseAlgorithm):
         cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler = self.train_cluster_classifier(
             items_train_encoded)
 
+        items_burst = items_train_encoded[items_train_encoded["burst_label"] == 1].copy(
+        )
+        items_burst["cluster_label"] = cluster_burst.labels_
         # 训练负载拟合模型
-        simulate_load, placed_warehouses = self.simulate_warehouse_load(
-            items_train_encoded[items_train_encoded["burst_label"] == 1])
+        warehouse_counts_snapshots, warehouse_load_snap = self.simulate_warehouse_load(
+            items_burst)
         self.peak_RBW_model, self.peak_WBW_model = self.train_warehouse_load_model(
-            simulate_load, placed_warehouses, cluster_burst.labels_)
+            warehouse_load_snap, warehouse_counts_snapshots)
 
         # 保存所有模型
         self.save_models(model_classify_type, cluster_stable, cluster_burst,
@@ -130,7 +133,8 @@ class TELA(BaseAlgorithm):
         score_burst = silhouette_score(
             burst_features_scaled, cluster_burst.labels_)
         logger.info(f"突发型聚类轮廓系数:{score_burst}")
-
+        self.plotter.plot_kMeans_cluster(
+            burst_features, stable_features, cluster_burst.labels_, cluster_stable.labels_)
         model_classify_stable = GridSearchCV(
             estimator=DecisionTreeClassifier(criterion="gini"),
             param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=1, verbose=0
@@ -140,9 +144,9 @@ class TELA(BaseAlgorithm):
             param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=1, verbose=0
         )
         model_classify_stable.fit(items_stable[[
-                                  "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]], items_stable["burst_label"])
+                                  "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]], cluster_stable.labels_)
         model_classify_burst.fit(items_burst[[
-                                 "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]], items_burst["burst_label"])
+                                 "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]], cluster_burst.labels_)
         best_classify_stable = model_classify_stable.best_estimator_
         best_classify_burst = model_classify_burst.best_estimator_
         logger.info(f"稳定型分类器:{model_classify_stable.best_params_}")
@@ -156,17 +160,10 @@ class TELA(BaseAlgorithm):
 
         return cluster_stable, cluster_burst, best_classify_stable, best_classify_burst, stable_scaler, burst_scaler
 
-    def train_warehouse_load_model(self, simulate_load: np.ndarray, placed_warehouses: np.ndarray, cluster_labels: np.ndarray):
+    def train_warehouse_load_model(self, warehouse_load_snap: np.ndarray, warehouse_counts_snapshots: np.ndarray):
         """训练负载拟合模型"""
-        disk_number = len(simulate_load)
         logger.info("开始训练负载拟合模型")
-        cluster_disk_count = np.zeros(
-            (disk_number, WarehouseConfig.WAREHOUSE_NUMBER, ModelConfig.TELA_CLUSTER_K), dtype=int)
-
-        for i in range(disk_number):
-            cluster_disk_count[i, placed_warehouses[i], cluster_labels[i]] += 1
-        X_train = cluster_disk_count[np.arange(
-            disk_number), placed_warehouses, :]
+        X_train = warehouse_counts_snapshots
         # peak_RBW_model = pwlf.PiecewiseLinFit(X_train, simulate_load[:, 0])
         # peak_WBW_model = pwlf.PiecewiseLinFit(X_train, simulate_load[:, 1])
         # n_segments_range = range(2, 6)
@@ -187,55 +184,62 @@ class TELA(BaseAlgorithm):
         # peak_WBW_model.fit(n_segments=best_n_segments_WBW)
         # logger.info(f"RBW负载拟合模型 BIC分数: {peak_RBW_model.bic:.4f}")
         # logger.info(f"WBW负载拟合模型 BIC分数: {peak_WBW_model.bic:.4f}")
-        peak_RBW_model = Earth(max_degree=1)
-        peak_WBW_model = Earth(max_degree=1)
-        peak_RBW_model.fit(X_train, simulate_load[:, 0])
-        peak_WBW_model.fit(X_train, simulate_load[:, 1])
+        peak_RBW_model = Earth(max_degree=1, rcond=None)
+        peak_WBW_model = Earth(max_degree=1, rcond=None)
+        peak_RBW_model.fit(X_train, warehouse_load_snap[:, 0])
+        peak_WBW_model.fit(X_train, warehouse_load_snap[:, 1])
         return peak_RBW_model, peak_WBW_model
 
     def simulate_warehouse_load(self, items: pd.DataFrame):
         """
         simulate_load_trace: 模拟负载的时序数据
         placed_warehouses: 磁盘放置的仓库
-        warehouse_load:增加每个磁盘仓库的负载峰值和均值指标[len(items),(RBW_max,WBW_max,RBW_avg,WBW_avg)]
+        warehouse_load_snap:新增每个磁盘时，磁盘对应仓库的负载峰值和均值指标[len(items),(RBW_max,WBW_max,RBW_avg,WBW_avg)]
         """
+        logger.info("使用oda模拟仓库放置")
         oda = ODA()
-        _, placed_warehouses = oda.place_item(items)
+        _, placed_warehouses, avaliable_items = oda.place_item(items)
         simulate_load_trace = np.zeros(
             (WarehouseConfig.WAREHOUSE_NUMBER, 2, DataConfig.EVALUATE_TIME_NUMBER))
-        warehouse_load = np.zeros((len(items), 4))
-
-        for i, item in items.iterrows():
-            # 跳过未成功放置的磁盘
+        warehouse_category_counts = np.zeros(
+            (WarehouseConfig.WAREHOUSE_NUMBER, ModelConfig.TELA_CLUSTER_K), dtype=int)
+        warehouse_counts_snapshots = np.zeros(
+            (len(avaliable_items), ModelConfig.TELA_CLUSTER_K), dtype=int)
+        warehouse_load_snap = np.zeros((len(avaliable_items), 4))
+        logger.info("开始模拟仓库突发负载")
+        for i, (_, item) in enumerate(avaliable_items.iterrows()):
             if i >= len(placed_warehouses) or placed_warehouses[i] == -1:
                 continue
-
+            logger.info(f"i=={i}")
             warehouse_idx = placed_warehouses[i]
             cluster_index = item["cluster_index"]
             disk_ID = item["disk_ID"]
             trace_dir = os.path.join(DirConfig.TRACE_ROOT,
                                      f"20_136090{cluster_index}", f"{disk_ID}")
             disk_trace_bandwidth = np.loadtxt(
-                trace_dir, delimiter=',', usecols=(2, 4), dtype=int)
-            read_bandwidth_trace = disk_trace_bandwidth[:
-                                                        DataConfig.EVALUATE_TIME_NUMBER, 0]
-            write_bandwidth_trace = disk_trace_bandwidth[:
-                                                         DataConfig.EVALUATE_TIME_NUMBER, 1]
+                trace_dir, delimiter=',', usecols=(0, 2, 4), dtype=int)
+            circle_trace = self._get_circular_trace(
+                disk_trace_bandwidth, item["disk_capacity"], DataConfig.EVALUATE_TIME_NUMBER)
+
             simulate_load_trace[warehouse_idx,
-                                0, :] += read_bandwidth_trace
+                                0, :] += circle_trace[:DataConfig.EVALUATE_TIME_NUMBER, 1]
             simulate_load_trace[warehouse_idx,
-                                1, :] += write_bandwidth_trace
-            warehouse_load[i, 0] = np.max(
+                                1, :] += circle_trace[:DataConfig.EVALUATE_TIME_NUMBER, 2]
+            warehouse_load_snap[i, 0] = np.max(
                 simulate_load_trace[warehouse_idx, 0, :])
-            warehouse_load[i, 1] = np.max(
+            warehouse_load_snap[i, 1] = np.max(
                 simulate_load_trace[warehouse_idx, 1, :])
-            warehouse_load[i, 2] = np.mean(
+            warehouse_load_snap[i, 2] = np.mean(
                 simulate_load_trace[warehouse_idx, 0, :])
-            warehouse_load[i, 3] = np.mean(
+            warehouse_load_snap[i, 3] = np.mean(
                 simulate_load_trace[warehouse_idx, 1, :])
-        items.to_csv(os.path.join(
+            warehouse_category_counts[warehouse_idx,
+                                      item["cluster_label"]] += 1
+            warehouse_counts_snapshots[i] = warehouse_category_counts[warehouse_idx, :]
+        avaliable_items.to_csv(os.path.join(
             DirConfig.TELA_DIR, "train_items.csv"))
-        return warehouse_load, placed_warehouses
+        logger.info("模拟仓库突发负载完成")
+        return warehouse_counts_snapshots, warehouse_load_snap
 
     def predict_disk_types_and_loads(self, items: pd.DataFrame):
         """预测磁盘类型和负载"""

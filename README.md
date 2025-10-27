@@ -42,3 +42,10 @@
 |    13     | disk_timestamp_num |   int    |  
 |    14     |   burst_label |   int    | 
 
+### 数据清洗标准：
+- 空闲时间超过90%
+- cpu == 0
+- memory == 0
+- timestamp_num < 8640
+- peak_bandwidth > warehouse_resource*0.8
+- avg_bandwidth>3

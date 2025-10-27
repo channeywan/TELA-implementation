@@ -30,7 +30,7 @@ class DiskDataLoader:
         [7:10]:vm_cpu, vm_mem,cluster_index
         '''
         ORIGINAL_COLS = ["disk_ID", "disk_capacity", "disk_if_local", "disk_attr", "disk_type", "disk_if_VIP",
-                         "disk_pay", "vm_cpu", "vm_mem", "avg_rbw", "avg_wbw", "peak_rbw", "peak_wbw", "timestamp_num", "burst_label"]
+                         "disk_pay", "vm_cpu", "vm_mem", "avg_rbw", "avg_wbw", "peak_rbw", "peak_wbw", "timestamp_num", "burst_label", "RBW_mul", "WBW_mul"]
         PREDICT_COLS = ["disk_ID", "disk_capacity", "disk_if_local", "disk_attr", "disk_type", "disk_if_VIP",
                         "disk_pay", "vm_cpu", "vm_mem"]
         logger.info(f"正在加载{type}磁盘数据,用途为{purpose}")
@@ -40,11 +40,9 @@ class DiskDataLoader:
                 DirConfig.CLUSTER_INFO_ROOT,
                 f"cluster{cluster_index}"
             )
-
             if not os.path.exists(item_dir):
                 logger.warning(f"数据文件不存在: {item_dir}")
                 continue
-
             try:
                 items = pd.read_csv(item_dir, header=None,
                                     names=ORIGINAL_COLS, encoding="utf-8")
@@ -70,12 +68,12 @@ class DiskDataLoader:
                     'vm_cpu': float, 'vm_mem': float, 'avg_rbw': float,
                     'avg_wbw': float, 'peak_rbw': float, 'peak_wbw': float,
                     'timestamp_num': int, 'burst_label': int,
-                    'cluster_index': int}
+                    'cluster_index': int, 'RBW_mul': float, 'WBW_mul': float}
 
         items = items.astype(type_map)
-        max_read_bandwidth = WarehouseConfig.MAX_READ_BANDWIDTH[cluster_index] * \
+        max_read_bandwidth = np.min(WarehouseConfig.MAX_READ_BANDWIDTH) * \
             ModelConfig.RESERVATION_RATE_FOR_MONITOR
-        max_write_bandwidth = WarehouseConfig.MAX_WRITE_BANDWIDTH[cluster_index] * \
+        max_write_bandwidth = np.min(WarehouseConfig.MAX_WRITE_BANDWIDTH) * \
             ModelConfig.RESERVATION_RATE_FOR_MONITOR
         mask_cpu_mem = (items['vm_cpu'] > 0) & (items['vm_mem'] > 0)
         mask_timestamp = items['timestamp_num'] >= DataConfig.MIN_TIMESTAMP_NUM
@@ -93,3 +91,6 @@ class DiskDataLoader:
             raise ValueError(f"Invalid type: {type}")
         items = items[validation_mask & type_mask]
         return items
+
+    def generate_random_disk(self, items: pd.DataFrame) -> pd.DataFrame:
+        random_items = items.sample(n=DataConfig.DISK_NUMBER, replace=False)

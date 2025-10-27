@@ -1,4 +1,4 @@
-from visualization.plotter import DiskPlotter, CoachPlotter
+from visualization.plotter import DiskPlotter, CoachPlotter, BasePlotter
 from data.processor import DiskDataProcessor, CoachProcessor
 from data.loader import DiskDataLoader
 from cluster_info_init.cluster_info_initializer import ClusterInfoInitializer
@@ -132,6 +132,7 @@ class CoachCycleDetector:
 
 def main():
     """主函数"""
+    plotter = DiskPlotter()
     parser = argparse.ArgumentParser(description='云盘放置策略分析')
     subparsers = parser.add_subparsers(dest='mode', required=True, help='运行模式')
 
@@ -145,13 +146,15 @@ def main():
 
     # plot 子命令
     plot_parser = subparsers.add_parser('plot', help='绘图')
-    plot_parser.add_argument(
-        '--method', choices=['trace', 'cluster'], required=True, help='绘图方法')
-    plot_parser.add_argument(
-        '--cluster-index', type=int, help='集群索引 (trace模式需要)')
-    plot_parser.add_argument('--disk-id', type=str, help='磁盘ID (trace模式需要)')
-    plot_parser.add_argument(
-        '--trace-time', choices=['week', 'all'], type=str, help='追踪时间 (trace模式需要)')
+    plot_sub_parser = plot_parser.add_subparsers(
+        dest='type', required=True, help='绘图内容')
+    trace_parser = plot_sub_parser.add_parser('trace', help='绘制单个磁盘追踪图')
+    cluster_parser = plot_sub_parser.add_parser('cluster', help='绘制集群分析图')
+    trace_parser.add_argument('--cluster', type=int, help='集群索引')
+    trace_parser.add_argument('--disk-id', type=str, help='磁盘ID ')
+    trace_parser.add_argument(
+        '--time', choices=['week', 'all'], type=str, help='追踪时间 (trace模式需要)')
+    cluster_parser.add_argument('--content', type=str, help='绘图内容')
 
     # placement 子命令
     placement_parser = subparsers.add_parser('placement', help='放置策略分析')
@@ -174,24 +177,33 @@ def main():
             logger.error(f"未知的statistic分析方法: {args.method}")
             sys.exit(1)
     elif args.mode == 'plot':
-        if args.method == 'trace':
-            if args.cluster_index is None or args.disk_id is None or args.trace_time is None:
+        if args.type == 'trace':
+            if args.cluster is None or args.disk_id is None or args.time is None:
                 logger.error(
-                    "plot-trace模式需要 --cluster-index, --disk-id, --trace-time 参数")
+                    "plot-trace模式需要 --cluster, --disk-id, --time 参数")
                 sys.exit(1)
-            if args.trace_time == 'week':
+            if args.time == 'week':
                 detector.plot_disk_traces(
-                    args.cluster_index, args.disk_id, args.trace_time)
-            elif args.trace_time == 'all':
+                    args.cluster, args.disk_id, args.time)
+            elif args.time == 'all':
                 detector.plot_disk_traces(
-                    args.cluster_index, args.disk_id, args.trace_time)
+                    args.cluster, args.disk_id, args.time)
             else:
-                logger.error(f"未知的trace-time: {args.trace_time}")
+                logger.error(f"未知的trace-time: {args.time}")
                 sys.exit(1)
-        elif args.method == 'cluster':
-            logger.info("plot-cluster模式暂未实现，仅作占位")
+        elif args.type == 'cluster':
+            if args.content is None:
+                logger.error(
+                    "plot-cluster模式需要 --content,  参数")
+                sys.exit(1)
+            if args.content == 'BW_mul':
+                plotter.plot_disk_BW_mul()
+
+            else:
+                logger.error(f"未知的cluster-content: {args.content}")
+                sys.exit(1)
         else:
-            logger.error(f"未知的plot绘图方法: {args.method}")
+            logger.error(f"未知的plot绘图方法: {args.type}")
             sys.exit(1)
     elif args.mode == 'placement':
         if args.algorithm == 'odp':
@@ -199,11 +211,11 @@ def main():
             logger.info("运行ODA放置策略分析")
             oda_analyzer.run()
         elif args.algorithm == 'scda':
-            logger.info("运行SCDA放置策略分析）")
+            logger.info("运行SCDA放置策略分析")
             scda_analyzer = SCDA()
             scda_analyzer.run()
         elif args.algorithm == 'tela':
-            logger.info("运行TELA放置策略分析（请补充实现）")
+            logger.info("运行TELA放置策略分析")
             tela_analyzer = TELA()
             tela_analyzer.run()
         else:

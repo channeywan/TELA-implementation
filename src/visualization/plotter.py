@@ -1,31 +1,198 @@
-from config.settings import DirConfig, DataConfig
+from config.settings import DirConfig, DataConfig, WarehouseConfig
 from typing import List, Tuple, Optional
 from datetime import datetime
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import os
 import logging
 import numpy as np
 import matplotlib
+from data.loader import DiskDataLoader
 matplotlib.use('Agg')
 
 
 logger = logging.getLogger(__name__)
 
 
-class DiskPlotter:
-    """磁盘数据可视化绘图器"""
-
+class BasePlotter:
     def __init__(self):
         self.config = DirConfig()
         self.data_config = DataConfig()
 
-        # 设置中文字体支持
-        # 尝试多种中文字体，按优先级排列
         plt.rcParams['font.family'] = [
             'Noto Serif CJK SC'
         ]
-        plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+        plt.rcParams['axes.unicode_minus'] = False
+
+
+class TelaPlotter(BasePlotter):
+    def __init__(self):
+        super().__init__()
+
+    def plot_disk_BW_mul(self):
+        """绘制磁盘BW_mul分布图"""
+        logger.info("开始绘制峰均值比值分布图")
+        for i in range(9):
+            plotter = BasePlotter()
+            items = DiskDataLoader().load_items(type="both",
+                                                cluster_index_list=[i])
+            readBW = items['RBW_mul']
+            writeBW = items['WBW_mul']
+            fig, axes = plt.subplots(
+                1, 2, figsize=(14, 6))
+            sns.kdeplot(readBW, log_scale=True,
+                        color='skyblue', ax=axes[0], label='read BandWidth')
+            sns.kdeplot(writeBW, log_scale=True,
+                        color='lightcoral', ax=axes[0], label='write BandWidth')
+            axes[0].grid(True, linestyle='--', alpha=0.6)
+            axes[0].set_title(f"集群{i}读写带宽峰均值比值pdf图")
+            axes[0].set_xlabel('峰均值比值')
+            axes[0].set_ylabel('概率密度')
+            axes[0].legend()
+
+            sns.ecdfplot(readBW, color='skyblue', ax=axes[1],
+                         log_scale=True, label='read BandWidth')
+            sns.ecdfplot(writeBW, color='lightcoral',
+                         ax=axes[1], log_scale=True, label='write BandWidth')
+            axes[1].grid(True, linestyle='--', alpha=0.6)
+            axes[1].set_title(f"集群{i}读写带宽峰均值比值cdf图")
+            axes[1].set_xlabel('峰均值比值')
+            axes[1].set_ylabel('累积分布')
+            axes[1].legend()
+            plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+            plt.savefig(os.path.join(DirConfig.VISUALIZATION_TRACE_DIR,
+                        f'集群{i}写带宽峰均值比值分布图.png'), dpi=300, bbox_inches='tight')
+            plt.close(fig)
+
+    def plot_kMeans_cluster(self, data_burst, data_stable, label_burst, label_stable):
+        """绘制KMeans聚类图"""
+        fig, axes = plt.subplots(1, 2, figsize=(14, 10))
+        axes[0].scatter(data_burst.iloc[:, 0], data_burst.iloc[:, 1],
+                        c=label_burst, cmap='viridis')
+        axes[0].set_title('突发型磁盘聚类')
+        axes[0].set_xlabel('读带宽')
+        axes[0].set_ylabel('写带宽')
+        axes[0].legend()
+        axes[1].scatter(data_stable.iloc[:, 0], data_stable.iloc[:, 1],
+                        c=label_stable, cmap='viridis')
+        axes[1].set_title('稳定型磁盘聚类')
+        axes[1].set_xlabel('读带宽')
+        axes[1].set_ylabel('写带宽')
+        axes[1].legend()
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig(os.path.join(DirConfig.TELA_DIR,
+                                 f'KMeans_tela_cluster.png'), dpi=300, bbox_inches='tight')
+        logger.info(f"KMeans_tela_cluster.png已保存至{DirConfig.TELA_DIR}")
+        plt.close(fig)
+
+    def plot_Warehouse_utilization(self, warehouse_utilization: np.ndarray, algorithm_dir: str, fig_title: str):
+        """绘制仓库利用率图"""
+        fig, axes = plt.subplots(figsize=(14, 6))
+        indices = np.arange(WarehouseConfig.WAREHOUSE_NUMBER)
+        bar_width = 0.2
+        pos1 = indices-bar_width
+        pos2 = indices
+        pos3 = indices+bar_width
+        bars1 = axes.bar(
+            pos1, warehouse_utilization[0, :, 0], bar_width, label='capacity', color='dodgerblue')
+        bars2 = axes.bar(
+            pos2, warehouse_utilization[0, :, 1], bar_width, label='read_bw', color='sandybrown')
+        bars3 = axes.bar(
+            pos3, warehouse_utilization[0, :, 2], bar_width, label='write_bw', color='mediumseagreen')
+        axes.set_title(fig_title)
+        axes.set_ylim(0, 1.1)
+        axes.set_xticks(indices)
+        axes.set_xticklabels(
+            [f"warehouse{i}" for i in indices], rotation=45)
+        axes.legend()
+        plt.tight_layout()
+
+        def update(frame):
+            current_data = warehouse_utilization[frame]
+            for i in range(WarehouseConfig.WAREHOUSE_NUMBER):
+                bars1[i].set_height(current_data[i, 0])
+                bars2[i].set_height(current_data[i, 1])
+                bars3[i].set_height(current_data[i, 2])
+            return list(bars1)+list(bars2)+list(bars3)
+        logger.info(f"creating {fig_title} animation")
+        ani = animation.FuncAnimation(fig, update, frames=len(
+            warehouse_utilization), blit=True, interval=10)
+        ani.save(os.path.join(algorithm_dir, f'{fig_title}.mp4'),
+                 writer='ffmpeg', fps=15, dpi=80)
+        plt.close(fig)
+
+    def plot_resource_allocation_animation(self, allocation_history: np.ndarray, algorithm_dir: str, fig_title: str):
+        """
+        绘制资源分配历史动画
+
+        Args:
+            allocation_history: 资源分配历史数据，形状为 (时间步数, 仓库数, 3)
+            algorithm_dir: 保存目录
+            fig_title: 图表标题
+        """
+        if len(allocation_history) == 0:
+            logger.warning("资源分配历史为空，无法生成动画")
+            return
+
+        warehouses_max_ndarray = np.array(WarehouseConfig.WAREHOUSE_MAX).T
+        allocation_utilization = allocation_history / warehouses_max_ndarray
+
+        fig, axes = plt.subplots(figsize=(14, 6))
+        indices = np.arange(WarehouseConfig.WAREHOUSE_NUMBER)
+        bar_width = 0.2
+        pos1 = indices - bar_width
+        pos2 = indices
+        pos3 = indices + bar_width
+
+        # 初始化条形图
+        bars1 = axes.bar(
+            pos1, allocation_utilization[0, :, 0], bar_width,
+            label='capacity', color='dodgerblue')
+        bars2 = axes.bar(
+            pos2, allocation_utilization[0, :, 1], bar_width,
+            label='read_bw', color='sandybrown')
+        bars3 = axes.bar(
+            pos3, allocation_utilization[0, :, 2], bar_width,
+            label='write_bw', color='mediumseagreen')
+
+        axes.set_title(fig_title)
+        axes.set_ylim(0, 1.1)
+        axes.set_xticks(indices)
+        axes.set_xticklabels(
+            [f"warehouse{i}" for i in indices], rotation=45)
+        axes.set_ylabel('资源利用率')
+        axes.axhline(y=1.0, color='red', linestyle='--',
+                     linewidth=1, alpha=0.7)
+        axes.legend()
+        plt.tight_layout()
+
+        def update(frame):
+            """更新函数，用于动画的每一帧"""
+            current_data = allocation_utilization[frame]
+            for i in range(WarehouseConfig.WAREHOUSE_NUMBER):
+                bars1[i].set_height(current_data[i, 0])
+                bars2[i].set_height(current_data[i, 1])
+                bars3[i].set_height(current_data[i, 2])
+            axes.set_title(
+                f'{fig_title} (时间步: {frame}/{len(allocation_history)})')
+            return list(bars1) + list(bars2) + list(bars3)
+
+        ani = animation.FuncAnimation(
+            fig, update, frames=len(allocation_history),
+            blit=True, interval=10)
+
+        output_path = os.path.join(algorithm_dir, f'{fig_title}.mp4')
+        ani.save(output_path, writer='ffmpeg', fps=30, dpi=100)
+        plt.close(fig)
+        logger.info(f"动画已保存至 {output_path}")
+
+
+class DiskPlotter(BasePlotter):
+    """磁盘数据可视化绘图器"""
+
+    def __init__(self):
+        super().__init__()
 
     def plot_variance_density(self, rbw_scores: List[float], wbw_scores: List[float],
                               title: str = "所有磁盘的方差分析") -> None:
