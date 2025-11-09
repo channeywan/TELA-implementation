@@ -2,10 +2,12 @@ from visualization.plotter import DiskPlotter, CoachPlotter, BasePlotter
 from data.processor import DiskDataProcessor, CoachProcessor
 from data.loader import DiskDataLoader
 from cluster_info_init.cluster_info_initializer import ClusterInfoInitializer
+from cluster_info_init.dump_trace import DumpTrace
 from config.settings import DirConfig, DataConfig, WarehouseConfig
 from algorithms.ODA import ODA
 from algorithms.SCDA import SCDA
 from algorithms.TELA import TELA
+from algorithms.Oracle import Oracle
 import logging
 import argparse
 import sys
@@ -18,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(filename)s - %(lineno)s - %(message)s',
+    format='File "%(pathname)s", line %(lineno)d, %(message)s',
     handlers=[
         logging.FileHandler('disk_analysis.log', encoding='utf-8'),
         logging.StreamHandler()
@@ -133,11 +135,16 @@ class CoachCycleDetector:
 def main():
     """主函数"""
     plotter = DiskPlotter()
+    detector = DiskCycleDetector()
+    coach_detector = CoachCycleDetector()
     parser = argparse.ArgumentParser(description='云盘放置策略分析')
     subparsers = parser.add_subparsers(dest='mode', required=True, help='运行模式')
 
     # init 子命令
-    init_parser = subparsers.add_parser('init', help='初始化仓库数据')
+    init_cluster_info_parser = subparsers.add_parser(
+        'init_cluster_info', help='初始化集群信息')
+    init_cluster_trace_parser = subparsers.add_parser(
+        'init_cluster_trace', help='初始化集群trace数据')
 
     # statistic 子命令
     statistic_parser = subparsers.add_parser('statistic', help='统计分析')
@@ -159,12 +166,9 @@ def main():
     # placement 子命令
     placement_parser = subparsers.add_parser('placement', help='放置策略分析')
     placement_parser.add_argument(
-        '--algorithm', choices=['odp', 'scda', 'tela'], required=True, help='放置方法')
+        '--algorithm', choices=['odp', 'scda', 'tela', 'oracle'], required=True, help='放置方法')
 
     args = parser.parse_args()
-
-    detector = DiskCycleDetector()
-    coach_detector = CoachCycleDetector()
 
     if args.mode == 'statistic':
         if args.method == 'burst':
@@ -218,12 +222,19 @@ def main():
             logger.info("运行TELA放置策略分析")
             tela_analyzer = TELA()
             tela_analyzer.run()
+        elif args.algorithm == 'oracle':
+            logger.info("运行Orcale放置策略分析")
+            oracle_analyzer = Oracle()
+            oracle_analyzer.run()
         else:
             logger.error(f"未知的placement放置方法: {args.method}")
             sys.exit(1)
-    elif args.mode == 'init':
+    elif args.mode == 'init_cluster_info':
         initializer = ClusterInfoInitializer()
         initializer.init_cluster_info()
+    elif args.mode == 'init_cluster_trace':
+        initializer = DumpTrace()
+        initializer.dump_trace()
     else:
         logger.error(f"未知的运行模式: {args.mode}")
         sys.exit(1)

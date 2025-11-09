@@ -11,7 +11,7 @@ class DirConfig:
     # 数据目录
     TRACE_ROOT = "/data/Tencent_CVD/Shanghai"
     CLUSTER_INFO_ROOT = "/home/wcl/cluster_info"
-
+    CLUSTER_TRACE_DB_ROOT = "/home/wcl/cluster_trace_db"
     # 输出目录
     OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
     VISUALIZATION_TRACE_DIR = os.path.join(OUTPUT_DIR, "visualization_trace")
@@ -21,6 +21,7 @@ class DirConfig:
     ODA_DIR = os.path.join(PLACEMENT_DIR, "ODA")
     SCDA_DIR = os.path.join(PLACEMENT_DIR, "SCDA")
     TELA_DIR = os.path.join(PLACEMENT_DIR, "Tela")
+    Oracle_DIR = os.path.join(PLACEMENT_DIR, "Orcale")
     # 模型保存目录
     MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
 
@@ -28,22 +29,25 @@ class DirConfig:
     @classmethod
     def ensure_dirs(cls):
         """确保必要的目录存在"""
-        for dir_path in [cls.OUTPUT_DIR, cls.VISUALIZATION_TRACE_DIR, cls.PEAK_DISTRIBUTION_DIR, cls.ODA_DIR, cls.SCDA_DIR, cls.TELA_DIR, cls.MODEL_DIR]:
+        for dir_path in [cls.OUTPUT_DIR, cls.VISUALIZATION_TRACE_DIR, cls.PEAK_DISTRIBUTION_DIR, cls.ODA_DIR, cls.SCDA_DIR, cls.TELA_DIR, cls.Oracle_DIR, cls.MODEL_DIR]:
             os.makedirs(dir_path, exist_ok=True)
 
 
-class DataConfig:
+sacle = 2
 
+
+class DataConfig:
     # 选择分析的集群列表
     CLUSTER_INDEX_LIST_ODA = [0, 2, 4]
     CLUSTER_INDEX_LIST_TRAIN = [0, 2, 4]
     CLUSTER_INDEX_LIST_PREDICT = [1, 3]
+    CLUSTER_INDEX_LIST_ORACLE = [0, 2, 4]
 
     # 评价时间数量
     EVALUATE_TIME_NUMBER = 8640
 
     # 云盘放置数量
-    DISK_NUMBER = 8000
+    DISK_NUMBER = 4000*sacle
 
     # 云盘最小生命周期（时间戳）
     MIN_TIMESTAMP_NUM = 8640
@@ -69,9 +73,7 @@ class ModelConfig:
 
     # 阈值设置
     IO_LINE = 100
-    BANDWIDTH_LINE = 50
-    READ_BANDWIDTH_LINE = 9
-    WRITE_BANDWIDTH_LINE = 30
+    BANDWIDTH_LINE = 25
 
     # 聚类参数
     SCDA_CLUSTER_K = 3
@@ -93,16 +95,12 @@ class WarehouseConfig:
                     40000, 10000, 10000, 30000, 20000]
 
     # 仓库最大read bandwidth
-    MAX_READ_BANDWIDTH = [30000, 30000, 30000, 13000,
-                          13000, 13000, 47000, 47000, 47000]
-
-    # 仓库最大write bandwidth
-    MAX_WRITE_BANDWIDTH = [70000, 70000, 70000, 130000,
-                           130000, 130000, 20000, 20000, 20000]
+    MAX_BANDWIDTH = [100000, 100000, 100000, 130000,
+                     130000, 130000, 47000, 47000, 47000]
 
     # 仓库最大值矩阵
     WAREHOUSE_MAX = np.array(
-        [MAX_CAPACITY, MAX_READ_BANDWIDTH, MAX_WRITE_BANDWIDTH])
+        [MAX_CAPACITY, MAX_BANDWIDTH]).T*sacle
 
     # 仓库数量
     WAREHOUSE_NUMBER = 9

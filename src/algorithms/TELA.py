@@ -16,7 +16,8 @@ from .base_algorithm import BaseAlgorithm
 from .ODA import ODA
 from .SCDA import SCDA
 from config.settings import DataConfig, WarehouseConfig, ModelConfig, DirConfig
-
+import joblib
+from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
@@ -25,8 +26,9 @@ class TELA(BaseAlgorithm):
 
     def __init__(self):
         super().__init__("TELA")
-        self.peak_RBW_model = None
-        self.peak_WBW_model = None
+        self.warehouse_burst_type_counts = np.zeros(
+            (WarehouseConfig.WAREHOUSE_NUMBER, ModelConfig.TELA_CLUSTER_K), dtype=int)
+        self.train_disks_trace = {}
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
@@ -36,6 +38,10 @@ class TELA(BaseAlgorithm):
             cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT,
             purpose="train"
         )
+        for cluster_index in DataConfig.CLUSTER_INDEX_LIST_PREDICT:
+            trace_dir = os.path.join(
+                DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
+            self.disks_trace[cluster_index] = joblib.load(trace_dir)
         items_encoded = self.encode_item(items)
         # 预测磁盘类型和负载
         return self.predict_disk_types_and_loads(items_encoded)
@@ -50,6 +56,10 @@ class TELA(BaseAlgorithm):
             cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN,
             purpose="train"
         )
+        for cluster_index in DataConfig.CLUSTER_INDEX_LIST_TRAIN:
+            trace_dir = os.path.join(
+                DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
+            self.train_disks_trace[cluster_index] = joblib.load(trace_dir)
         items_train_encoded = self.encode_item(items_train)
 
         # 第一阶段：训练稳定型/突发型分类模型
@@ -64,14 +74,14 @@ class TELA(BaseAlgorithm):
         )
         items_burst["cluster_label"] = cluster_burst.labels_
         # 训练负载拟合模型
-        warehouse_counts_snapshots, warehouse_load_snap = self.simulate_warehouse_load(
+        warehouse_counts_snapshots, warehouse_peak_load_snap, warehouse_avg_load_snap = self.simulate_warehouse_load(
             items_burst)
-        self.peak_RBW_model, self.peak_WBW_model = self.train_warehouse_load_model(
-            warehouse_load_snap, warehouse_counts_snapshots)
+        peak_bandwidth_model, avg_bandwidth_model = self.train_warehouse_load_model(
+            warehouse_counts_snapshots, warehouse_peak_load_snap, warehouse_avg_load_snap)
 
         # 保存所有模型
         self.save_models(model_classify_type, cluster_stable, cluster_burst,
-                         classify_stable, classify_burst,  stable_scaler, burst_scaler)
+                         classify_stable, classify_burst,  stable_scaler, burst_scaler, peak_bandwidth_model, avg_bandwidth_model)
 
         logger.info("TELA模型训练完成")
 
@@ -116,8 +126,8 @@ class TELA(BaseAlgorithm):
         items_burst = items[items["burst_label"] == 1]
         logger.info(f"稳定型磁盘数量：{len(items_stable)}")
         logger.info(f"突发型磁盘数量：{len(items_burst)}")
-        stable_features = items_stable[["avg_rbw", "avg_wbw"]]
-        burst_features = items_burst[["peak_rbw", "peak_wbw"]]
+        stable_features = items_stable[["avg_bandwidth"]]
+        burst_features = items_burst[["peak_bandwidth"]]
         # 对训练数据进行缩放
         stable_scaler = MinMaxScaler()
         burst_scaler = MinMaxScaler()
@@ -133,8 +143,8 @@ class TELA(BaseAlgorithm):
         score_burst = silhouette_score(
             burst_features_scaled, cluster_burst.labels_)
         logger.info(f"突发型聚类轮廓系数:{score_burst}")
-        self.plotter.plot_kMeans_cluster(
-            burst_features, stable_features, cluster_burst.labels_, cluster_stable.labels_)
+        # self.plotter.plot_kMeans_cluster(
+        #     burst_features, stable_features, cluster_burst.labels_, cluster_stable.labels_)
         model_classify_stable = GridSearchCV(
             estimator=DecisionTreeClassifier(criterion="gini"),
             param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=1, verbose=0
@@ -160,7 +170,7 @@ class TELA(BaseAlgorithm):
 
         return cluster_stable, cluster_burst, best_classify_stable, best_classify_burst, stable_scaler, burst_scaler
 
-    def train_warehouse_load_model(self, warehouse_load_snap: np.ndarray, warehouse_counts_snapshots: np.ndarray):
+    def train_warehouse_load_model(self, warehouse_counts_snapshots, warehouse_peak_load_snap, warehouse_avg_load_snap):
         """训练负载拟合模型"""
         logger.info("开始训练负载拟合模型")
         X_train = warehouse_counts_snapshots
@@ -184,11 +194,11 @@ class TELA(BaseAlgorithm):
         # peak_WBW_model.fit(n_segments=best_n_segments_WBW)
         # logger.info(f"RBW负载拟合模型 BIC分数: {peak_RBW_model.bic:.4f}")
         # logger.info(f"WBW负载拟合模型 BIC分数: {peak_WBW_model.bic:.4f}")
-        peak_RBW_model = Earth(max_degree=1, rcond=None)
-        peak_WBW_model = Earth(max_degree=1, rcond=None)
-        peak_RBW_model.fit(X_train, warehouse_load_snap[:, 0])
-        peak_WBW_model.fit(X_train, warehouse_load_snap[:, 1])
-        return peak_RBW_model, peak_WBW_model
+        peak_bandwidth_model = Earth(max_degree=1)
+        avg_bandwidth_model = Earth(max_degree=1)
+        peak_bandwidth_model.fit(X_train, warehouse_peak_load_snap)
+        avg_bandwidth_model.fit(X_train, warehouse_avg_load_snap)
+        return peak_bandwidth_model, avg_bandwidth_model
 
     def simulate_warehouse_load(self, items: pd.DataFrame):
         """
@@ -198,53 +208,45 @@ class TELA(BaseAlgorithm):
         """
         logger.info("使用oda模拟仓库放置")
         oda = ODA()
-        _, placed_warehouses, avaliable_items = oda.place_item(items)
+        oda.disks_trace = self.train_disks_trace
+        placed_warehouses, avaliable_items = oda.place_item(items)
+        placed_items = avaliable_items.iloc[np.where(
+            placed_warehouses != -1)[0]]
+        placed_warehouses = placed_warehouses[
+            placed_warehouses != -1]
         simulate_load_trace = np.zeros(
-            (WarehouseConfig.WAREHOUSE_NUMBER, 2, DataConfig.EVALUATE_TIME_NUMBER))
+            (WarehouseConfig.WAREHOUSE_NUMBER, DataConfig.EVALUATE_TIME_NUMBER))
         warehouse_category_counts = np.zeros(
             (WarehouseConfig.WAREHOUSE_NUMBER, ModelConfig.TELA_CLUSTER_K), dtype=int)
         warehouse_counts_snapshots = np.zeros(
-            (len(avaliable_items), ModelConfig.TELA_CLUSTER_K), dtype=int)
-        warehouse_load_snap = np.zeros((len(avaliable_items), 4))
-        logger.info("开始模拟仓库突发负载")
-        for i, (_, item) in enumerate(avaliable_items.iterrows()):
-            if i >= len(placed_warehouses) or placed_warehouses[i] == -1:
-                continue
-            logger.info(f"i=={i}")
+            (len(placed_items), ModelConfig.TELA_CLUSTER_K), dtype=int)
+        warehouse_peak_load_snap = np.zeros(len(placed_items))
+        warehouse_avg_load_snap = np.zeros(len(placed_items))
+        for i, item in tqdm(placed_items.reset_index(drop=True).iterrows(), total=len(placed_items), desc="模拟仓库突发负载"):
             warehouse_idx = placed_warehouses[i]
-            cluster_index = item["cluster_index"]
-            disk_ID = item["disk_ID"]
-            trace_dir = os.path.join(DirConfig.TRACE_ROOT,
-                                     f"20_136090{cluster_index}", f"{disk_ID}")
-            disk_trace_bandwidth = np.loadtxt(
-                trace_dir, delimiter=',', usecols=(0, 2, 4), dtype=int)
+            disk_trace_bandwidth = self.train_disks_trace[item["cluster_index"]
+                                                          ][item["disk_ID"]]
+            first_day_line = self._iterate_first_day(
+                disk_trace_bandwidth["timestamp"])
             circle_trace = self._get_circular_trace(
-                disk_trace_bandwidth, item["disk_capacity"], DataConfig.EVALUATE_TIME_NUMBER)
+                disk_trace_bandwidth, item["disk_capacity"], first_day_line, DataConfig.EVALUATE_TIME_NUMBER)
 
-            simulate_load_trace[warehouse_idx,
-                                0, :] += circle_trace[:DataConfig.EVALUATE_TIME_NUMBER, 1]
-            simulate_load_trace[warehouse_idx,
-                                1, :] += circle_trace[:DataConfig.EVALUATE_TIME_NUMBER, 2]
-            warehouse_load_snap[i, 0] = np.max(
-                simulate_load_trace[warehouse_idx, 0, :])
-            warehouse_load_snap[i, 1] = np.max(
-                simulate_load_trace[warehouse_idx, 1, :])
-            warehouse_load_snap[i, 2] = np.mean(
-                simulate_load_trace[warehouse_idx, 0, :])
-            warehouse_load_snap[i, 3] = np.mean(
-                simulate_load_trace[warehouse_idx, 1, :])
+            simulate_load_trace[warehouse_idx, :] += circle_trace[:, 1]
+            warehouse_peak_load_snap[i] = np.max(
+                simulate_load_trace[warehouse_idx, :])
+            warehouse_avg_load_snap[i] = np.mean(
+                simulate_load_trace[warehouse_idx, :])
             warehouse_category_counts[warehouse_idx,
                                       item["cluster_label"]] += 1
             warehouse_counts_snapshots[i] = warehouse_category_counts[warehouse_idx, :]
-        avaliable_items.to_csv(os.path.join(
+        placed_items.to_csv(os.path.join(
             DirConfig.TELA_DIR, "train_items.csv"))
-        logger.info("模拟仓库突发负载完成")
-        return warehouse_counts_snapshots, warehouse_load_snap
+        return warehouse_counts_snapshots, warehouse_peak_load_snap, warehouse_avg_load_snap
 
     def predict_disk_types_and_loads(self, items: pd.DataFrame):
         """预测磁盘类型和负载"""
         # 加载训练好的模型
-        type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler = self.load_item_predict_models()
+        type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler, self.peak_bandwidth_model, self.avg_bandwidth_model = self.load_item_predict_models()
 
         # 决策树分类磁盘类型，区分稳定型和突发型
         logger.info("开始决策树分类磁盘类型，区分稳定型和突发型")
@@ -274,72 +276,76 @@ class TELA(BaseAlgorithm):
             cluster_stable.cluster_centers_[stable_items_belong_to_cluster])
         # 将聚类中心与磁盘特征拼接
         # 对于稳定型磁盘来说，pre_rbw和pre_wbw是平均负载，对于突发型磁盘来说，pre_rbw和pre_wbw是预测的峰值负载
-        burst_items_belong_to_cluster_centers_df = pd.DataFrame(
-            burst_items_belong_to_cluster_centers, columns=["pre_rbw", "pre_wbw"])
-        stable_items_belong_to_cluster_centers_df = pd.DataFrame(
-            stable_items_belong_to_cluster_centers, columns=["pre_rbw", "pre_wbw"])
-        stable_items.to_csv(os.path.join(
-            DirConfig.TELA_DIR, "stable_items.csv"))
-        stable_items_belong_to_cluster_centers_df.to_csv(os.path.join(
-            DirConfig.TELA_DIR, "stable_items_belong_to_cluster_centers_df.csv"))
-        burst_items_with_cluster_centers = pd.concat(
-            [burst_items, burst_items_belong_to_cluster_centers_df], axis=1)
-        stable_items_with_cluster_centers = pd.concat(
-            [stable_items, stable_items_belong_to_cluster_centers_df], axis=1)
+        burst_items["pre_bandwidth"] = burst_items_belong_to_cluster_centers
+        stable_items["pre_bandwidth"] = stable_items_belong_to_cluster_centers
+
         items_with_cluster_centers = pd.concat(
-            [burst_items_with_cluster_centers, stable_items_with_cluster_centers], axis=0, ignore_index=True)
+            [burst_items, stable_items], axis=0, ignore_index=True)
         items_with_cluster_centers.to_csv(os.path.join(
             DirConfig.TELA_DIR, "predict_items.csv"))
         logger.info("预测磁盘类型和负载完成")
         return items_with_cluster_centers
 
-    def select_warehouse(self, item: pd.Series, warehouses_resource_allocated: List[List[int]],
-                         warehouses_cannot_use_by_monitor: np.ndarray, warehouse_burst_type_counts: np.ndarray) -> int:
+    def select_warehouse(self, item: pd.Series) -> int:
         """TELA的仓库选择策略：基于时间序列预测的负载均衡"""
         selected_warehouse = -1
-        scda = SCDA()
+
         if item["pre_burst_label"] == 0:
-            selected_warehouse = scda.select_warehouse(
-                item, warehouses_resource_allocated, warehouses_cannot_use_by_monitor)
+            min_manhatten_distance = float('inf')
+            disk_capacity = item["disk_capacity"]
+            disk_pre_bandwidth = item["pre_bandwidth"]
+            for warehouse in range(WarehouseConfig.WAREHOUSE_NUMBER):
+                if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
+                    continue
+
+                # 检查资源容量约束
+                if np.any(self.warehouses_resource_allocated[warehouse] + np.array([disk_capacity, disk_pre_bandwidth]) > WarehouseConfig.WAREHOUSE_MAX[warehouse] * ModelConfig.RESERVATION_RATE_FOR_MONITOR):
+                    continue
+
+                # 计算放置后的利用率
+                current_capacity_utilization = ((self.warehouses_resource_allocated[warehouse][0] + disk_capacity) /
+                                                WarehouseConfig.WAREHOUSE_MAX[warehouse, 0])
+                current_bandwidth_utilization = ((self.warehouses_resource_allocated[warehouse][1] + disk_pre_bandwidth) /
+                                                 WarehouseConfig.WAREHOUSE_MAX[warehouse, 1])
+
+                # 计算利用率中心点和曼哈顿距离
+                current_utilization_center = (
+                    (current_capacity_utilization + current_bandwidth_utilization) / 2)
+                current_manhatten_distance = (abs(current_capacity_utilization - current_utilization_center) +
+                                              abs(current_bandwidth_utilization - current_utilization_center))
+
+                if current_manhatten_distance < min_manhatten_distance:
+                    min_manhatten_distance = current_manhatten_distance
+                    selected_warehouse = warehouse
         else:
             min_peak_resource_usage = np.inf
             for warehouse in range(WarehouseConfig.WAREHOUSE_NUMBER):
-                if warehouses_cannot_use_by_monitor[warehouse] == 1:
+                if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
                     continue
-                if warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[0][warehouse] * ModelConfig.RESERVATION_RATE_FOR_MONITOR:
+                if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0] * ModelConfig.RESERVATION_RATE_FOR_MONITOR:
                     continue
-                train_X = warehouse_burst_type_counts[warehouse]+np.array(
+                train_X = self.warehouse_burst_type_counts[warehouse]+np.array(
                     [1 if i == item["belong_to_cluster"] else 0 for i in range(ModelConfig.TELA_CLUSTER_K)])
                 train_X = np.array([train_X])
-                predict_warehouse_peak_RBW = self.peak_RBW_model.predict(
+                predict_warehouse_peak_bandwidth = self.peak_bandwidth_model.predict(
                     train_X)
-                predict_warehouse_peak_WBW = self.peak_WBW_model.predict(
-                    train_X)
-                if predict_warehouse_peak_RBW+warehouses_resource_allocated[warehouse][1] > WarehouseConfig.WAREHOUSE_MAX[1][warehouse] * ModelConfig.PEAK_PREDICTION_TOLERANCE_FACTOR or predict_warehouse_peak_WBW+warehouses_resource_allocated[warehouse][2] > WarehouseConfig.WAREHOUSE_MAX[2][warehouse] * ModelConfig.PEAK_PREDICTION_TOLERANCE_FACTOR:
+                if predict_warehouse_peak_bandwidth+self.warehouses_resource_allocated[warehouse][1] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 1] * ModelConfig.PEAK_PREDICTION_TOLERANCE_FACTOR:
                     continue
-                peak_resource_usage = predict_warehouse_peak_RBW / \
-                    WarehouseConfig.WAREHOUSE_MAX[1][warehouse] + \
-                    predict_warehouse_peak_WBW / \
-                    WarehouseConfig.WAREHOUSE_MAX[2][warehouse]
+                peak_resource_usage = predict_warehouse_peak_bandwidth / \
+                    WarehouseConfig.WAREHOUSE_MAX[warehouse, 1]
                 if peak_resource_usage < min_peak_resource_usage:
                     min_peak_resource_usage = peak_resource_usage
                     selected_warehouse = warehouse
         return selected_warehouse
 
-    def additional_state_update(self, selected_warehouse: int, item: pd.Series, warehouses_resource_allocated: np.ndarray, warehouses_trace: np.ndarray, current_time: int, warehouse_burst_type_counts: np.ndarray):
+    def additional_state_update(self, selected_warehouse: int, item: pd.Series):
         if item["pre_burst_label"] == 0:
-            warehouses_resource_allocated[selected_warehouse][1] += item["pre_rbw"]
-            warehouses_resource_allocated[selected_warehouse][2] += item["pre_wbw"]
+            self.warehouses_resource_allocated[selected_warehouse][1] += item["pre_bandwidth"]
         else:
-            warehouse_burst_type_counts[selected_warehouse][item["belong_to_cluster"]] += 1
+            self.warehouse_burst_type_counts[selected_warehouse][item["belong_to_cluster"]] += 1
         return
 
-    def initialize_additional_state(self):
-        warehouse_burst_type_counts = np.zeros(
-            (WarehouseConfig.WAREHOUSE_NUMBER, ModelConfig.TELA_CLUSTER_K), dtype=int)
-        return warehouse_burst_type_counts
-
-    def save_models(self, type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler):
+    def save_models(self, type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler, peak_bandwidth_model, avg_bandwidth_model):
         """保存所有训练好的模型"""
         os.makedirs(os.path.join(DirConfig.MODEL_DIR, "TELA"), exist_ok=True)
 
@@ -361,10 +367,10 @@ class TELA(BaseAlgorithm):
         with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "burst_scaler.pkl"), "wb") as f:
             pickle.dump(burst_scaler, f)
         # 保存拟合模型
-        with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "peak_RBW_model.pkl"), "wb") as f:
-            pickle.dump(self.peak_RBW_model, f)
-        with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "peak_WBW_model.pkl"), "wb") as f:
-            pickle.dump(self.peak_WBW_model, f)
+        with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "peak_bandwidth_model.pkl"), "wb") as f:
+            pickle.dump(peak_bandwidth_model, f)
+        with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "avg_bandwidth_model.pkl"), "wb") as f:
+            pickle.dump(avg_bandwidth_model, f)
 
         logger.info("TELA模型已保存")
 
@@ -399,15 +405,13 @@ class TELA(BaseAlgorithm):
                 stable_scaler = pickle.load(f)
             with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "burst_scaler.pkl"), "rb") as f:
                 burst_scaler = pickle.load(f)
-            with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "peak_RBW_model.pkl"), "rb") as f:
-                self.peak_RBW_model = pickle.load(f)
-            with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "peak_WBW_model.pkl"), "rb") as f:
-                self.peak_WBW_model = pickle.load(f)
-            logger.info("TELA模型加载成功")
-            return type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler
+            with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "peak_bandwidth_model.pkl"), "rb") as f:
+                peak_bandwidth_model = pickle.load(f)
+            with open(os.path.join(DirConfig.MODEL_DIR, "TELA", "avg_bandwidth_model.pkl"), "rb") as f:
+                avg_bandwidth_model = pickle.load(f)
+            return type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler, peak_bandwidth_model, avg_bandwidth_model
 
         except FileNotFoundError:
-            logger.warning("TELA模型文件未找到,开始训练")
             self.train_models()
             return self.load_item_predict_models()
         except Exception as e:

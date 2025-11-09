@@ -68,13 +68,13 @@ class TelaPlotter(BasePlotter):
     def plot_kMeans_cluster(self, data_burst, data_stable, label_burst, label_stable):
         """绘制KMeans聚类图"""
         fig, axes = plt.subplots(1, 2, figsize=(14, 10))
-        axes[0].scatter(data_burst.iloc[:, 0], data_burst.iloc[:, 1],
+        axes[0].scatter(data_burst,
                         c=label_burst, cmap='viridis')
         axes[0].set_title('突发型磁盘聚类')
         axes[0].set_xlabel('读带宽')
         axes[0].set_ylabel('写带宽')
         axes[0].legend()
-        axes[1].scatter(data_stable.iloc[:, 0], data_stable.iloc[:, 1],
+        axes[1].scatter(data_stable,
                         c=label_stable, cmap='viridis')
         axes[1].set_title('稳定型磁盘聚类')
         axes[1].set_xlabel('读带宽')
