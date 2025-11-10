@@ -206,6 +206,8 @@ class BaseAlgorithm(ABC):
         all_violation_durations = [[]
                                    for _ in range(self.warehouse_number)]
         utilize_trace = evaluate_warehouses_trace/self.warehouses_max
+        self.plotter.plot_warehouse_trace(
+            utilize_trace[:, :, 1], self.output_dir, f"{self.algorithm_name}_warehouse_trace")
         utilize_mean_on_time = np.mean(utilize_trace, axis=0)
         violation_count_warehouse = (
             utilize_trace > 1).any(axis=2).sum(axis=0)
@@ -231,19 +233,22 @@ class BaseAlgorithm(ABC):
         return (utilize_mean_on_time, violation_count_warehouse, max_violation_duration,
                 all_violation_durations, warehouse_load_imb, imbalance_on_timewindow)
 
-    def evaluate_imbalance_in_one_day(self, utilize_trace: np.ndarray, windows_length_in_one_day=6) -> float:
+    def evaluate_imbalance_in_one_day(self, utilize_trace: np.ndarray) -> float:
         bandwidth_trace = utilize_trace[:, :, 1]
         time_index = pd.date_range(
-            start='2025-01-01 00:00:00', periods=len(utilize_trace), freq='5T')
+            start='2025-01-01 00:00:00', periods=len(utilize_trace), freq='5min')
         trace_avg_across_resource = pd.DataFrame(bandwidth_trace, columns=[
             f'warehouse{i}' for i in range(self.warehouse_number)], index=time_index)
-        window_means_among_warehouses = trace_avg_across_resource.resample(
-            f'{windows_length_in_one_day}H').mean()
-        daily_cv_among_warehouses = window_means_among_warehouses.resample(
-            '1D').std()/window_means_among_warehouses.resample(
-            '1D').mean()
-        imbalance_among_warehouses = daily_cv_among_warehouses.mean(axis=0)
-        return imbalance_among_warehouses.to_numpy()
+        imbalance_on_timewindow = {}
+        for windows_length_in_one_day in DataConfig.WINDOWS_LENGTH_IN_ONE_DAY:
+            window_means_among_warehouses = trace_avg_across_resource.resample(
+                f'{windows_length_in_one_day}').mean()
+            daily_cv_among_warehouses = window_means_among_warehouses.resample(
+                '1D').std()/window_means_among_warehouses.resample(
+                '1D').mean()
+            imbalance_among_warehouses = daily_cv_among_warehouses.to_numpy().mean()
+            imbalance_on_timewindow[windows_length_in_one_day] = imbalance_among_warehouses
+        return imbalance_on_timewindow
 
     def write_result(self, utilize_mean_on_time, violation_count_warehouse, max_violation_duration, all_violation_durations, warehouse_load_imb, imbalance_on_timewindow):
         """写入结果"""
@@ -305,9 +310,9 @@ class BaseAlgorithm(ABC):
                 "capacity:"+str(warehouse_load_imb[0]) + "\nbandwidth:"+str(warehouse_load_imb[1]) + "\n")
             f.write(
                 "--------------------------imbalance_on_timewindow-------------------------\n")
-            f.write(",".join(map(str, imbalance_on_timewindow)) + "\n")
-            f.write("average_imbalance_on_timewindow:" +
-                    str(np.mean(imbalance_on_timewindow)) + "\n")
+            for windows_length_in_one_day in DataConfig.WINDOWS_LENGTH_IN_ONE_DAY:
+                f.write(f"{windows_length_in_one_day}:" +
+                        str(imbalance_on_timewindow[windows_length_in_one_day]) + "\n")
         logger.info(f"结果已写入 {result_dir}")
 
     def encode_item(self, items: pd.DataFrame) -> pd.DataFrame:

@@ -66,6 +66,8 @@ class DataConfig:
 
     # 监视器为防止违反SLA的预留比例
     RESERVATION_RATE_FOR_MONITOR = 0.8
+    WINDOWS_LENGTH_IN_ONE_DAY = [
+        "5min",  "30min", "1h", "3h", "4h", "6h", "8h"]
 
 
 class ModelConfig:

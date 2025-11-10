@@ -122,6 +122,25 @@ class TelaPlotter(BasePlotter):
                  writer='ffmpeg', fps=15, dpi=80)
         plt.close(fig)
 
+    def plot_warehouse_trace(self, warehouse_trace: np.ndarray, algorithm_dir: str, fig_title: str):
+        picture_dir = os.path.join(algorithm_dir, f"{fig_title}.png")
+        fig, axes = plt.subplots(3, 3, figsize=(64, 24))
+        fig.suptitle(fig_title, fontsize=16)
+        x_ticks = [288*day for day in range(31)]
+        x_tick_labels = [f'day{day}' for day in range(31)]
+        for i in range(3):
+            for j in range(3):
+                warehouse_idx = i*3+j
+                axes[i, j].plot(range(len(warehouse_trace[:, warehouse_idx])),
+                                warehouse_trace[:, warehouse_idx], color='skyblue')
+                axes[i, j].set_title(f'warehouse{warehouse_idx+1}')
+                axes[i, j].set_xticks(x_ticks)
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig(picture_dir,
+                    dpi=300, bbox_inches='tight')
+        logger.info(f"warehouse trace已保存至 {picture_dir}")
+        plt.close(fig)
+
     def plot_resource_allocation_animation(self, allocation_history: np.ndarray, algorithm_dir: str, fig_title: str):
         """
         绘制资源分配历史动画

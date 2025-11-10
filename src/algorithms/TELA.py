@@ -298,8 +298,7 @@ class TELA(BaseAlgorithm):
                 if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
                     continue
 
-                # 检查资源容量约束
-                if np.any(self.warehouses_resource_allocated[warehouse] + np.array([disk_capacity, disk_pre_bandwidth]) > WarehouseConfig.WAREHOUSE_MAX[warehouse] * ModelConfig.RESERVATION_RATE_FOR_MONITOR):
+                if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0] * ModelConfig.RESERVATION_RATE_FOR_MONITOR:
                     continue
 
                 # 计算放置后的利用率
@@ -329,8 +328,6 @@ class TELA(BaseAlgorithm):
                 train_X = np.array([train_X])
                 predict_warehouse_peak_bandwidth = self.peak_bandwidth_model.predict(
                     train_X)
-                if predict_warehouse_peak_bandwidth+self.warehouses_resource_allocated[warehouse][1] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 1] * ModelConfig.PEAK_PREDICTION_TOLERANCE_FACTOR:
-                    continue
                 peak_resource_usage = predict_warehouse_peak_bandwidth / \
                     WarehouseConfig.WAREHOUSE_MAX[warehouse, 1]
                 if peak_resource_usage < min_peak_resource_usage:

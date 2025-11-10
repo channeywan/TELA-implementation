@@ -40,15 +40,14 @@ class Oracle(BaseAlgorithm):
         after_placed_bandwidth_util = after_placed_bandwidth / \
             self.warehouses_max[:, 1]
 
-        combined_mask = monitor_mask & capacity_mask & self.get_overload_mask(
-            after_placed_bandwidth_util)
+        combined_mask = monitor_mask & capacity_mask
         eligible_warehouses_indices = np.where(combined_mask)[0]
         if len(eligible_warehouses_indices) == 0:
             return -1
-        max_bandwidth_util = np.max(
-            after_placed_bandwidth[:, eligible_warehouses_indices]/self.warehouses_max[eligible_warehouses_indices, 1], axis=0)
-        min_peak_bandwidth_index = np.argmin(max_bandwidth_util)
-        selected_warehouse = eligible_warehouses_indices[min_peak_bandwidth_index]
+        absolute_deviation = np.sum(np.abs(after_placed_bandwidth_util[:, eligible_warehouses_indices]-np.mean(
+            after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)), axis=0)
+        min_absolute_deviation_index = np.argmin(absolute_deviation)
+        selected_warehouse = eligible_warehouses_indices[min_absolute_deviation_index]
         return selected_warehouse
 
     def get_overload_mask(self, after_placed_bandwidth_util: np.ndarray) -> np.ndarray:

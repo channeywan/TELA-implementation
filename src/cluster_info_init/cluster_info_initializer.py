@@ -24,16 +24,25 @@ class DiskDataProcessor:
                    "read_BW", "write_IOPS", "write_BW"]
         traces = pd.read_csv(trace_dir, names=columns, usecols=[
             0, 1, 2, 3, 4], sep=',', header=None)
+        if len(traces) == 0:
+            logger.warning(f"trace_dir {trace_dir} is empty")
+            return None
         first_day_line = self._iterate_first_day(traces["timestamp"])
         disk_bandwidth = traces["read_BW"].values+traces["write_BW"].values
-        disk_bandwidth_avg = np.average(disk_bandwidth[first_day_line:])
-        disk_bandwidth_peak = np.max(disk_bandwidth[first_day_line:])
-        processed_line = len(disk_bandwidth[first_day_line:])
-
+        slice_bandwidth = disk_bandwidth[first_day_line:]
+        processed_line = len(slice_bandwidth)
+        if processed_line == 0:
+            logger.warning(f"trace_dir {trace_dir} is empty")
+            return None
+        disk_bandwidth_avg = np.average(slice_bandwidth)
+        disk_bandwidth_peak = np.max(slice_bandwidth)
+        bandwidth_zero_num = np.sum(slice_bandwidth == 0)
+        bandwidth_zero_ratio = bandwidth_zero_num / processed_line
         return {
             'avg_bandwidth': disk_bandwidth_avg,
             'peak_bandwidth': disk_bandwidth_peak,
-            'processed_line': processed_line
+            'processed_line': processed_line,
+            'bandwidth_zero_ratio': bandwidth_zero_ratio
         }
 
     def calculate_label(self, disk_data: Dict[str, Any]) -> Tuple[int, float]:
@@ -126,12 +135,12 @@ class ClusterInfoInitializer:
         cluster_info_file.write(
             # item[0] disk_ID
             # item[1:9] disk_capacity, disk_if_local, disk_attr, disk_type, disk_if_VIP, disk_pay, vm_cpu, vm_mem
-            # item[9:13] average_bandwidth, peak_bandwidth, disk_timestamp_num,burst_label,bandwidth_mul
+            # item[9:13] average_bandwidth, peak_bandwidth, disk_timestamp_num,burst_label,bandwidth_mul,bandwidth_zero_ratio
             f"{description['disk_ID']},{description['disk_capacity']},{description['disk_if_local']},{description['disk_attr']},"
             f"{description['disk_type']},{description['disk_if_VIP']},{description['disk_pay']},{description['vm_cpu']},"
             f"{description['vm_memory']},{disk_data['avg_bandwidth']},{disk_data['peak_bandwidth']},"
             # label (0 for stable, 1 for burst)
-            f"{disk_data['processed_line']},{label},{bandwidth_mul}\n"
+            f"{disk_data['processed_line']},{label},{bandwidth_mul},{disk_data['bandwidth_zero_ratio']}\n"
         )
 
     def init_cluster_info(self) -> None:

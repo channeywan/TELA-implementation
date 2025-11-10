@@ -41,9 +41,7 @@ class ODA(BaseAlgorithm):
         disk_capacity = item["disk_capacity"]
 
         monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
-        capacity_mask = (self.warehouses_resource_allocated[:, 0]+disk_capacity <=
-                         WarehouseConfig.WAREHOUSE_MAX[:, 0]*ModelConfig.RESERVATION_RATE_FOR_MONITOR)
-        combined_mask = monitor_mask & capacity_mask
+        combined_mask = monitor_mask
         eligible_warehouses_indices = np.where(combined_mask)[0]
         if len(eligible_warehouses_indices) == 0:
             return -1

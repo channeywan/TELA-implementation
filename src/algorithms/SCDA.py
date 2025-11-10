@@ -153,8 +153,7 @@ class SCDA(BaseAlgorithm):
             if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
                 continue
 
-            # 检查资源容量约束
-            if np.any(self.warehouses_resource_allocated[warehouse] + np.array([disk_capacity, disk_pre_bandwidth]) > WarehouseConfig.WAREHOUSE_MAX[warehouse] * ModelConfig.RESERVATION_RATE_FOR_MONITOR):
+            if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0] * ModelConfig.RESERVATION_RATE_FOR_MONITOR:
                 continue
 
             # 计算放置后的利用率

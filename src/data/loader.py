@@ -18,7 +18,7 @@ class DiskDataLoader:
 
     def load_items(self, cluster_index_list: List[int] = range(WarehouseConfig.WAREHOUSE_NUMBER), type: str = "both", purpose: str = "train") -> pd.DataFrame:
         ORIGINAL_COLS = ["disk_ID", "disk_capacity", "disk_if_local", "disk_attr", "disk_type", "disk_if_VIP",
-                         "disk_pay", "vm_cpu", "vm_mem", "avg_bandwidth", "peak_bandwidth", "timestamp_num", "burst_label", "bandwidth_mul"]
+                         "disk_pay", "vm_cpu", "vm_mem", "avg_bandwidth", "peak_bandwidth", "timestamp_num", "burst_label", "bandwidth_mul", "bandwidth_zero_ratio"]
         PREDICT_COLS = ["disk_ID", "disk_capacity", "disk_if_local", "disk_attr", "disk_type", "disk_if_VIP",
                         "disk_pay", "vm_cpu", "vm_mem"]
         logger.info(f"正在加载{type}磁盘数据,用途为{purpose}")
@@ -56,16 +56,16 @@ class DiskDataLoader:
                     'vm_cpu': float, 'vm_mem': float, 'avg_bandwidth': float,
                     'peak_bandwidth': float,
                     'timestamp_num': int, 'burst_label': int,
-                    'cluster_index': int, 'bandwidth_mul': float}
+                    'cluster_index': int, 'bandwidth_mul': float, 'bandwidth_zero_ratio': float}
 
         items = items.astype(type_map)
         max_bandwidth = np.min(WarehouseConfig.MAX_BANDWIDTH) * \
             ModelConfig.RESERVATION_RATE_FOR_MONITOR
         mask_cpu_mem = (items['vm_cpu'] > 0) & (items['vm_mem'] > 0)
         mask_timestamp = items['timestamp_num'] >= DataConfig.MIN_TIMESTAMP_NUM
-        mask_bandwidth = (items['peak_bandwidth'] <= max_bandwidth)
-        mask_avg_bw = (items['avg_bandwidth'] >= 3)
-        validation_mask = mask_cpu_mem & mask_timestamp & mask_bandwidth & mask_avg_bw
+        mask_avg_bw = (items['avg_bandwidth'] > 0)
+        mask_bandwidth_zero_ratio = (items['bandwidth_zero_ratio'] < 0.4)
+        validation_mask = mask_cpu_mem & mask_timestamp & mask_avg_bw & mask_bandwidth_zero_ratio
         if type == "burst":
             type_mask = (items['burst_label'] == 1)
         elif type == "stable":

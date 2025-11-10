@@ -11,7 +11,7 @@ class DumpTrace:
         self.disk_data_loader = DiskDataLoader()
 
     def dump_trace(self):
-        for cluster_index in range(WarehouseConfig.CLUSTER_NUMBER):
+        for cluster_index in range(WarehouseConfig.WAREHOUSE_NUMBER):
             items = self.disk_data_loader.load_items(
                 cluster_index_list=[cluster_index], type="both", purpose="train")
             trace_db = {}
