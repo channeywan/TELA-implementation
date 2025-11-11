@@ -34,7 +34,6 @@ class TELA(BaseAlgorithm):
         """加载和预处理数据"""
         # 加载预测数据
         items = self.loader.load_items(
-            type="both",
             cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT
         )
         for cluster_index in DataConfig.CLUSTER_INDEX_LIST_PREDICT:
@@ -51,7 +50,6 @@ class TELA(BaseAlgorithm):
 
         # 加载训练数据
         items_train = self.loader.load_items(
-            type="both",
             cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN
         )
         for cluster_index in DataConfig.CLUSTER_INDEX_LIST_TRAIN:
@@ -296,7 +294,7 @@ class TELA(BaseAlgorithm):
                 if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
                     continue
 
-                if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0] * ModelConfig.RESERVATION_RATE_FOR_MONITOR:
+                if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0]:
                     continue
 
                 # 计算放置后的利用率

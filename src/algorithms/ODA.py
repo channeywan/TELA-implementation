@@ -31,7 +31,7 @@ class ODA(BaseAlgorithm):
             trace_dir = os.path.join(
                 DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
             self.disks_trace[cluster_index] = joblib.load(trace_dir)
-        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ODA)
+        return self.loader.load_items(cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ODA)
 
     def select_warehouse(self, item) -> int:
         """
@@ -39,9 +39,10 @@ class ODA(BaseAlgorithm):
         选择当前容量利用率最低的仓库
         """
         disk_capacity = item["disk_capacity"]
-
+        capacity_mask = (self.warehouses_resource_allocated[:, 0]+disk_capacity <=
+                         self.warehouses_max[:, 0])
         monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
-        combined_mask = monitor_mask
+        combined_mask = monitor_mask & capacity_mask
         eligible_warehouses_indices = np.where(combined_mask)[0]
         if len(eligible_warehouses_indices) == 0:
             return -1

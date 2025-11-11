@@ -176,8 +176,7 @@ class BaseAlgorithm(ABC):
 
             if np.any(
                 self.warehouses_trace[self.current_time][warehouse] >
-                self.warehouses_max[warehouse] *
-                    ModelConfig.RESERVATION_RATE_FOR_MONITOR
+                self.warehouses_max[warehouse]
             ):
                 self.violation_time_queues[warehouse].append(
                     self.current_time)
@@ -205,17 +204,18 @@ class BaseAlgorithm(ABC):
         all_violation_durations = [[]
                                    for _ in range(self.warehouse_number)]
         utilize_trace = evaluate_warehouses_trace/self.warehouses_max
+        utilize_trace = np.where(utilize_trace > 1, 1, utilize_trace)
         self.plotter.plot_warehouse_trace(
             utilize_trace[:, :, 1], self.output_dir, f"{self.algorithm_name}_warehouse_trace")
         utilize_mean_on_time = np.mean(utilize_trace, axis=0)
         violation_count_warehouse = (
-            utilize_trace > 1).any(axis=2).sum(axis=0)
+            utilize_trace == 1).any(axis=2).sum(axis=0)
         warehouse_load_std = np.mean(np.std(utilize_trace, axis=1), axis=0)
         warehouse_load_mean = np.mean(np.mean(utilize_trace, axis=1), axis=0)
         warehouse_load_imb = np.where(
             warehouse_load_mean == 0, 0, warehouse_load_std/warehouse_load_mean)
         for i in range(self.warehouse_number):
-            series = (utilize_trace > 1).any(axis=2)[:, i]
+            series = (utilize_trace == 1).any(axis=2)[:, i]
             padded_series = np.concatenate(([False], series, [False]))
             int_series = padded_series.astype(int)
             diff_series = np.diff(int_series)

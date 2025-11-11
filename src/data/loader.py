@@ -15,7 +15,7 @@ class DiskDataLoader:
     def __init__(self):
         pass
 
-    def load_items(self, cluster_index_list: List[int] = WarehouseConfig.CLUSTER_DIR_LIST, type: str = "both") -> pd.DataFrame:
+    def load_items(self, cluster_index_list: List[int], type: str = "both") -> pd.DataFrame:
         all_cluster_items = []
         for cluster_index in cluster_index_list:
             item_dir = os.path.join(
@@ -45,6 +45,8 @@ class DiskDataLoader:
         if len(all_cluster_items) == 0:
             return pd.DataFrame()
         all_items = pd.concat(all_cluster_items, ignore_index=True)
+        all_items.reset_index(drop=True, inplace=True)
+        logger.info(f"加载了 {len(all_items)} 个磁盘")
         return all_items
 
     def _parse_disk(self, items: pd.DataFrame, type: str = "both") -> Optional[pd.DataFrame]:

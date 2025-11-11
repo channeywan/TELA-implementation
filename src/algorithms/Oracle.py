@@ -21,22 +21,23 @@ class Oracle(BaseAlgorithm):
                 DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
             self.disks_trace[cluster_index] = joblib.load(trace_dir)
         logger.info(f"Loaded cluster trace data for Oracle")
-        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ORACLE)
+        return self.loader.load_items(cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ORACLE)
 
     def select_warehouse(self, item: pd.Series) -> int:
+        selected_warehouse = -1
         if self.current_time == 0:
             return 0
-        reverse_time_window = min(12*24, self.current_time)
         disk_trace_bandwidth = self.disks_trace[item['cluster_index']
                                                 ][item['disk_ID']]
+        first_day_line = self._iterate_first_day(
+            disk_trace_bandwidth["timestamp"])
         future_bandwidth = self._get_circular_trace(
-            disk_trace_bandwidth, item["disk_capacity"], self.current_time, 12*24)
-        selected_warehouse = -1
+            disk_trace_bandwidth, item["disk_capacity"], first_day_line, DataConfig.DISK_NUMBER)
         monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
         capacity_mask = (self.warehouses_resource_allocated[:, 0]+item["disk_capacity"] <=
-                         self.warehouses_max[:, 0]*ModelConfig.RESERVATION_RATE_FOR_MONITOR)
-        after_placed_bandwidth = self.warehouses_trace[self.current_time-reverse_time_window:
-                                                       self.current_time, :, 1]+np.tile(future_bandwidth[len(future_bandwidth)-reverse_time_window:, 1].reshape(reverse_time_window, 1), (1, self.warehouse_number))
+                         self.warehouses_max[:, 0])
+        after_placed_bandwidth = self.warehouses_trace[:DataConfig.DISK_NUMBER,
+                                                       :, 1] + future_bandwidth[:, 1][:, np.newaxis]
         after_placed_bandwidth_util = after_placed_bandwidth / \
             self.warehouses_max[:, 1]
 
@@ -44,8 +45,11 @@ class Oracle(BaseAlgorithm):
         eligible_warehouses_indices = np.where(combined_mask)[0]
         if len(eligible_warehouses_indices) == 0:
             return -1
-        absolute_deviation = np.sum(np.abs(after_placed_bandwidth_util[:, eligible_warehouses_indices]-np.mean(
-            after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)), axis=0)
+
+        # absolute_deviation = np.sum(np.abs(after_placed_bandwidth_util[:, eligible_warehouses_indices]-np.mean(
+        #     after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)), axis=0)/np.mean(after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)
+        absolute_deviation = np.std(after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)/np.mean(
+            after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)
         min_absolute_deviation_index = np.argmin(absolute_deviation)
         selected_warehouse = eligible_warehouses_indices[min_absolute_deviation_index]
         return selected_warehouse

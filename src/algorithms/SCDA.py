@@ -26,7 +26,7 @@ class SCDA(BaseAlgorithm):
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
         items = self.loader.load_items(
-            type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT)
+            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT)
         for cluster_index in DataConfig.CLUSTER_INDEX_LIST_PREDICT:
             trace_dir = os.path.join(
                 DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
@@ -36,7 +36,7 @@ class SCDA(BaseAlgorithm):
     def train_model(self):
         """训练模型"""
         items = self.loader.load_items(
-            type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN)
+            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN)
         model_cluster, labels_cluster = self.train_Kmeans(items)
         model_classify = self.train_DecisionTree(items, labels_cluster)
 
@@ -153,7 +153,7 @@ class SCDA(BaseAlgorithm):
             if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
                 continue
 
-            if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0] * ModelConfig.RESERVATION_RATE_FOR_MONITOR:
+            if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0]:
                 continue
 
             # 计算放置后的利用率
