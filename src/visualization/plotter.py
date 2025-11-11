@@ -126,8 +126,8 @@ class TelaPlotter(BasePlotter):
         picture_dir = os.path.join(algorithm_dir, f"{fig_title}.png")
         fig, axes = plt.subplots(3, 3, figsize=(64, 24))
         fig.suptitle(fig_title, fontsize=16)
-        x_ticks = [288*day for day in range(31)]
-        x_tick_labels = [f'day{day}' for day in range(31)]
+        x_ticks = [288*day for day in range(8)]
+        x_tick_labels = [f'day{day}' for day in range(8)]
         for i in range(3):
             for j in range(3):
                 warehouse_idx = i*3+j
@@ -135,6 +135,7 @@ class TelaPlotter(BasePlotter):
                                 warehouse_trace[:, warehouse_idx], color='skyblue')
                 axes[i, j].set_title(f'warehouse{warehouse_idx+1}')
                 axes[i, j].set_xticks(x_ticks)
+                axes[i, j].set_xticklabels(x_tick_labels)
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.savefig(picture_dir,
                     dpi=300, bbox_inches='tight')

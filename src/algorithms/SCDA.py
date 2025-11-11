@@ -26,7 +26,7 @@ class SCDA(BaseAlgorithm):
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
         items = self.loader.load_items(
-            type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT, purpose="train")
+            type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT)
         for cluster_index in DataConfig.CLUSTER_INDEX_LIST_PREDICT:
             trace_dir = os.path.join(
                 DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
@@ -36,7 +36,7 @@ class SCDA(BaseAlgorithm):
     def train_model(self):
         """训练模型"""
         items = self.loader.load_items(
-            type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN, purpose="train")
+            type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN)
         model_cluster, labels_cluster = self.train_Kmeans(items)
         model_classify = self.train_DecisionTree(items, labels_cluster)
 
@@ -101,7 +101,7 @@ class SCDA(BaseAlgorithm):
         }
 
         train_data = items[["disk_capacity",
-                            "disk_if_local", "disk_type", "vm_cpu", "vm_mem"]]
+                            "disk_type", "vm_cpu", "vm_memory"]]
         train_data_encoded = self.encode_item(train_data)
 
         model_classify = GridSearchCV(
@@ -125,7 +125,7 @@ class SCDA(BaseAlgorithm):
         """
         model_cluster, model_classify = self.load_model()
         data_predict = items[["disk_capacity",
-                              "disk_if_local", "disk_type", "vm_cpu", "vm_mem"]]
+                              "disk_type", "vm_cpu", "vm_memory"]]
         data_predict_encoded = self.encode_item(data_predict)
         pre_labels_classify = model_classify.predict(data_predict_encoded)
         cluster_centers = model_cluster.cluster_centers_

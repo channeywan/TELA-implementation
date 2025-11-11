@@ -21,16 +21,16 @@ class Oracle(BaseAlgorithm):
                 DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
             self.disks_trace[cluster_index] = joblib.load(trace_dir)
         logger.info(f"Loaded cluster trace data for Oracle")
-        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ORACLE, purpose="train")
+        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ORACLE)
 
     def select_warehouse(self, item: pd.Series) -> int:
         if self.current_time == 0:
             return 0
-        reverse_time_window = min(12*24*7, self.current_time)
+        reverse_time_window = min(12*24, self.current_time)
         disk_trace_bandwidth = self.disks_trace[item['cluster_index']
                                                 ][item['disk_ID']]
         future_bandwidth = self._get_circular_trace(
-            disk_trace_bandwidth, item["disk_capacity"], self.current_time, 12*24*7)
+            disk_trace_bandwidth, item["disk_capacity"], self.current_time, 12*24)
         selected_warehouse = -1
         monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
         capacity_mask = (self.warehouses_resource_allocated[:, 0]+item["disk_capacity"] <=

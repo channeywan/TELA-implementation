@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import logging
 import os
-from datetime import datetime
 from tqdm import tqdm
 from data.loader import DiskDataLoader
 from data.processor import DiskDataProcessor
@@ -332,41 +331,51 @@ class BaseAlgorithm(ABC):
         """
         计算第一周第一天的行数
         """
+        target_time = "2023-05-09 00:00:00"
+        target_time = pd.to_datetime(target_time)
         line_len = -1
-        last_weekday = -1
-        current_weekday = -1
         for timestamp in timestamps:
             line_len += 1
-            current_weekday = datetime.fromtimestamp(timestamp).weekday()
-            if current_weekday == 0 and last_weekday == 6:
+            if timestamp.weekday() == target_time.weekday() and timestamp.time() == target_time.time():
                 break
-            last_weekday = current_weekday
         return line_len
 
     def _get_circular_trace(self, disk_trace_bandwidth: pd.DataFrame, disk_capacity: int, begin_line: int, trace_len: int) -> np.ndarray:
         """
         return :DataFrame, shape(trace_len, [disk_capacity, bandwidth])
         """
-        timestamps = disk_trace_bandwidth["timestamp"].to_numpy()
-        last_timestamp = timestamps[-1]
-        start_index = -1
-        last_weekday = datetime.fromtimestamp(last_timestamp).weekday()
-        last_time = datetime.fromtimestamp(last_timestamp).time()
-        for index, current_timestamp in enumerate(timestamps):
-            if datetime.fromtimestamp(current_timestamp).weekday() == last_weekday and datetime.fromtimestamp(current_timestamp).time() == last_time:
-                start_index = index
-                break
-        circular_bandwidth_trace = disk_trace_bandwidth[begin_line:]["bandwidth"].to_numpy(
-        )
-        append_trace = disk_trace_bandwidth[start_index:]["bandwidth"].to_numpy(
-        )
-        if start_index == -1:
-            logger.error("the disk trace is not support circular trace")
+        timestamps = disk_trace_bandwidth["timestamp"]
+        last_timestamp = timestamps.iloc[-1]
+        target_timestamp = last_timestamp + pd.Timedelta("5 min")
+        target_weekday = target_timestamp.weekday()
+        target_time = target_timestamp.time()
+        all_weekdays = timestamps.dt.weekday
+        all_times = timestamps.dt.time
+        mask_match = (all_weekdays == target_weekday) & (
+            all_times == target_time)
+        matches = np.where(mask_match)[0]
+        if len(matches) == 0:
+            logger.error(
+                "the disk trace is not support circular trace (no matches found)")
             return None
-        while (len(circular_bandwidth_trace) < trace_len):
-            circular_bandwidth_trace = np.concatenate(
-                [circular_bandwidth_trace, append_trace], axis=0)
-        circular_bandwidth_trace = circular_bandwidth_trace[:trace_len]
+        start_index = matches[0]
+        base_trace = disk_trace_bandwidth.iloc[begin_line:]["bandwidth"].to_numpy(
+        )
+        append_trace = disk_trace_bandwidth.iloc[start_index:]["bandwidth"].to_numpy(
+        )
+        if len(append_trace) == 0:
+            logger.error(
+                "append_trace is empty, cannot tile for circular trace")
+            return None
+        len_base = len(base_trace)
+
+        if len_base >= trace_len:
+            circular_bandwidth_trace = base_trace[:trace_len]
+        else:
+            len_needed = trace_len - len_base
+            num_repeats = int(np.ceil(len_needed / len(append_trace)))
+            padding = np.tile(append_trace, num_repeats)[:len_needed]
+            circular_bandwidth_trace = np.concatenate([base_trace, padding])
         circular_trace = np.column_stack([np.full(
             len(circular_bandwidth_trace), disk_capacity), circular_bandwidth_trace])
         return circular_trace

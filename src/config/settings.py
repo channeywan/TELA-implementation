@@ -9,7 +9,7 @@ class DirConfig:
         os.path.dirname(os.path.abspath(__file__))))
 
     # 数据目录
-    TRACE_ROOT = "/data/Tencent_CVD/Shanghai"
+    TRACE_ROOT = "/data/Tencent_CVD/workload/0521"
     CLUSTER_INFO_ROOT = "/home/wcl/cluster_info"
     CLUSTER_TRACE_DB_ROOT = "/home/wcl/cluster_trace_db"
     # 输出目录
@@ -33,24 +33,24 @@ class DirConfig:
             os.makedirs(dir_path, exist_ok=True)
 
 
-sacle = 2
+sacle = 10
 
 
 class DataConfig:
     # 选择分析的集群列表
-    CLUSTER_INDEX_LIST_ODA = [0, 2, 4]
-    CLUSTER_INDEX_LIST_TRAIN = [0, 2, 4]
-    CLUSTER_INDEX_LIST_PREDICT = [1, 3]
-    CLUSTER_INDEX_LIST_ORACLE = [0, 2, 4]
+    CLUSTER_INDEX_LIST_ODA = [400, 401, 405, 406, 407, 408, 413, 414, 415]
+    CLUSTER_INDEX_LIST_TRAIN = [436, 437, 452, 456, 458, 476, 477, 478, 486]
+    CLUSTER_INDEX_LIST_PREDICT = [400, 401, 405, 406, 407, 408, 413, 414, 415]
+    CLUSTER_INDEX_LIST_ORACLE = [400, 401, 405, 406, 407, 408, 413, 414, 415]
 
     # 评价时间数量
-    EVALUATE_TIME_NUMBER = 8640
+    EVALUATE_TIME_NUMBER = 2016
 
     # 云盘放置数量
-    DISK_NUMBER = 4000*sacle
+    DISK_NUMBER = 2016
 
     # 云盘最小生命周期（时间戳）
-    MIN_TIMESTAMP_NUM = 8640
+    MIN_TIMESTAMP_NUM = 2016
 
     # 时序间隔
     TIME_INTERVAL = 1
@@ -93,13 +93,15 @@ class ModelConfig:
 
 class WarehouseConfig:
     # 仓库最大容量 (9个仓库配置)(MB)
-    MAX_CAPACITY = [25000, 25000, 25000, 40000,
-                    40000, 10000, 10000, 30000, 20000]
-
+    # MAX_CAPACITY = [25000, 25000, 25000, 40000,
+    #                 40000, 10000, 10000, 30000, 20000]
+    MAX_CAPACITY = [70000, 70000, 70000, 100000,
+                    50000, 100000, 70000, 150000, 70000]
     # 仓库最大read bandwidth
-    MAX_BANDWIDTH = [100000, 100000, 100000, 130000,
-                     130000, 130000, 47000, 47000, 47000]
-
+    # MAX_BANDWIDTH = [100000, 100000, 100000, 130000,
+    #                  130000, 130000, 47000, 47000, 47000]
+    MAX_BANDWIDTH = [45000000, 45000000, 45000000, 70000000,
+                     70000000, 30000000, 30000000, 50000000, 30000000]
     # 仓库最大值矩阵
     WAREHOUSE_MAX = np.array(
         [MAX_CAPACITY, MAX_BANDWIDTH]).T*sacle
@@ -107,6 +109,8 @@ class WarehouseConfig:
     # 仓库数量
     WAREHOUSE_NUMBER = 9
     CLUSTER_NUMBER = 10
+    CLUSTER_DIR_LIST = [400, 401, 405, 406, 407, 408, 413, 414, 415]
+    # 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518]
 
 
 class TestConfig:

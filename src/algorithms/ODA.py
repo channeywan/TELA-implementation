@@ -31,7 +31,7 @@ class ODA(BaseAlgorithm):
             trace_dir = os.path.join(
                 DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
             self.disks_trace[cluster_index] = joblib.load(trace_dir)
-        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ODA, purpose="train")
+        return self.loader.load_items(type="both", cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ODA)
 
     def select_warehouse(self, item) -> int:
         """

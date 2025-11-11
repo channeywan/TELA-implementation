@@ -35,8 +35,7 @@ class TELA(BaseAlgorithm):
         # 加载预测数据
         items = self.loader.load_items(
             type="both",
-            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT,
-            purpose="train"
+            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT
         )
         for cluster_index in DataConfig.CLUSTER_INDEX_LIST_PREDICT:
             trace_dir = os.path.join(
@@ -53,8 +52,7 @@ class TELA(BaseAlgorithm):
         # 加载训练数据
         items_train = self.loader.load_items(
             type="both",
-            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN,
-            purpose="train"
+            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN
         )
         for cluster_index in DataConfig.CLUSTER_INDEX_LIST_TRAIN:
             trace_dir = os.path.join(
@@ -94,8 +92,8 @@ class TELA(BaseAlgorithm):
             'min_samples_leaf': [1, 2, 3, 4],
             'max_features': ['sqrt', 'log2', None]
         }
-        train_features = items[["disk_capacity", "disk_type", "disk_if_VIP",
-                                "vm_cpu", "vm_mem"]]
+        train_features = items[["disk_capacity",
+                                "disk_type", "vm_cpu", "vm_memory"]]
 
         model_classify_type = GridSearchCV(
             estimator=DecisionTreeClassifier(criterion="gini"),
@@ -154,9 +152,9 @@ class TELA(BaseAlgorithm):
             param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=1, verbose=0
         )
         model_classify_stable.fit(items_stable[[
-                                  "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]], cluster_stable.labels_)
+                                  "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]], cluster_stable.labels_)
         model_classify_burst.fit(items_burst[[
-                                 "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]], cluster_burst.labels_)
+                                 "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]], cluster_burst.labels_)
         best_classify_stable = model_classify_stable.best_estimator_
         best_classify_burst = model_classify_burst.best_estimator_
         logger.info(f"稳定型分类器:{model_classify_stable.best_params_}")
@@ -250,8 +248,8 @@ class TELA(BaseAlgorithm):
 
         # 决策树分类磁盘类型，区分稳定型和突发型
         logger.info("开始决策树分类磁盘类型，区分稳定型和突发型")
-        type_classify_features = items[["disk_capacity", "disk_type", "disk_if_VIP",
-                                        "vm_cpu", "vm_mem"]]
+        type_classify_features = items[[
+            "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]]
         type_classify_labels = type_classifier.predict(type_classify_features)
         items["pre_burst_label"] = type_classify_labels
         logger.info(
@@ -263,9 +261,9 @@ class TELA(BaseAlgorithm):
         stable_items = items[items["pre_burst_label"]
                              == 0].copy().reset_index(drop=True)
         burst_items_belong_to_cluster = classify_burst.predict(burst_items[[
-            "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]])
+            "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]])
         stable_items_belong_to_cluster = classify_stable.predict(stable_items[[
-            "disk_capacity", "disk_type", "disk_if_VIP", "vm_cpu", "vm_mem"]])
+            "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]])
         # 将磁盘特征与所属簇序号拼接
         burst_items["belong_to_cluster"] = burst_items_belong_to_cluster
         stable_items["belong_to_cluster"] = stable_items_belong_to_cluster

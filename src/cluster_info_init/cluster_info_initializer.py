@@ -1,10 +1,10 @@
+import csv
 import os
 import logging
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
-import csv
 from datetime import datetime
-from config.settings import DirConfig, WarehouseConfig,  ModelConfig
+from config.settings import DirConfig, WarehouseConfig,  ModelConfig, DataConfig
 import pandas as pd
 logger = logging.getLogger(__name__)
 
@@ -17,31 +17,31 @@ class DiskDataProcessor:
     def process_disk_data(self, trace_dir: str) -> Optional[Dict[str, Any]]:
         """处理单个磁盘的跟踪数据"""
         if not os.path.exists(trace_dir):
-            logger.error(f"trace_dir {trace_dir} not exists")
             return None
-
-        columns = ["timestamp", "read_IOPS",
-                   "read_BW", "write_IOPS", "write_BW"]
-        traces = pd.read_csv(trace_dir, names=columns, usecols=[
-            0, 1, 2, 3, 4], sep=',', header=None)
+        traces = pd.read_csv(trace_dir, sep=',')
+        traces.columns = ["timestamp", "read_IOPS",
+                          "write_IOPS", "read_BW", "write_BW"]
+        traces["timestamp"] = pd.to_datetime(traces["timestamp"])
         if len(traces) == 0:
-            logger.warning(f"trace_dir {trace_dir} is empty")
+            logger.warning(f"trace {trace_dir} is empty")
+            return None
+        if (traces["timestamp"].diff() != "5min").iloc[1:].any():
+            logger.warning(f"trace {trace_dir} 采样时间戳错误")
             return None
         first_day_line = self._iterate_first_day(traces["timestamp"])
         disk_bandwidth = traces["read_BW"].values+traces["write_BW"].values
         slice_bandwidth = disk_bandwidth[first_day_line:]
-        processed_line = len(slice_bandwidth)
-        if processed_line == 0:
-            logger.warning(f"trace_dir {trace_dir} is empty")
+        timestamp_num = len(slice_bandwidth)
+        if timestamp_num < DataConfig.MIN_TIMESTAMP_NUM:
             return None
         disk_bandwidth_avg = np.average(slice_bandwidth)
         disk_bandwidth_peak = np.max(slice_bandwidth)
         bandwidth_zero_num = np.sum(slice_bandwidth == 0)
-        bandwidth_zero_ratio = bandwidth_zero_num / processed_line
+        bandwidth_zero_ratio = bandwidth_zero_num / timestamp_num
         return {
             'avg_bandwidth': disk_bandwidth_avg,
             'peak_bandwidth': disk_bandwidth_peak,
-            'processed_line': processed_line,
+            'timestamp_num': timestamp_num,
             'bandwidth_zero_ratio': bandwidth_zero_ratio
         }
 
@@ -60,15 +60,13 @@ class DiskDataProcessor:
         """
         计算第一周第一天的行数
         """
+        target_time = "2023-05-09 00:00:00"
+        target_time = pd.to_datetime(target_time)
         line_len = -1
-        last_weekday = -1
-        current_weekday = -1
         for timestamp in timestamps:
             line_len += 1
-            current_weekday = datetime.fromtimestamp(timestamp).weekday()
-            if current_weekday == 0 and last_weekday == 6:
+            if timestamp.weekday() == target_time.weekday() and timestamp.time() == target_time.time():
                 break
-            last_weekday = current_weekday
         return line_len
 
 
@@ -91,59 +89,56 @@ class ClusterInfoInitializer:
     def _process_cluster(self, cluster_index: int) -> None:
         """处理单个集群的数据"""
         logger.info(f"正在处理集群 {cluster_index}")
-        description_dir = f"{self.trace_root}/20_136090{cluster_index}/136090{cluster_index}_subscript_info"
+        description_dir = f"{self.trace_root}/153_10077{cluster_index}/describe.csv"
+        if not os.path.exists(description_dir):
+            logger.error(f"description_dir {description_dir} not exists")
+            return
         cluster_info_dir = self._ensure_cluster_info_dir()
 
-        with open(description_dir, "r") as descriptions, open(f"{cluster_info_dir}/cluster{cluster_index}", "w") as cluster_info:
-            columns = ["appid", "disk_ID", "disk_instance", "vm_uid", "create_time", "finsh_time", "status", "disk_if_local", "disk_attr", "disk_type",
-                       "disk_if_VIP", "disk_pay", "pay_type", "vm_name", "vm_cpu", "vm_memory", "app_name", "disk_name", "project_name", "disk_usage", "disk_capacity"]
-            df = pd.read_csv(descriptions, names=columns, sep=',', header=None)
-            for _, description in df.iterrows():
-                if self._is_valid_description(description):
-                    self._process_disk(
-                        description, cluster_index, cluster_info)
+        with open(description_dir, "r") as descriptions:
+            df = pd.read_csv(descriptions, sep=',', usecols=[
+                             "disk_uuid", "vm_alias", "vm_cpu", "vm_mem", "vm_type", "is_vip", "ins_type", "project_name", "buss_name", "disk_alias", "disk_size", "disk_type", "volume_type"])
+            df.columns = ["disk_ID", "vm_name", "vm_cpu", "vm_memory", "vm_type", "disk_if_VIP", "ins_type",
+                          "project_name", "buss_name", "disk_name", "disk_capacity", "disk_type", "volume_type"]
+            df.replace('', np.nan, inplace=True)
+            df.dropna(inplace=True, how='any', axis=0)
+            if df.empty:
+                logger.warning(f"集群 {cluster_index} 过滤后没有有效数据。")
+                return
+            new_data_df = df.apply(
+                self._process_disk_row, axis=1, args=(cluster_index,))
+            df = df.join(new_data_df)
+            df.dropna(inplace=True, how='any', axis=0)
+            cluster_info_dir = self._ensure_cluster_info_dir()
+            output_path = f"{cluster_info_dir}/cluster{cluster_index}"
+            df.to_csv(output_path, index=False)
 
-    def _is_valid_description(self, description: pd.Series) -> bool:
-        """检查描述是否有效"""
-        required_fields = ["disk_ID", "disk_if_local", "disk_attr", "disk_type",
-                           "disk_if_VIP", "disk_pay", "vm_cpu", "vm_memory", "disk_capacity"]
-        return not any(description[i] == '' or pd.isna(description[i]) for i in required_fields)
-
-    def _process_disk(self, description: pd.Series, cluster_index: int,
-                      cluster_info_file) -> None:
+    def _process_disk_row(self, description: pd.Series, cluster_index: int,
+                          ) -> pd.Series:
         """处理单个磁盘的数据"""
-        trace_dir = f"{self.trace_root}/20_136090{cluster_index}/{description['disk_ID']}"
+        trace_dir = f"{self.trace_root}/153_10077{cluster_index}/{description['disk_ID']}.csv"
         disk_data = self.disk_processor.process_disk_data(trace_dir)
 
         if disk_data is None:
             self._log_missing_trace(description['disk_ID'], cluster_index)
-            return
+            return pd.Series({
+                'avg_bandwidth': np.nan, 'peak_bandwidth': np.nan,
+                'timestamp_num': np.nan, 'burst_label': np.nan,
+                'bandwidth_mul': np.nan, 'bandwidth_zero_ratio': np.nan
+            })
 
         label, bandwidth_mul = self.disk_processor.calculate_label(
             disk_data)
-        self._write_disk_data(description, disk_data, label,
-                              bandwidth_mul, cluster_info_file)
+        disk_data['burst_label'] = label
+        disk_data['bandwidth_mul'] = bandwidth_mul
+        return pd.Series(disk_data)
 
     def _log_missing_trace(self, disk_id: str, cluster_index: int) -> None:
         """记录缺失的跟踪文件"""
         with open(f"{self.cluster_info_root}/cluster{cluster_index}_not_exist", "a") as f:
             f.write(f"{disk_id}\n")
 
-    def _write_disk_data(self, description: List[str], disk_data: Dict[str, Any],
-                         label: int, bandwidth_mul: float, cluster_info_file) -> None:
-        """写入磁盘数据到仓库文件"""
-        cluster_info_file.write(
-            # item[0] disk_ID
-            # item[1:9] disk_capacity, disk_if_local, disk_attr, disk_type, disk_if_VIP, disk_pay, vm_cpu, vm_mem
-            # item[9:13] average_bandwidth, peak_bandwidth, disk_timestamp_num,burst_label,bandwidth_mul,bandwidth_zero_ratio
-            f"{description['disk_ID']},{description['disk_capacity']},{description['disk_if_local']},{description['disk_attr']},"
-            f"{description['disk_type']},{description['disk_if_VIP']},{description['disk_pay']},{description['vm_cpu']},"
-            f"{description['vm_memory']},{disk_data['avg_bandwidth']},{disk_data['peak_bandwidth']},"
-            # label (0 for stable, 1 for burst)
-            f"{disk_data['processed_line']},{label},{bandwidth_mul},{disk_data['bandwidth_zero_ratio']}\n"
-        )
-
     def init_cluster_info(self) -> None:
         logger.info("开始初始化磁盘数据")
-        for cluster_index in range(WarehouseConfig.CLUSTER_NUMBER):
+        for cluster_index in WarehouseConfig.CLUSTER_DIR_LIST:
             self._process_cluster(cluster_index)
