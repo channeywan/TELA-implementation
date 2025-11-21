@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from typing import List, Dict, Any, Optional
 import pandas as pd
-
+import joblib
 from config.settings import DirConfig, DataConfig, WarehouseConfig, ModelConfig
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,20 @@ class DiskDataLoader:
     def __init__(self):
         pass
 
-    def load_items(self, cluster_index_list: List[int], type: str = "both") -> pd.DataFrame:
+    def load_items_and_trace(self, cluster_index_list: List[int], type: str = "both"):
+        all_items = self.load_items(cluster_index_list, type)
+        disks_trace = self._get_disks_trace(cluster_index_list)
+        return all_items, disks_trace
+
+    def load_selected_items(self):
+        return pd.read_csv(os.path.join(DirConfig.CLUSTER_INFO_ROOT, "selected_items_with_business_type.csv"))
+
+    def load_all_trace(self):
+        trace_dir = os.path.join(
+            DirConfig.CLUSTER_TRACE_DB_ROOT, "all_trace.pkl")
+        return joblib.load(trace_dir)
+
+    def load_items(self, cluster_index_list: List[int], type: str = "both"):
         all_cluster_items = []
         for cluster_index in cluster_index_list:
             item_dir = os.path.join(
@@ -23,13 +36,12 @@ class DiskDataLoader:
                 f"cluster{cluster_index}"
             )
             if not os.path.exists(item_dir):
-                logger.warning(f"数据文件不存在: {item_dir}")
+                logger.warning(f"data file not exists: {item_dir}")
                 continue
             try:
-                logger.info(f"加载集群 {cluster_index} 的磁盘数据")
                 items = pd.read_csv(item_dir,  encoding="utf-8")
                 if len(items) == 0:
-                    logger.warning(f"cluster {cluster_index} 没有数据")
+                    logger.warning(f"cluster {cluster_index} has no data")
                     continue
                 items["cluster_index"] = cluster_index
                 cluster_items = self._parse_disk(
@@ -37,17 +49,25 @@ class DiskDataLoader:
                 if cluster_items is not None and not cluster_items.empty:
                     all_cluster_items.append(cluster_items)
             except (IOError, OSError) as e:
-                logger.error(f"读取文件 {item_dir} 出错: {e}")
+                logger.error(f"read file {item_dir} error: {e}")
                 continue
-            logger.info(
-                f"集群 {cluster_index} 加载了 {len(cluster_items) if cluster_items is not None else 0} 个磁盘")
+            # logger.info(
+            #     f"cluster {cluster_index} loaded {len(cluster_items) if cluster_items is not None else 0} disks")
         # 如果没有加载到任何数据，返回空 DataFrame
         if len(all_cluster_items) == 0:
             return pd.DataFrame()
         all_items = pd.concat(all_cluster_items, ignore_index=True)
         all_items.reset_index(drop=True, inplace=True)
-        logger.info(f"加载了 {len(all_items)} 个磁盘")
+        logger.info(f"total loaded {len(all_items)} disks")
         return all_items
+
+    def _get_disks_trace(self, cluster_index_list: List[int]):
+        disks_trace = {}
+        for cluster_index in cluster_index_list:
+            trace_dir = os.path.join(
+                DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
+            disks_trace[cluster_index] = joblib.load(trace_dir)
+        return disks_trace
 
     def _parse_disk(self, items: pd.DataFrame, type: str = "both") -> Optional[pd.DataFrame]:
         """
@@ -59,10 +79,10 @@ class DiskDataLoader:
                     'cluster_index': int, 'bandwidth_mul': float, 'bandwidth_zero_ratio': float}
 
         items = items.astype(type_map)
-        max_bandwidth = np.min(WarehouseConfig.MAX_BANDWIDTH) * \
-            ModelConfig.RESERVATION_RATE_FOR_MONITOR
+
         mask_cpu_mem = (items['vm_cpu'] > 0) & (items['vm_memory'] > 0)
         mask_avg_bw = (items['avg_bandwidth'] > 0)
+        # & (items['avg_bandwidth'] < DataConfig.MAX_BANDWIDTH_THRESHOLD)
         mask_bandwidth_zero_ratio = (items['bandwidth_zero_ratio'] < 0.4)
         validation_mask = mask_cpu_mem & mask_avg_bw & mask_bandwidth_zero_ratio
         if type == "burst":

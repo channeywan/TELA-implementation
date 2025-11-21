@@ -27,11 +27,7 @@ class ODA(BaseAlgorithm):
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
-        for cluster_index in DataConfig.CLUSTER_INDEX_LIST_ODA:
-            trace_dir = os.path.join(
-                DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
-            self.disks_trace[cluster_index] = joblib.load(trace_dir)
-        return self.loader.load_items(cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ODA)
+        return self.test_items.copy()
 
     def select_warehouse(self, item) -> int:
         """
@@ -41,13 +37,20 @@ class ODA(BaseAlgorithm):
         disk_capacity = item["disk_capacity"]
         capacity_mask = (self.warehouses_resource_allocated[:, 0]+disk_capacity <=
                          self.warehouses_max[:, 0])
-        monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
-        combined_mask = monitor_mask & capacity_mask
-        eligible_warehouses_indices = np.where(combined_mask)[0]
-        if len(eligible_warehouses_indices) == 0:
-            return -1
-        allocated_capacity = self.warehouses_resource_allocated[eligible_warehouses_indices, 0]
-        min_utilization_index = np.argmin(
-            allocated_capacity/WarehouseConfig.WAREHOUSE_MAX[eligible_warehouses_indices, 0])
-        selected_warehouse = eligible_warehouses_indices[min_utilization_index]
+        overload_mask = self.check_warehouse_overload_after_placement(item)
+        while True:
+            monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
+            combined_mask = capacity_mask & monitor_mask
+            eligible_warehouses_indices = np.where(combined_mask)[0]
+            if len(eligible_warehouses_indices) == 0:
+                return -1
+            allocated_capacity = self.warehouses_resource_allocated[eligible_warehouses_indices, 0]
+            min_utilization_index = np.argmin(
+                allocated_capacity/WarehouseConfig.WAREHOUSE_MAX[eligible_warehouses_indices, 0])
+            selected_warehouse = eligible_warehouses_indices[min_utilization_index]
+            if not overload_mask[selected_warehouse]:
+                self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+                continue
+            else:
+                break
         return selected_warehouse

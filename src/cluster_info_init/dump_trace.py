@@ -1,5 +1,5 @@
 from data.loader import DiskDataLoader
-from config.settings import WarehouseConfig, DirConfig
+from config.settings import WarehouseConfig, DirConfig, DataConfig
 import pandas as pd
 import os
 import joblib
@@ -11,9 +11,9 @@ class DumpTrace:
         self.disk_data_loader = DiskDataLoader()
 
     def dump_trace(self):
-        for cluster_index in WarehouseConfig.CLUSTER_DIR_LIST:
+        for cluster_index in DataConfig.CLUSTER_DIR_LIST:
             items = self.disk_data_loader.load_items(
-                cluster_index_list=[cluster_index], type="both")
+                cluster_index_list=[cluster_index])
             if len(items) == 0:
                 continue
             trace_db = {}

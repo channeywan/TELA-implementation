@@ -8,7 +8,10 @@ import os
 import logging
 import numpy as np
 import matplotlib
+import pandas as pd
 from data.loader import DiskDataLoader
+from data.utils import get_circular_trace, iterate_first_day
+from tqdm import tqdm
 matplotlib.use('Agg')
 
 
@@ -19,51 +22,75 @@ class BasePlotter:
     def __init__(self):
         self.config = DirConfig()
         self.data_config = DataConfig()
-
+        self.loader = DiskDataLoader()
         plt.rcParams['font.family'] = [
             'Noto Serif CJK SC'
         ]
         plt.rcParams['axes.unicode_minus'] = False
 
+    def plot_cdf(self, data: List[float], save_dir: str, title: str):
+        plt.figure(figsize=(10, 6))
+        sns.ecdfplot(data, label='CDF',  color='skyblue', alpha=0.5)
+        plt.title(title)
+        plt.xlabel('Value')
+        plt.ylabel('CDF')
+        plt.savefig(os.path.join(save_dir, f'{title}_cdf.png'))
+        logger.info(
+            f"{title}_cdf.png saved to {os.path.join(save_dir, f'{title}_cdf.png')}")
+        plt.close()
+
+    def plot_pdf(self, data: List[float], save_dir: str, title: str):
+        plt.figure(figsize=(10, 6))
+        sns.kdeplot(data, label='PDF', fill=True, color='skyblue', alpha=0.5)
+        plt.title(title)
+        plt.xlabel('Value')
+        plt.ylabel('PDF')
+        plt.savefig(os.path.join(save_dir, f'{title}_pdf.png'))
+        logger.info(
+            f"{title}_pdf.png saved to {os.path.join(save_dir, f'{title}_pdf.png')}")
+        plt.close()
+
+    def plot_scatter(self, x: List[float], y: List[float], save_dir: str, title: str, xlabel: str = "X", ylabel: str = "Y"):
+        """
+        画散点图
+
+        Args:
+            x (List[float]): x轴数据
+            y (List[float]): y轴数据
+            save_dir (str): 保存目录
+            title (str): 图表标题
+            xlabel (str): x轴标签
+            ylabel (str): y轴标签
+        """
+        plt.figure(figsize=(15, 6))
+        plt.scatter(x, y, s=100, alpha=0.9)
+
+        # # 如果有标签，在每个点旁边添加标签
+        # labels = ["ODA", "SCDA", "Tela", "TIDAL"]
+        # for i, label in enumerate(labels):
+        #     plt.annotate(label, (x[i], y[i]),
+        #                  xytext=(5, 5), textcoords='offset points',
+        #                  fontsize=10, alpha=0.8)
+
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.savefig(os.path.join(save_dir, f'{title}_scatter.png'))
+        logger.info(
+            f"{title}_scatter.png saved to {os.path.join(save_dir, f'{title}_scatter.png')}")
+        plt.close()
+
+    def iterate_first_day(self, timestamps: List[int]) -> int:
+        return iterate_first_day(timestamps)
+
+    def get_circular_trace(self, trace: pd.DataFrame, first_day_line: int, trace_len: int) -> np.ndarray:
+        return get_circular_trace(trace, first_day_line, trace_len)
+
 
 class TelaPlotter(BasePlotter):
     def __init__(self):
         super().__init__()
-
-    def plot_disk_BW_mul(self):
-        """绘制磁盘BW_mul分布图"""
-        logger.info("开始绘制峰均值比值分布图")
-        for i in range(9):
-            plotter = BasePlotter()
-            items = DiskDataLoader().load_items(type="both",
-                                                cluster_index_list=[i])
-            readBW = items['RBW_mul']
-            writeBW = items['WBW_mul']
-            fig, axes = plt.subplots(
-                1, 2, figsize=(14, 6))
-            sns.kdeplot(readBW, log_scale=True,
-                        color='skyblue', ax=axes[0], label='read BandWidth')
-            sns.kdeplot(writeBW, log_scale=True,
-                        color='lightcoral', ax=axes[0], label='write BandWidth')
-            axes[0].grid(True, linestyle='--', alpha=0.6)
-            axes[0].set_title(f"集群{i}读写带宽峰均值比值pdf图")
-            axes[0].set_xlabel('峰均值比值')
-            axes[0].set_ylabel('概率密度')
-            axes[0].legend()
-
-            sns.ecdfplot(readBW, color='skyblue', ax=axes[1],
-                         log_scale=True, label='read BandWidth')
-            sns.ecdfplot(writeBW, color='lightcoral',
-                         ax=axes[1], log_scale=True, label='write BandWidth')
-            axes[1].grid(True, linestyle='--', alpha=0.6)
-            axes[1].set_title(f"集群{i}读写带宽峰均值比值cdf图")
-            axes[1].set_xlabel('峰均值比值')
-            axes[1].set_ylabel('累积分布')
-            axes[1].legend()
-            plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-            plt.savefig(os.path.join(DirConfig.VISUALIZATION_TRACE_DIR,
-                        f'集群{i}写带宽峰均值比值分布图.png'), dpi=300, bbox_inches='tight')
-            plt.close(fig)
 
     def plot_kMeans_cluster(self, data_burst, data_stable, label_burst, label_stable):
         """绘制KMeans聚类图"""
@@ -86,50 +113,20 @@ class TelaPlotter(BasePlotter):
         logger.info(f"KMeans_tela_cluster.png已保存至{DirConfig.TELA_DIR}")
         plt.close(fig)
 
-    def plot_Warehouse_utilization(self, warehouse_utilization: np.ndarray, algorithm_dir: str, fig_title: str):
-        """绘制仓库利用率图"""
-        fig, axes = plt.subplots(figsize=(14, 6))
-        indices = np.arange(WarehouseConfig.WAREHOUSE_NUMBER)
-        bar_width = 0.2
-        pos1 = indices-bar_width
-        pos2 = indices
-        pos3 = indices+bar_width
-        bars1 = axes.bar(
-            pos1, warehouse_utilization[0, :, 0], bar_width, label='capacity', color='dodgerblue')
-        bars2 = axes.bar(
-            pos2, warehouse_utilization[0, :, 1], bar_width, label='read_bw', color='sandybrown')
-        bars3 = axes.bar(
-            pos3, warehouse_utilization[0, :, 2], bar_width, label='write_bw', color='mediumseagreen')
-        axes.set_title(fig_title)
-        axes.set_ylim(0, 1.1)
-        axes.set_xticks(indices)
-        axes.set_xticklabels(
-            [f"warehouse{i}" for i in indices], rotation=45)
-        axes.legend()
-        plt.tight_layout()
-
-        def update(frame):
-            current_data = warehouse_utilization[frame]
-            for i in range(WarehouseConfig.WAREHOUSE_NUMBER):
-                bars1[i].set_height(current_data[i, 0])
-                bars2[i].set_height(current_data[i, 1])
-                bars3[i].set_height(current_data[i, 2])
-            return list(bars1)+list(bars2)+list(bars3)
-        logger.info(f"creating {fig_title} animation")
-        ani = animation.FuncAnimation(fig, update, frames=len(
-            warehouse_utilization), blit=True, interval=10)
-        ani.save(os.path.join(algorithm_dir, f'{fig_title}.mp4'),
-                 writer='ffmpeg', fps=15, dpi=80)
-        plt.close(fig)
-
     def plot_warehouse_trace(self, warehouse_trace: np.ndarray, algorithm_dir: str, fig_title: str):
+        """
+        绘制仓库trace图，将所有仓库绘制到同一张图中
+        warehouse_trace: 所有仓库的trace数据
+        """
+        num_rows = (WarehouseConfig.WAREHOUSE_NUMBER + 2) // 3
+        num_cols = 3
         picture_dir = os.path.join(algorithm_dir, f"{fig_title}.png")
-        fig, axes = plt.subplots(3, 3, figsize=(64, 24))
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(24, 6*num_rows))
         fig.suptitle(fig_title, fontsize=16)
         x_ticks = [288*day for day in range(8)]
         x_tick_labels = [f'day{day}' for day in range(8)]
-        for i in range(3):
-            for j in range(3):
+        for i in range(num_rows):
+            for j in range(num_cols):
                 warehouse_idx = i*3+j
                 axes[i, j].plot(range(len(warehouse_trace[:, warehouse_idx])),
                                 warehouse_trace[:, warehouse_idx], color='skyblue')
@@ -206,6 +203,139 @@ class TelaPlotter(BasePlotter):
         ani.save(output_path, writer='ffmpeg', fps=30, dpi=100)
         plt.close(fig)
         logger.info(f"动画已保存至 {output_path}")
+
+    def plot_each_cluster_trace(self, cluster_index_list: List[int], save_dir: str):
+        """
+        给一个集群列表，绘制每个集群的trace图
+        Args:
+            cluster_index_list: 集群列表
+            save_dir: 保存目录
+        """
+        os.makedirs(save_dir, exist_ok=True)
+        items, disks_trace = self.loader.load_items_and_trace(
+            cluster_index_list)
+        for cluster_index in cluster_index_list:
+            warehouse_trace = np.zeros(DataConfig.EVALUATE_TIME_NUMBER)
+            cluster_trace = disks_trace[cluster_index]
+            cluster_items = items[items["cluster_index"] == cluster_index]
+            for _, item in tqdm(cluster_items.iterrows(), total=len(cluster_items), desc=f"Processing cluster {cluster_index}"):
+                disk_id = item["disk_ID"]
+                disk_trace = cluster_trace[disk_id]
+                first_day_line = self.iterate_first_day(
+                    disk_trace["timestamp"].to_list())
+                circular_trace = self.get_circular_trace(
+                    disk_trace, first_day_line, DataConfig.EVALUATE_TIME_NUMBER)
+                warehouse_trace += circular_trace
+            fig, ax = plt.subplots(figsize=(20, 6))
+            ax.plot(warehouse_trace, label='Warehouse Trace')
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Bandwidth')
+            ax.set_title('Warehouse Trace')
+            x_ticks = [288*day for day in range(8)]
+            x_tick_labels = [f'day{day}' for day in range(8)]
+            ax.set_xticks(x_ticks)
+            ax.set_xticklabels(x_tick_labels)
+            fig.savefig(os.path.join(
+                save_dir, f'warehouse_trace{cluster_index}.png'))
+            plt.close(fig)
+            logger.info(
+                f"warehouse_trace{cluster_index}.png saved to {os.path.join(save_dir, f'warehouse_trace{cluster_index}.png')}")
+
+    def plot_conbined_items_trace(self, items: pd.DataFrame, save_dir: str):
+        """
+        给一个items列表，绘制items累计的trace图
+        Args:
+            items: items列表
+            save_dir: 保存目录
+        """
+        os.makedirs(save_dir, exist_ok=True)
+        _, disks_trace = self.loader.load_items_and_trace(
+            DataConfig.CLUSTER_DIR_LIST)
+        warehouse_trace = np.zeros(DataConfig.EVALUATE_TIME_NUMBER)
+        for _, item in tqdm(items.iterrows(), total=len(items), desc="Processing items"):
+            cluster_index = item["cluster_index"]
+            disk_id = item["disk_ID"]
+            disk_trace = disks_trace[cluster_index][disk_id]
+            first_day_line = self.iterate_first_day(disk_trace["timestamp"])
+            circular_trace = self.get_circular_trace(
+                disk_trace, first_day_line, DataConfig.EVALUATE_TIME_NUMBER)
+            warehouse_trace += circular_trace
+        fig, ax = plt.subplots(figsize=(20, 6))
+        ax.plot(warehouse_trace, label='Warehouse Trace')
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Bandwidth')
+        ax.set_title('Warehouse Trace')
+        x_ticks = [288*day for day in range(8)]
+        x_tick_labels = [f'day{day}' for day in range(8)]
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels(x_tick_labels)
+        fig.savefig(os.path.join(save_dir, 'warehouse_trace.png'))
+        plt.close(fig)
+        logger.info(
+            f"Combined warehouse trace saved to {os.path.join(save_dir, 'warehouse_trace.png')}")
+
+    def plot_particular_cluster_disk_trace(self, cluster_index_list: List[int], save_dir: str):
+        """
+        给一个指定的集群列表，绘制该集群下所有磁盘的trace图
+        Args:
+            cluster_index_list: 集群列表
+            save_dir: 保存目录
+        """
+        items, disks_trace = self.loader.load_items_and_trace(
+            cluster_index_list)
+        for cluster_index in cluster_index_list:
+            cluster_trace = disks_trace[cluster_index]
+            cluster_save_dir = os.path.join(
+                save_dir, f"cluster{cluster_index}")
+            cluster_items = items[items["cluster_index"] == cluster_index]
+            os.makedirs(cluster_save_dir, exist_ok=True)
+            for _, item in tqdm(cluster_items.iterrows(), total=len(cluster_items), desc=f"Processing cluster {cluster_index}"):
+                disk_id = item["disk_ID"]
+                disk_trace = cluster_trace[disk_id]
+                first_day_line = self.iterate_first_day(
+                    disk_trace["timestamp"].to_list())
+                circular_trace = self.get_circular_trace(
+                    disk_trace, first_day_line, DataConfig.EVALUATE_TIME_NUMBER)
+                fig, ax = plt.subplots(figsize=(20, 6))
+                ax.plot(circular_trace, label='Disk Trace')
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Bandwidth')
+                ax.set_title('Warehouse Trace')
+                x_ticks = [288*day for day in range(8)]
+                x_tick_labels = [f'day{day}' for day in range(8)]
+                ax.set_xticks(x_ticks)
+                ax.set_xticklabels(x_tick_labels)
+                fig.savefig(os.path.join(
+                    cluster_save_dir, f'{disk_id}.png'))
+                plt.close(fig)
+
+    def plot_type_pie(self, cluster_index_list: List[int], save_dir: str):
+        items, disks_trace = self.loader.load_items_and_trace(
+            cluster_index_list)
+        items_type = items['business_type'].value_counts()
+        items_type.plot(kind='pie', autopct='%1.1f%%', figsize=(6, 6))
+        plt.savefig(os.path.join(save_dir, 'type_pie.png'))
+        logger.info(
+            f"type_pie.png saved to {os.path.join(save_dir, 'type_pie.png')}")
+
+    def plot_business_type_vector(self, business_type_vector: pd.DataFrame, save_dir: str, start_hour=8):
+        df_transposed = business_type_vector.T
+        df_transposed.index = df_transposed.index.astype(int)
+        new_order = [(start_hour + i) % 24 for i in range(24)]
+        df_reordered = df_transposed.reindex(new_order)
+        df_reordered = df_reordered.reset_index(drop=True)
+        df_reordered.index = range(24)
+        os.makedirs(save_dir, exist_ok=True)
+        plt.figure(figsize=(12, 6))
+        df_reordered.plot(ax=plt.gca(), legend=False)
+        plt.xlabel('Hour')
+        x_tick_labels = [f'{h}h' for h in new_order]
+        plt.xticks(range(24), x_tick_labels)
+        plt.grid(True)
+        plt.savefig(os.path.join(save_dir, 'business_type_vector.png'))
+        logger.info(
+            f"business_type_vector saved to {os.path.join(save_dir, 'business_type_vector.png')}")
+        plt.close()
 
 
 class DiskPlotter(BasePlotter):

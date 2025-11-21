@@ -30,15 +30,23 @@ class DiskDataProcessor:
             return None
         first_day_line = self._iterate_first_day(traces["timestamp"])
         disk_bandwidth = traces["read_BW"].values+traces["write_BW"].values
-        slice_bandwidth = disk_bandwidth[first_day_line:]
+        disk_read_bandwidth = traces["read_BW"].values
+        disk_write_bandwidth = traces["write_BW"].values
+        # slice_bandwidth = disk_bandwidth[first_day_line:]
+        slice_bandwidth = disk_bandwidth
         timestamp_num = len(slice_bandwidth)
         if timestamp_num < DataConfig.MIN_TIMESTAMP_NUM:
             return None
+        disk_read_bandwidth_avg = np.average(disk_read_bandwidth)
+        disk_write_bandwidth_avg = np.average(disk_write_bandwidth)
         disk_bandwidth_avg = np.average(slice_bandwidth)
         disk_bandwidth_peak = np.max(slice_bandwidth)
         bandwidth_zero_num = np.sum(slice_bandwidth == 0)
         bandwidth_zero_ratio = bandwidth_zero_num / timestamp_num
+
         return {
+            'avg_read_bandwidth': disk_read_bandwidth_avg,
+            'avg_write_bandwidth': disk_write_bandwidth_avg,
             'avg_bandwidth': disk_bandwidth_avg,
             'peak_bandwidth': disk_bandwidth_peak,
             'timestamp_num': timestamp_num,
@@ -78,6 +86,33 @@ class ClusterInfoInitializer:
         self.trace_root = DirConfig.TRACE_ROOT
         self.warehouse_number = WarehouseConfig.WAREHOUSE_NUMBER
         self.disk_processor = DiskDataProcessor()
+        self.column_mapping = {
+            "disk_uuid": "disk_ID",
+            "vm_alias": "vm_name",
+            "vm_cpu": "vm_cpu",
+            "vm_mem": "vm_memory",
+            "is_vip": "disk_if_VIP",
+            "ins_type": "ins_type",
+            "project_name": "project_name",
+            "buss_name": "buss_name",
+            "disk_alias": "disk_name",
+            "disk_size": "disk_capacity",
+            "add_time": "add_time",
+            "create_date_time": "create_date_time",
+            "last_op_date_time": "last_op_date_time",
+            "modify_time": "modify_time",
+            "deadline": "deadline",
+            "appid": "appid",
+            "depot_id": "depot_id",
+            "set_uuid": "set_uuid",
+            "set_volume_type": "set_volume_type",
+            "vm_os_name": "vm_os_name",
+            "vm_type": "vm_type",
+            "disk_type": "disk_type",
+            "volume_type": "volume_type",
+            "pay_mode": "pay_mode",
+            "life_state": "life_state"
+        }
 
     def _ensure_cluster_info_dir(self) -> str:
         """确保仓库目录存在"""
@@ -96,10 +131,17 @@ class ClusterInfoInitializer:
         cluster_info_dir = self._ensure_cluster_info_dir()
 
         with open(description_dir, "r") as descriptions:
-            df = pd.read_csv(descriptions, sep=',', usecols=[
-                             "disk_uuid", "vm_alias", "vm_cpu", "vm_mem", "vm_type", "is_vip", "ins_type", "project_name", "buss_name", "disk_alias", "disk_size", "disk_type", "volume_type"])
-            df.columns = ["disk_ID", "vm_name", "vm_cpu", "vm_memory", "vm_type", "disk_if_VIP", "ins_type",
-                          "project_name", "buss_name", "disk_name", "disk_capacity", "disk_type", "volume_type"]
+            raw_df = pd.read_csv(descriptions, sep=',',
+                                 usecols=self.column_mapping.keys())
+            raw_df.rename(columns=self.column_mapping, inplace=True)
+            date_columns = ["add_time", "create_date_time",
+                            "last_op_date_time", "modify_time", "deadline"]
+            for column in date_columns:
+                raw_df[column] = pd.to_datetime(
+                    raw_df[column], errors='coerce')
+            raw_df["finish_time"] = raw_df[date_columns].max(axis=1)
+            raw_df["create_time"] = raw_df[date_columns].min(axis=1)
+            df = raw_df.drop(date_columns, axis=1)
             df.replace('', np.nan, inplace=True)
             df.dropna(inplace=True, how='any', axis=0)
             if df.empty:
@@ -109,8 +151,46 @@ class ClusterInfoInitializer:
                 self._process_disk_row, axis=1, args=(cluster_index,))
             df = df.join(new_data_df)
             df.dropna(inplace=True, how='any', axis=0)
+            df = df[df['avg_bandwidth'] != 0]
+            df.sort_values(by=['appid', 'create_time'],
+                           ascending=[True, True], inplace=True)
+            df['recent_history_bandwidth_app'] = df.groupby(
+                'appid')['avg_bandwidth'].shift(1)
+            df['recent_history_bandwidth_cpu'] = df.groupby(['appid', 'vm_cpu'])[
+                'avg_bandwidth'].shift(1)
+            df['recent_history_bandwidth_memory'] = df.groupby(['appid', 'vm_memory'])[
+                'avg_bandwidth'].shift(1)
+            df['recent_history_bandwidth_cpu_memory'] = df.groupby(
+                ['appid', 'vm_cpu', 'vm_memory'])['avg_bandwidth'].shift(1)
+            app_grouped = df.groupby('appid')[
+                'avg_bandwidth']
+            app_grouped_cpu_memory = df.groupby(['appid', 'vm_cpu', 'vm_memory'])[
+                'avg_bandwidth']
+            app_grouped_cpu = df.groupby(['appid', 'vm_cpu'])[
+                'avg_bandwidth']
+            app_grouped_memory = df.groupby(['appid', 'vm_memory'])[
+                'avg_bandwidth']
+            app_group_sum = app_grouped.transform('sum')
+            app_group_count = app_grouped.transform('count')
+            app_group_sum_cpu_memory = app_grouped_cpu_memory.transform('sum')
+            app_group_count_cpu_memory = app_grouped_cpu_memory.transform(
+                'count')
+            app_group_sum_cpu = app_grouped_cpu.transform('sum')
+            app_group_count_cpu = app_grouped_cpu.transform('count')
+            app_group_sum_memory = app_grouped_memory.transform('sum')
+            app_group_count_memory = app_grouped_memory.transform('count')
+            df["avg_history_bandwidth_app"] = (
+                app_group_sum-df["avg_bandwidth"]) / (app_group_count-1)
+            df["avg_history_bandwidth_cpu_memory"] = (
+                app_group_sum_cpu_memory-df["avg_bandwidth"]) / (app_group_count_cpu_memory-1)
+            df["avg_history_bandwidth_cpu"] = (
+                app_group_sum_cpu-df["avg_bandwidth"]) / (app_group_count_cpu-1)
+            df["avg_history_bandwidth_memory"] = (
+                app_group_sum_memory-df["avg_bandwidth"]) / (app_group_count_memory-1)
             cluster_info_dir = self._ensure_cluster_info_dir()
             output_path = f"{cluster_info_dir}/cluster{cluster_index}"
+            logger.info(
+                f"cluster{cluster_index} info saved to {output_path}, {len(df)} disks processed")
             df.to_csv(output_path, index=False)
 
     def _process_disk_row(self, description: pd.Series, cluster_index: int,
@@ -140,5 +220,21 @@ class ClusterInfoInitializer:
 
     def init_cluster_info(self) -> None:
         logger.info("开始初始化磁盘数据")
-        for cluster_index in WarehouseConfig.CLUSTER_DIR_LIST:
+        for cluster_index in DataConfig.CLUSTER_DIR_LIST:
             self._process_cluster(cluster_index)
+        self.merge_business_type()
+
+    def merge_business_type(self) -> None:
+        for cluster_index in DataConfig.CLUSTER_DIR_LIST:
+            raw_cluster_info_file = os.path.join(
+                DirConfig.CLUSTER_INFO_ROOT, f"cluster{cluster_index}")
+            bussiness_info_file = os.path.join(
+                DirConfig.CLUSTER_INFO_BUSINESS_TYPE_ROOT, f"cluster{cluster_index}.csv")
+            raw_df = pd.read_csv(raw_cluster_info_file)
+            bussiness_df = pd.read_csv(bussiness_info_file)
+            bussiness_df = bussiness_df[[
+                "disk_ID", "business_type", "description"]]
+            merged_df = pd.merge(raw_df, bussiness_df,
+                                 on="disk_ID", how="left")
+            merged_df.to_csv(os.path.join(DirConfig.CLUSTER_INFO_ROOT,
+                                          f"cluster{cluster_index}"), index=False)

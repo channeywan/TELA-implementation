@@ -15,13 +15,7 @@ class Oracle(BaseAlgorithm):
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
-        logger.info(f"Loading cluster trace data for Oracle")
-        for cluster_index in DataConfig.CLUSTER_INDEX_LIST_ORACLE:
-            trace_dir = os.path.join(
-                DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
-            self.disks_trace[cluster_index] = joblib.load(trace_dir)
-        logger.info(f"Loaded cluster trace data for Oracle")
-        return self.loader.load_items(cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_ORACLE)
+        return self.test_items.copy()
 
     def select_warehouse(self, item: pd.Series) -> int:
         selected_warehouse = -1
@@ -40,8 +34,8 @@ class Oracle(BaseAlgorithm):
                                                        :, 1] + future_bandwidth[:, 1][:, np.newaxis]
         after_placed_bandwidth_util = after_placed_bandwidth / \
             self.warehouses_max[:, 1]
-
-        combined_mask = monitor_mask & capacity_mask
+        overload_mask = self.check_warehouse_overload_after_placement(item)
+        combined_mask = capacity_mask & overload_mask
         eligible_warehouses_indices = np.where(combined_mask)[0]
         if len(eligible_warehouses_indices) == 0:
             return -1

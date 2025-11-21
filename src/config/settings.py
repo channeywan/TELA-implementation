@@ -11,6 +11,7 @@ class DirConfig:
     # 数据目录
     TRACE_ROOT = "/data/Tencent_CVD/workload/0521"
     CLUSTER_INFO_ROOT = "/home/wcl/cluster_info"
+    CLUSTER_INFO_BUSINESS_TYPE_ROOT = "/home/wcl/cluster_info_business_type"
     CLUSTER_TRACE_DB_ROOT = "/home/wcl/cluster_trace_db"
     # 输出目录
     OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
@@ -22,10 +23,14 @@ class DirConfig:
     SCDA_DIR = os.path.join(PLACEMENT_DIR, "SCDA")
     TELA_DIR = os.path.join(PLACEMENT_DIR, "Tela")
     Oracle_DIR = os.path.join(PLACEMENT_DIR, "Orcale")
+    TIDAL_DIR = os.path.join(PLACEMENT_DIR, "TIDAL")
+    MODEL_DISTILL_DIR = os.path.join(PROJECT_ROOT, "model_distill")
+    BUSINESS_TYPE_DIR = os.path.join(PROJECT_ROOT, "business_type")
     # 模型保存目录
     MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
-
+    TEMPLE_DIR = os.path.join(OUTPUT_DIR, "temple")
     # 确保目录存在
+
     @classmethod
     def ensure_dirs(cls):
         """确保必要的目录存在"""
@@ -33,25 +38,33 @@ class DirConfig:
             os.makedirs(dir_path, exist_ok=True)
 
 
-sacle = 5
-
-
 class DataConfig:
     # 选择分析的集群列表
-    CLUSTER_INDEX_LIST_ODA = [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519,
-                              520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564]
-    CLUSTER_INDEX_LIST_TRAIN = [565, 566, 567,
-                                568, 569, 570, 571, 576, 577, 578, 588]
-    CLUSTER_INDEX_LIST_PREDICT = [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519,
-                                  520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564]
-    CLUSTER_INDEX_LIST_ORACLE = [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519,
-                                 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564]
+    # 400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519,
+    # 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588,
+    # 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700
+    CLUSTER_INDEX_LIST_ODA = [407, 408, 415, 436, 437, 456, 458,
+                              511, 517, 518, 520, 538, 546, 560, 564, 565, 566, 567, 577, 588]
+    CLUSTER_INDEX_LIST_TRAIN = [400, 401, 405, 406,
+                                413, 414, 452, 476, 477, 478, 486, 487, 519]
+    CLUSTER_INDEX_LIST_PREDICT = [407, 408, 415, 436, 437, 456, 458,
+                                  511, 517, 518, 520, 538, 546, 560, 564, 565, 566, 567, 577, 588]
+    CLUSTER_INDEX_LIST_ORACLE = [407, 408, 415, 436, 437, 456, 458,
+                                 511, 517, 518, 520, 538, 546, 560, 564, 565, 566, 567, 577, 588]
+    REQUEST_BUSINESS_TYPE_CLUSTER_INDEX_LIST = [400, 401, 405, 406, 413, 414, 452, 476, 477, 478, 486, 487, 519, 521, 529, 532, 547, 561, 562, 563, 568, 569, 570, 571, 576,
+                                                578, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+    SELECT_CLUSTER_INDEX_LIST = [407, 408, 415, 436, 437, 456, 458,
+                                 511, 517, 518, 520, 538, 546, 560, 564, 565, 566, 567, 577, 588]
+    CLUSTER_DIR_LIST = [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519,
+                        520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588,
+                        589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736,
+                        742, 748, 752, 753, 754, 756, 757, 771]
 
     # 评价时间数量
     EVALUATE_TIME_NUMBER = 2016
-
+    MAX_BANDWIDTH_THRESHOLD = 1e7
     # 云盘放置数量
-    DISK_NUMBER = 10080
+    DISK_NUMBER = 6048
 
     # 云盘最小生命周期（时间戳）
     MIN_TIMESTAMP_NUM = 2016
@@ -66,12 +79,14 @@ class DataConfig:
     VIOLATION_WINDOW_SIZE = 1000
 
     # 一个时间窗口内发生违反SLA的次数，超过即满载
-    MAX_VIOLATION_OCCURRENCE = 10
-
-    # 监视器为防止违反SLA的预留比例
+    MAX_VIOLATION_OCCURRENCE = 5
+    MAX_OVERLOAD_LIFETIME_OCCURRENCE = 150
     RESERVATION_RATE_FOR_MONITOR = 0.8
     WINDOWS_LENGTH_IN_ONE_DAY = [
         "5min",  "30min", "1h", "3h", "4h", "6h", "8h"]
+    TRACE_VECTOR_INTERVAL = 6
+    BUSINESS_TYPE_LIST = ["game-service", "office-system", "gov-public-service", "corp-website-portal", "ecommerce-retail", "local-service-delivery", "media-video-streaming", "media-news-portal", "finance-payment", "data-collection-delivery", "ai-machine-learning", "dev-test-env", "education-learning", "community-social-forum",
+                          "compute-simulation", "personal-use", "iot-saas-platform", "logistics-mobility", "travel-hospitality", "infra-node", "infra-coordination", "infra-database", "infra-message-queue", "infra-cloud-function", "infra-jumpbox", "infra-cache", "infra-logging-monitoring", "generic-autoscaling", "generic-unknown"]
 
 
 class ModelConfig:
@@ -96,26 +111,20 @@ class ModelConfig:
 
 
 class WarehouseConfig:
-    # 仓库最大容量 (9个仓库配置)(MB)
-    # MAX_CAPACITY = [25000, 25000, 25000, 40000,
-    #                 40000, 10000, 10000, 30000, 20000]
-    MAX_CAPACITY = [70000, 70000, 70000, 100000,
-                    50000, 100000, 70000, 150000, 70000]
-    # 仓库最大read bandwidth
-    # MAX_BANDWIDTH = [100000, 100000, 100000, 130000,
-    #                  130000, 130000, 47000, 47000, 47000]
-    MAX_BANDWIDTH = [45000000, 45000000, 45000000, 70000000,
-                     70000000, 30000000, 30000000, 50000000, 30000000]
+    capacity_mean = 150000*9/6
+    bandwidth_mean = 25000000*9/6
+
+    MAX_CAPACITY = np.array(
+        [1, 1, 1, 1, 1, 1])*capacity_mean
+    MAX_BANDWIDTH = np.array(
+        [1, 1, 0.8, 0.8, 1.2, 1.4])*bandwidth_mean
     # 仓库最大值矩阵
     WAREHOUSE_MAX = np.array(
-        [MAX_CAPACITY, MAX_BANDWIDTH]).T*sacle
+        [MAX_CAPACITY, MAX_BANDWIDTH]).T
 
     # 仓库数量
-    WAREHOUSE_NUMBER = 9
+    WAREHOUSE_NUMBER = 6
     CLUSTER_NUMBER = 10
-    CLUSTER_DIR_LIST = [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519,
-                        520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588,
-                        589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700]
 
 
 class TestConfig:

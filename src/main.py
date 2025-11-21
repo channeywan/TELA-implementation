@@ -8,11 +8,13 @@ from algorithms.ODA import ODA
 from algorithms.SCDA import SCDA
 from algorithms.TELA import TELA
 from algorithms.Oracle import Oracle
+from algorithms.TIDAL import TIDAL
 import logging
 import argparse
 import sys
+import visualization.disk_trace_dashboard as disk_trace_dashboard
 from pathlib import Path
-
+from data.request_business_type import run_request_business_type
 # 添加src目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -145,7 +147,8 @@ def main():
         'init_cluster_info', help='初始化集群信息')
     init_cluster_trace_parser = subparsers.add_parser(
         'init_cluster_trace', help='初始化集群trace数据')
-
+    request_business_type_parser = subparsers.add_parser(
+        'request_business_type', help='请求业务类型')
     # statistic 子命令
     statistic_parser = subparsers.add_parser('statistic', help='统计分析')
     statistic_parser.add_argument(
@@ -157,6 +160,10 @@ def main():
         dest='type', required=True, help='绘图内容')
     trace_parser = plot_sub_parser.add_parser('trace', help='绘制单个磁盘追踪图')
     cluster_parser = plot_sub_parser.add_parser('cluster', help='绘制集群分析图')
+    web_parser = plot_sub_parser.add_parser('web', help='绘制web界面')
+    peak_hour_parser = plot_sub_parser.add_parser(
+        'peak_hour', help='绘制峰值小时分布图')
+    peak_hour_parser.add_argument('--window-length', type=str, help='窗口长度')
     trace_parser.add_argument('--cluster', type=int, help='集群索引')
     trace_parser.add_argument('--disk-id', type=str, help='磁盘ID ')
     trace_parser.add_argument(
@@ -166,7 +173,7 @@ def main():
     # placement 子命令
     placement_parser = subparsers.add_parser('placement', help='放置策略分析')
     placement_parser.add_argument(
-        '--algorithm', choices=['odp', 'scda', 'tela', 'oracle'], required=True, help='放置方法')
+        '--algorithm', choices=['odp', 'scda', 'tela', 'oracle', 'tidal'], required=True, help='放置方法')
 
     args = parser.parse_args()
 
@@ -206,6 +213,10 @@ def main():
             else:
                 logger.error(f"未知的cluster-content: {args.content}")
                 sys.exit(1)
+        elif args.type == 'web':
+            disk_trace_dashboard.show_dashboard()
+        elif args.type == 'peak_hour':
+            logger.info(f"绘制峰值小时分布图: {args.window_length}缺失参数")
         else:
             logger.error(f"未知的plot绘图方法: {args.type}")
             sys.exit(1)
@@ -226,6 +237,10 @@ def main():
             logger.info("运行Orcale放置策略分析")
             oracle_analyzer = Oracle()
             oracle_analyzer.run()
+        elif args.algorithm == 'tidal':
+            logger.info("运行TIDAL放置策略分析")
+            tidal_analyzer = TIDAL(model_name="distill_bert")
+            tidal_analyzer.run()
         else:
             logger.error(f"未知的placement放置方法: {args.method}")
             sys.exit(1)
@@ -235,6 +250,8 @@ def main():
     elif args.mode == 'init_cluster_trace':
         initializer = DumpTrace()
         initializer.dump_trace()
+    elif args.mode == 'request_business_type':
+        run_request_business_type()
     else:
         logger.error(f"未知的运行模式: {args.mode}")
         sys.exit(1)

@@ -10,6 +10,7 @@ from data.loader import DiskDataLoader
 from data.processor import DiskDataProcessor
 from config.settings import WarehouseConfig, DataConfig, ModelConfig, DirConfig
 from visualization.plotter import TelaPlotter
+from sklearn.model_selection import train_test_split
 logger = logging.getLogger(__name__)
 
 
@@ -30,12 +31,14 @@ class BaseAlgorithm(ABC):
             (DataConfig.EVALUATE_TIME_NUMBER+DataConfig.DISK_NUMBER, self.warehouse_number, self.resource_dimension_number))
         self.warehouses_resource_allocated = np.zeros(
             (self.warehouse_number, self.resource_dimension_number))
-
         self.warehouses_cannot_use_by_monitor = np.zeros(
             self.warehouse_number)
         self.violation_time_queues = [deque(maxlen=DataConfig.MAX_VIOLATION_OCCURRENCE)
                                       for _ in range(self.warehouse_number)]
-        self.disks_trace = {}
+        self.disks_trace = self.loader.load_all_trace()
+        self.selected_items = self.loader.load_selected_items()
+        self.train_items, self.test_items = train_test_split(
+            self.selected_items, test_size=0.3, random_state=42)
 
     def run(self) -> None:
         """运行算法的主流程"""
@@ -135,6 +138,24 @@ class BaseAlgorithm(ABC):
         # 可视化调试
         return np.array(placed_warehouses), available_items
 
+    def check_warehouse_overload_after_placement(self,  item: pd.Series) -> np.ndarray:
+        """
+        检查仓库放置当前盘后的负载超限
+        """
+        disk_trace_bandwidth = self.disks_trace[item['cluster_index']
+                                                ][item['disk_ID']]
+        first_day_line = self._iterate_first_day(
+            disk_trace_bandwidth["timestamp"])
+        future_bandwidth = self._get_circular_trace(
+            disk_trace_bandwidth, item["disk_capacity"], first_day_line, DataConfig.DISK_NUMBER)
+        after_placed_bandwidth = self.warehouses_trace[:DataConfig.DISK_NUMBER,
+                                                       :, 1] + future_bandwidth[:, 1][:, np.newaxis]
+        after_placed_bandwidth_util = after_placed_bandwidth / \
+            self.warehouses_max[:, 1]
+        overload_mask = np.sum(after_placed_bandwidth_util >=
+                               1, axis=0) <= DataConfig.MAX_OVERLOAD_LIFETIME_OCCURRENCE
+        return overload_mask
+
     def update_warehouse_state(self, selected_warehouse: int, item: pd.Series) -> None:
         """
         更新仓库状态
@@ -170,23 +191,26 @@ class BaseAlgorithm(ABC):
 
     def monitor_warning_violation(self) -> None:
         """监控SLA违反"""
-        for warehouse in range(self.warehouse_number):
-            if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
-                continue
+        pass
+        # self.warehouses_cannot_use_by_monitor = np.sum(
+        #     self.warehouses_trace[:DataConfig.DISK_NUMBER, :, 1] > self.warehouses_max[:, 1], axis=0) >= DataConfig.MAX_OVERLOAD_LIFETIME_OCCURRENCE
+        # for warehouse in range(self.warehouse_number):
+        #     if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
+        #         continue
 
-            if np.any(
-                self.warehouses_trace[self.current_time][warehouse] >
-                self.warehouses_max[warehouse]
-            ):
-                self.violation_time_queues[warehouse].append(
-                    self.current_time)
-                while len(self.violation_time_queues[warehouse]) >= 2 and self.violation_time_queues[warehouse][-1] - self.violation_time_queues[warehouse][0] >= DataConfig.VIOLATION_WINDOW_SIZE:
-                    self.violation_time_queues[warehouse].popleft()
-                if len(self.violation_time_queues[warehouse]) >= DataConfig.MAX_VIOLATION_OCCURRENCE:
-                    self.warehouses_cannot_use_by_monitor[warehouse] = 1
+        #     if np.any(
+        #         self.warehouses_trace[self.current_time][warehouse] >
+        #         self.warehouses_max[warehouse]
+        #     ):
+        #         self.violation_time_queues[warehouse].append(
+        #             self.current_time)
+        #         while len(self.violation_time_queues[warehouse]) >= 2 and self.violation_time_queues[warehouse][-1] - self.violation_time_queues[warehouse][0] >= DataConfig.VIOLATION_WINDOW_SIZE:
+        #             self.violation_time_queues[warehouse].popleft()
+        #         if len(self.violation_time_queues[warehouse]) >= DataConfig.MAX_VIOLATION_OCCURRENCE:
+        #             self.warehouses_cannot_use_by_monitor[warehouse] = 1
 
-                self.violation_time_queues[warehouse].append(
-                    self.current_time)
+        #         self.violation_time_queues[warehouse].append(
+        #             self.current_time)
 
     def evaluate_warehouses(self):
         """
@@ -204,18 +228,18 @@ class BaseAlgorithm(ABC):
         all_violation_durations = [[]
                                    for _ in range(self.warehouse_number)]
         utilize_trace = evaluate_warehouses_trace/self.warehouses_max
-        utilize_trace = np.where(utilize_trace > 1, 1, utilize_trace)
+        # utilize_trace = np.where(utilize_trace > 1, 1, utilize_trace)
         self.plotter.plot_warehouse_trace(
             utilize_trace[:, :, 1], self.output_dir, f"{self.algorithm_name}_warehouse_trace")
         utilize_mean_on_time = np.mean(utilize_trace, axis=0)
         violation_count_warehouse = (
-            utilize_trace == 1).any(axis=2).sum(axis=0)
+            utilize_trace >= 1).any(axis=2).sum(axis=0)
         warehouse_load_std = np.mean(np.std(utilize_trace, axis=1), axis=0)
         warehouse_load_mean = np.mean(np.mean(utilize_trace, axis=1), axis=0)
         warehouse_load_imb = np.where(
             warehouse_load_mean == 0, 0, warehouse_load_std/warehouse_load_mean)
         for i in range(self.warehouse_number):
-            series = (utilize_trace == 1).any(axis=2)[:, i]
+            series = (utilize_trace >= 1).any(axis=2)[:, i]
             padded_series = np.concatenate(([False], series, [False]))
             int_series = padded_series.astype(int)
             diff_series = np.diff(int_series)
@@ -277,10 +301,6 @@ class BaseAlgorithm(ABC):
                 f.write(f"warehouse{warehouse}:" + ",".join(map(str,
                         utilize_mean_on_time[warehouse])) + "\n")
             f.write(
-                f"-----------------------utilize_mean----------------------------------\n")
-            f.write(f"average_utilize_mean:" +
-                    ','.join(map(str, np.mean(utilize_mean_on_time, axis=0))) + "\n")
-            f.write(
                 f"-----------------------warehouse_load------------------------------\n")
             warehouse_load = utilize_mean_on_time*self.warehouses_max
             for warehouse in range(self.warehouse_number):
@@ -308,10 +328,14 @@ class BaseAlgorithm(ABC):
             f.write(
                 "capacity:"+str(warehouse_load_imb[0]) + "\nbandwidth:"+str(warehouse_load_imb[1]) + "\n")
             f.write(
-                "--------------------------imbalance_on_timewindow-------------------------\n")
+                "--------------------------imbalance_across_timewindow-------------------------\n")
             for windows_length_in_one_day in DataConfig.WINDOWS_LENGTH_IN_ONE_DAY:
                 f.write(f"{windows_length_in_one_day}:" +
                         str(imbalance_on_timewindow[windows_length_in_one_day]) + "\n")
+            f.write(
+                f"-----------------------utilize_mean----------------------------------\n")
+            f.write(f"average_utilize_mean:" +
+                    ','.join(map(str, np.mean(utilize_mean_on_time, axis=0))) + "\n")
         logger.info(f"结果已写入 {result_dir}")
 
     def encode_item(self, items: pd.DataFrame) -> pd.DataFrame:

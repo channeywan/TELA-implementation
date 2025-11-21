@@ -25,28 +25,22 @@ class SCDA(BaseAlgorithm):
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
-        items = self.loader.load_items(
-            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_PREDICT)
-        for cluster_index in DataConfig.CLUSTER_INDEX_LIST_PREDICT:
-            trace_dir = os.path.join(
-                DirConfig.CLUSTER_TRACE_DB_ROOT, f"cluster_{cluster_index}_trace.pkl")
-            self.disks_trace[cluster_index] = joblib.load(trace_dir)
-        return self.predict(items)
+        return self.predict(self.test_items.copy())
 
     def train_model(self):
         """训练模型"""
-        items = self.loader.load_items(
-            cluster_index_list=DataConfig.CLUSTER_INDEX_LIST_TRAIN)
+        items = self.train_items.copy()
         model_cluster, labels_cluster = self.train_Kmeans(items)
         model_classify = self.train_DecisionTree(items, labels_cluster)
 
-        os.makedirs(os.path.join(DirConfig.MODEL_DIR, "SCDA"), exist_ok=True)
+        os.makedirs(os.path.join(DirConfig.MODEL_DIR,
+                    self.algorithm_name), exist_ok=True)
         model_cluster_dir = os.path.join(
-            DirConfig.MODEL_DIR, "SCDA", "model_cluster.pkl")
+            DirConfig.MODEL_DIR, self.algorithm_name, "model_cluster.pkl")
         model_classify_dir = os.path.join(
-            DirConfig.MODEL_DIR, "SCDA", "model_classify.pkl")
+            DirConfig.MODEL_DIR, self.algorithm_name, "model_classify.pkl")
         scaler_dir = os.path.join(
-            DirConfig.MODEL_DIR, "SCDA", "scaler.pkl")
+            DirConfig.MODEL_DIR, self.algorithm_name, "scaler.pkl")
 
         with open(model_cluster_dir, "wb") as f:
             pickle.dump(model_cluster, f)
@@ -106,7 +100,7 @@ class SCDA(BaseAlgorithm):
 
         model_classify = GridSearchCV(
             estimator=DecisionTreeClassifier(criterion="gini"),
-            param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=-1, verbose=0
+            param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=1, verbose=0
         )
         model_classify.fit(train_data_encoded, labels_cluster)
 
@@ -143,44 +137,50 @@ class SCDA(BaseAlgorithm):
 
     def select_warehouse(self, item: pd.Series) -> int:
         """选择仓库（基于曼哈顿距离的负载均衡策略）"""
-        selected_warehouse = -1
-        min_manhatten_distance = float('inf')
-
         disk_capacity = item["disk_capacity"]
         disk_pre_bandwidth = item["pre_bandwidth"]
+        overload_mask = self.check_warehouse_overload_after_placement(item)
+        capacity_mask = (self.warehouses_resource_allocated[:, 0]+item["disk_capacity"] <=
+                         self.warehouses_max[:, 0])
+        while True:
+            monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
+            combined_mask = capacity_mask & monitor_mask
+            eligible_warehouses_indices = np.where(combined_mask)[0]
+            min_manhatten_distance = float('inf')
+            selected_warehouse = -1
+            if len(eligible_warehouses_indices) == 0:
+                return -1
+            for warehouse in eligible_warehouses_indices:
+                # 计算放置后的利用率
+                current_capacity_utilization = ((self.warehouses_resource_allocated[warehouse][0] + disk_capacity) /
+                                                WarehouseConfig.WAREHOUSE_MAX[warehouse, 0])
+                current_bandwidth_utilization = ((self.warehouses_resource_allocated[warehouse][1] + disk_pre_bandwidth) /
+                                                 WarehouseConfig.WAREHOUSE_MAX[warehouse, 1])
+                current_utilization_center = (
+                    (current_capacity_utilization + current_bandwidth_utilization) / 2)
+                current_manhatten_distance = (abs(current_capacity_utilization - current_utilization_center) +
+                                              abs(current_bandwidth_utilization - current_utilization_center))
 
-        for warehouse in range(WarehouseConfig.WAREHOUSE_NUMBER):
-            if self.warehouses_cannot_use_by_monitor[warehouse] == 1:
+                if current_manhatten_distance < min_manhatten_distance:
+                    min_manhatten_distance = current_manhatten_distance
+                    selected_warehouse = warehouse
+            if not overload_mask[selected_warehouse]:
+                self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
                 continue
-
-            if self.warehouses_resource_allocated[warehouse][0] + item["disk_capacity"] > WarehouseConfig.WAREHOUSE_MAX[warehouse, 0]:
-                continue
-
-            # 计算放置后的利用率
-            current_capacity_utilization = ((self.warehouses_resource_allocated[warehouse][0] + disk_capacity) /
-                                            WarehouseConfig.WAREHOUSE_MAX[warehouse, 0])
-            current_bandwidth_utilization = ((self.warehouses_resource_allocated[warehouse][1] + disk_pre_bandwidth) /
-                                             WarehouseConfig.WAREHOUSE_MAX[warehouse, 1])
-
-            # 计算利用率中心点和曼哈顿距离
-            current_utilization_center = (
-                (current_capacity_utilization + current_bandwidth_utilization) / 2)
-            current_manhatten_distance = (abs(current_capacity_utilization - current_utilization_center) +
-                                          abs(current_bandwidth_utilization - current_utilization_center))
-
-            if current_manhatten_distance < min_manhatten_distance:
-                min_manhatten_distance = current_manhatten_distance
-                selected_warehouse = warehouse
-
+            else:
+                break
         return selected_warehouse
 
-    def load_model(self) -> Tuple[KMeans, DecisionTreeClassifier]:
+    def load_model(self, train_models: bool = True) -> Tuple[KMeans, DecisionTreeClassifier]:
+        if train_models:
+            self.train_model()
+            return self.load_model(train_models=False)
         model_cluster_dir = os.path.join(
-            DirConfig.MODEL_DIR, "SCDA", "model_cluster.pkl")
+            DirConfig.MODEL_DIR, self.algorithm_name, "model_cluster.pkl")
         model_classify_dir = os.path.join(
-            DirConfig.MODEL_DIR, "SCDA", "model_classify.pkl")
+            DirConfig.MODEL_DIR, self.algorithm_name, "model_classify.pkl")
         scaler_dir = os.path.join(
-            DirConfig.MODEL_DIR, "SCDA", "scaler.pkl")
+            DirConfig.MODEL_DIR, self.algorithm_name, "scaler.pkl")
         if not os.path.exists(model_cluster_dir) or not os.path.exists(model_classify_dir) or not os.path.exists(scaler_dir):
             self.train_model()
 
