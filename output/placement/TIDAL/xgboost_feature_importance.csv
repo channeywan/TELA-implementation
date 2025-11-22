@@ -1,9 +1,0 @@
-,Feature,Importance
-5,disk_type,0.28885156
-0,disk_capacity,0.19726521
-1,vm_cpu,0.12953895
-6,volume_type,0.10699138
-7,business_type,0.101071656
-2,vm_memory,0.09266733
-3,disk_if_VIP,0.0836139
-4,ins_type,0.0

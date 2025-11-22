@@ -21,7 +21,7 @@ class DiskDataLoader:
         return all_items, disks_trace
 
     def load_selected_items(self):
-        return pd.read_csv(os.path.join(DirConfig.CLUSTER_INFO_ROOT, "selected_items_with_business_type.csv"))
+        return pd.read_csv(os.path.join(DirConfig.CLUSTER_INFO_ROOT, "selected_disks_all_info.csv"))
 
     def load_all_trace(self):
         trace_dir = os.path.join(

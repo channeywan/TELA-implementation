@@ -17,6 +17,7 @@ from sklearn.metrics import (
     explained_variance_score,
     r2_score
 )
+from scipy.stats import loguniform, randint, uniform
 import contextlib
 import joblib
 from tqdm import tqdm
@@ -26,7 +27,7 @@ import lightgbm as lgb
 import seaborn as sns
 import os
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV, ParameterGrid
+from sklearn.model_selection import train_test_split, GridSearchCV, ParameterGrid, RandomizedSearchCV
 import pickle
 import numpy as np
 from cluster_info_init.cluster_info_initializer import ClusterInfoInitializer
@@ -85,6 +86,71 @@ def plot_prediction_comparison(real_data, predicted_data, model_name, axis):
     plt.close()
 
 
+def search_catboost_params(train_items, test_items, features):
+    cat_type_list = ["disk_if_VIP",
+                     "disk_type", "volume_type", "business_type"]
+    X_train = train_items[features + cat_type_list].copy()
+    for field in cat_type_list:
+        X_train[field] = X_train[field].astype(str)
+    y_train = train_items["avg_bandwidth"]
+    X_test = test_items[features + cat_type_list].copy()
+    for field in cat_type_list:
+        X_test[field] = X_test[field].astype(str)
+    y_test = test_items["avg_bandwidth"]
+    params_distributions = {
+        'learning_rate': loguniform(0.01, 0.2),
+        'depth': randint(4, 15),
+        'l2_leaf_reg': randint(1, 12),
+        'loss_function': ['RMSE', 'MAE', 'Huber:delta=1.0'],
+        'iterations': randint(1000, 10000),
+        'one_hot_max_size': [2, 10, 20, 50],
+        'random_strength': [1, 2, 5, 10],
+        'subsample': uniform(0.6, 0.35),
+        'bootstrap_type': ['Bernoulli', 'MVS']
+    }
+    cb = CatBoostRegressor(
+        cat_features=cat_type_list,
+        verbose=0,
+        thread_count=12,
+        eval_metric='RMSE'
+    )
+    model_regressor = RandomizedSearchCV(
+        estimator=cb,
+        param_distributions=params_distributions,
+        n_iter=1000,
+        cv=5,
+        scoring='r2',
+        n_jobs=8,
+        verbose=1,
+        random_state=42
+    )
+    model_regressor.fit(X_train, y_train)
+    best_catboost = model_regressor.best_estimator_
+    feature_names = X_train.columns.tolist()
+    importances = best_catboost.feature_importances_
+    feature_imp_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Importance': importances
+    }).sort_values(by='Importance', ascending=False)
+    logger.info(feature_imp_df)
+    logger.info(f"best_params: {model_regressor.best_params_}")
+    logger.info(f"best_score: {model_regressor.best_score_:.6f}")
+    best_params = model_regressor.best_params_
+    best_catboost = CatBoostRegressor(
+        cat_features=cat_type_list,
+        verbose=0,
+        thread_count=100,
+        **best_params,
+        eval_metric='RMSE'
+    )
+    best_catboost.fit(X_train, y_train, eval_set=(X_test, y_test))
+    results = best_catboost.evals_result_
+    y_pred = best_catboost.predict(X_test)
+    logger.info(f"y_pred_min: {np.min(y_pred)}")
+    y_pred = np.maximum(y_pred, 0)
+    return y_test, y_pred, results
+
+
 def train_catboost(train_items, test_items, features):
     cat_type_list = ["disk_if_VIP",
                      "disk_type", "volume_type", "business_type"]
@@ -125,24 +191,24 @@ def train_lightgbm(train_items, test_items, features):
                      "disk_type", "volume_type", "business_type"]
     cat_dtypes_dict = {}
     X_train = train_items[features + cat_type_list].copy()
-    params_grid = {'learning_rate': [0.01, 0.05, 0.1, 0.15, 0.2],
-                   'num_leaves': [31, 63, 95],
-                   'max_depth': [-1, 8, 10, 15, 20],
-                   'min_child_samples': [20, 50, 80, 100],
-                   'subsample': [0.6, 0.7, 0.8, 0.9],
-                   'objective': ['regression', 'regression_l1', 'huber', 'tweedie', 'poisson']}
     for field in cat_type_list:
         X_train[field] = X_train[field].astype("category")
         cat_dtypes_dict[field] = X_train[field].dtype
-    y_train = (train_items["avg_bandwidth"])
+    y_train = train_items["avg_bandwidth"]
     X_test = test_items[features + cat_type_list].copy()
-    y_test = (test_items["avg_bandwidth"])
+    y_test = test_items["avg_bandwidth"]
     for field in cat_type_list:
         if field in cat_dtypes_dict:
             target_type = cat_dtypes_dict[field]
             X_test[field] = X_test[field].astype(target_type)
         else:
             X_test[field] = X_test[field].astype("category")
+    params_grid = {'learning_rate': [0.01, 0.05, 0.1, 0.15, 0.2],
+                   'num_leaves': [31, 63, 95],
+                   'max_depth': [-1, 8, 10, 15, 20],
+                   'min_child_samples': [20, 50, 80, 100],
+                   'subsample': [0.6, 0.7, 0.8, 0.9],
+                   'objective': ['regression', 'regression_l1', 'huber', 'tweedie', 'poisson']}
     lgbm = lgb.LGBMRegressor(
         n_estimators=3000,
         metric='rmse',
@@ -171,37 +237,32 @@ def train_lightgbm(train_items, test_items, features):
 
     # GridSearchCV 训练的模型没有 evals_result_，需要用最佳参数重新训练以获取训练历史
     best_params = model_regressor.best_params_
-    best_lgbm_with_history = lgb.LGBMRegressor(
+    best_lgbm = lgb.LGBMRegressor(
         metric='rmse',
         random_state=42,
         n_jobs=24,
         verbose=-1,
         **best_params
     )
-    best_lgbm_with_history.fit(
+    best_lgbm.fit(
         X_train, y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
         callbacks=[lgb.early_stopping(
             stopping_rounds=50), lgb.log_evaluation(period=200)]
     )
-    results = best_lgbm_with_history.evals_result_
-    y_pred = best_lgbm_with_history.predict(X_test)
+    results = best_lgbm.evals_result_
+    y_pred = best_lgbm.predict(X_test)
     logger.info(f"y_pred_min: {np.min(y_pred)}")
     y_pred = np.maximum(y_pred, 0)
     return y_test, y_pred, results
 
 
-def train_lightgbm2(train_items, test_items, features):
+def search_lightgbm_params(train_items, test_items, features):
     cat_type_list = ["disk_if_VIP",
                      "disk_type", "volume_type", "business_type"]
     cat_dtypes_dict = {}
     X_train = train_items[features + cat_type_list].copy()
-    params_grid = {'learning_rate': [0.01, 0.1],
-                   'num_leaves': [31, 63],
-                   'max_depth': [-1, 8, 20],
-                   'min_child_samples': [20, 50, 100],
-                   'subsample': [0.6,  0.9],
-                   'objective': ['regression', 'regression_l1']}
+
     for field in cat_type_list:
         X_train[field] = X_train[field].astype("category")
         cat_dtypes_dict[field] = X_train[field].dtype
@@ -214,22 +275,21 @@ def train_lightgbm2(train_items, test_items, features):
             X_test[field] = X_test[field].astype(target_type)
         else:
             X_test[field] = X_test[field].astype("category")
+    params_distributions = {
+        'learning_rate': loguniform(0.001, 0.2),
+        'num_leaves': randint(20, 150),
+        'max_depth': randint(-1, 20),
+        'min_child_samples': randint(20, 200),
+        'subsample': uniform(0.6,  0.35),
+        'subsample_freq': randint(1, 10),
+        'objective': ['regression', 'regression_l1', 'huber'],
+        'n_estimators': randint(100, 3000)
+    }
     lgbm = lgb.LGBMRegressor(
-        n_estimators=3000,
-        metric='rmse',
-        random_state=42,
-        n_jobs=24,
-        verbose=-1
-    )
-    model_regressor = GridSearchCV(estimator=lgbm,
-                                   param_grid=params_grid,
-                                   cv=3,
-                                   scoring='neg_root_mean_squared_error',
-                                   n_jobs=4,
-                                   verbose=1
-                                   )
-    with tqdm_joblib(tqdm(desc="Grid Search Progress", total=len(ParameterGrid(params_grid))*3)) as progress_bar:
-        model_regressor.fit(X_train, y_train)
+        metric='rmse', random_state=42, n_jobs=8, verbose=-1)
+    model_regressor = RandomizedSearchCV(estimator=lgbm, param_distributions=params_distributions,
+                                         n_iter=1000, cv=5, scoring='r2', n_jobs=12, verbose=1)
+    model_regressor.fit(X_train, y_train)
     best_lgbm = model_regressor.best_estimator_
     feature_names = X_train.columns.tolist()
     importances = best_lgbm.feature_importances_
@@ -240,72 +300,215 @@ def train_lightgbm2(train_items, test_items, features):
     logger.info(feature_imp_df)
     logger.info(f"best_params: {model_regressor.best_params_}")
     logger.info(f"best_score: {model_regressor.best_score_:.6f}")
-
-    # GridSearchCV 训练的模型没有 evals_result_，需要用最佳参数重新训练以获取训练历史
-    best_params = model_regressor.best_params_
-    best_lgbm_with_history = lgb.LGBMRegressor(
-        metric='rmse',
-        random_state=4,
-        n_jobs=48,
-        verbose=-1,
-        **best_params
-    )
-    best_lgbm_with_history.fit(
+    best_params = model_regressor.best_params_.copy()
+    best_lgbm = lgb.LGBMRegressor(
+        metric='rmse', random_state=4, n_jobs=100, verbose=-1, **best_params)
+    best_lgbm.fit(
         X_train, y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
         callbacks=[lgb.early_stopping(
-            stopping_rounds=50), lgb.log_evaluation(period=200)]
+            stopping_rounds=50), lgb.log_evaluation(period=200)],
+        categorical_feature=cat_type_list
     )
-    results = best_lgbm_with_history.evals_result_
-    y_pred = best_lgbm_with_history.predict(X_test)
+    results = best_lgbm.evals_result_
+    y_pred = best_lgbm.predict(X_test)
     logger.info(f"y_pred_min: {np.min(y_pred)}")
     y_pred = np.maximum(y_pred, 0)
     return y_test, y_pred, results
 
 
-def train_xgboost(train_items, test_items, features):
-    cat_type_list = ["disk_if_VIP",
-                     "disk_type", "volume_type", "business_type"]
+def search_xgboost_params_r2(train_items, test_items, features):
+    import xgboost as xgb
+    from scipy.stats import randint, uniform, loguniform
+
+    # 1. 数据预处理：类别特征转换为 category 类型
+    cat_type_list = ["disk_if_VIP", "disk_type",
+                     "volume_type", "business_type"]
     cat_dtypes_dict = {}
+
     X_train = train_items[features + cat_type_list].copy()
     for field in cat_type_list:
         X_train[field] = X_train[field].astype("category")
         cat_dtypes_dict[field] = X_train[field].dtype
-    y_train = np.log1p(train_items["avg_bandwidth"])
+    y_train = train_items["avg_bandwidth"]
+
     X_test = test_items[features + cat_type_list].copy()
+    y_test = test_items["avg_bandwidth"]
+
+    # 确保测试集类别类型与训练集一致（防止类别编码错误）
     for field in cat_type_list:
         if field in cat_dtypes_dict:
             target_type = cat_dtypes_dict[field]
             X_test[field] = X_test[field].astype(target_type)
         else:
             X_test[field] = X_test[field].astype("category")
-    y_test = test_items["avg_bandwidth"]
-    model_regressor = XGBRegressor(
-        enable_categorical=True,
-        n_jobs=80,
-        verbosity=0,
-        colsample_bytree=0.7802176541240374,
-        learning_rate=0.01,
-        max_depth=15,
-        min_child_weight=13,
-        n_estimators=2000,
-        objective='reg:squarederror',
-        reg_alpha=0.6717006844058567,
-        reg_lambda=0.6181282404578958,
-        subsample=0.7432650872131362,
+
+    # 2. 参数分布设置
+    params_distributions = {
+        'learning_rate': loguniform(0.001, 0.2),
+        'max_depth': randint(3, 15),         # 树深
+        'min_child_weight': randint(1, 100),  # 类似 LGBM 的 min_child_samples
+        'subsample': uniform(0.6, 0.35),     # 样本采样
+        'colsample_bytree': uniform(0.6, 0.35),  # 列采样
+
+        # 目标函数选择：
+        # reg:squarederror (MSE), reg:absoluteerror (MAE)
+        # reg:pseudohubererror (适合有异常值的带宽数据)
+        # reg:tweedie (适合非负、长尾分布)
+        'objective': ['reg:squarederror', 'reg:absoluteerror', 'reg:pseudohubererror', 'reg:tweedie'],
+
+        # 正则化
+        'reg_alpha': loguniform(1e-3, 10.0),  # L1
+        'reg_lambda': loguniform(1e-3, 10.0),  # L2
+
+        # Tweedie 分布的方差幂 (仅当 objective='reg:tweedie' 时生效)
+        'tweedie_variance_power': uniform(1.1, 0.8),
+
+        'n_estimators': randint(100, 3000)
+    }
+
+    # 3. 初始化搜索用的估算器
+    # tree_method='hist' 和 enable_categorical=True 是启用原生类别支持的关键
+    xgb_reg = xgb.XGBRegressor(
         tree_method='hist',
-        tweedie_variance_power=1.1908460737597033
+        enable_categorical=True,
+        n_jobs=18,
+        random_state=42,
+        eval_metric='rmse'  # 默认监控指标
     )
+
+    # 4. 随机搜索 (Scoring 使用 R2)
+    model_regressor = RandomizedSearchCV(
+        estimator=xgb_reg,
+        param_distributions=params_distributions,
+        n_iter=2,
+        cv=5,
+        scoring='r2',  # 选出 R2 最高的参数组合
+        n_jobs=5,
+        verbose=1
+    )
+
     model_regressor.fit(X_train, y_train)
+
+    # 5. 获取最佳模型和特征重要性
+    best_xgb_search = model_regressor.best_estimator_
     feature_names = X_train.columns.tolist()
-    importances = model_regressor.feature_importances_
+    importances = best_xgb_search.feature_importances_
     feature_imp_df = pd.DataFrame({
         'Feature': feature_names,
         'Importance': importances
     }).sort_values(by='Importance', ascending=False)
+
     logger.info(feature_imp_df)
-    y_pred = model_regressor.predict(X_test)
-    return y_test, np.expm1(y_pred)
+    logger.info(f"best_params: {model_regressor.best_params_}")
+    logger.info(f"best_score: {model_regressor.best_score_:.6f}")
+
+    # 6. 最终训练 (使用 Early Stopping)
+    best_params = model_regressor.best_params_
+
+    # 重新初始化，覆盖 n_estimators 为大数值
+    best_xgb = xgb.XGBRegressor(
+        tree_method='hist',
+        enable_categorical=True,
+        n_jobs=100,
+        random_state=42,
+        **best_params,
+        n_estimators=10000
+    )
+
+    # 在 fit 中传入早停参数
+    best_xgb.fit(
+        X_train, y_train,
+        eval_set=[(X_train, y_train), (X_test, y_test)],
+        eval_metric='rmse',  # 即使搜索用 R2，早停依然建议用 RMSE
+        early_stopping_rounds=50,
+        verbose=200
+    )
+
+    # 7. 获取结果
+    results = best_xgb.evals_result()
+    y_pred = best_xgb.predict(X_test)
+
+    logger.info(f"y_pred_min: {np.min(y_pred)}")
+    y_pred = np.maximum(y_pred, 0)
+
+    return y_test, y_pred, results
+
+
+def search_xgboost_params(train_items, test_items, features):
+    cat_type_list = ["disk_if_VIP",
+                     "disk_type", "volume_type", "business_type"]
+    cat_dtypes_dict = {}
+    X_train = train_items[features + cat_type_list].copy()
+
+    for field in cat_type_list:
+        X_train[field] = X_train[field].astype("category")
+        cat_dtypes_dict[field] = X_train[field].dtype
+    y_train = (train_items["avg_bandwidth"])
+    X_test = test_items[features + cat_type_list].copy()
+    y_test = (test_items["avg_bandwidth"])
+    for field in cat_type_list:
+        if field in cat_dtypes_dict:
+            target_type = cat_dtypes_dict[field]
+            X_test[field] = X_test[field].astype(target_type)
+        else:
+            X_test[field] = X_test[field].astype("category")
+    params_distributions = {
+        'learning_rate': loguniform(0.001, 0.2),
+        'max_depth': randint(3, 15),
+        'min_child_weight': randint(1, 100),
+        'subsample': uniform(0.6, 0.35),
+        'colsample_bytree': uniform(0.6, 0.35),
+        'objective': ['reg:squarederror', 'reg:absoluteerror', 'reg:pseudohubererror', 'reg:tweedie'],
+        'reg_alpha': loguniform(1e-3, 10.0),
+        'reg_lambda': loguniform(1e-3, 10.0),
+        'tweedie_variance_power': uniform(1.1, 0.8),
+        'n_estimators': randint(100, 3000)
+    }
+    xgb_reg = XGBRegressor(
+        tree_method='hist',
+        enable_categorical=True,
+        n_jobs=8,
+        random_state=42,
+        eval_metric='rmse'  # 默认监控指标
+    )
+    model_regressor = RandomizedSearchCV(estimator=xgb_reg, param_distributions=params_distributions,
+                                         n_iter=1000, cv=5, scoring='r2', n_jobs=12, verbose=1)
+    best_xgb_search = model_regressor.best_estimator_
+    feature_names = X_train.columns.tolist()
+    importances = best_xgb_search.feature_importances_
+    feature_imp_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Importance': importances
+    }).sort_values(by='Importance', ascending=False)
+
+    logger.info(feature_imp_df)
+    logger.info(f"best_params: {model_regressor.best_params_}")
+    logger.info(f"best_score: {model_regressor.best_score_:.6f}")
+
+    best_params = model_regressor.best_params_
+    best_xgb = XGBRegressor(
+        tree_method='hist',
+        enable_categorical=True,
+        n_jobs=100,
+        random_state=42,
+        **best_params,
+        n_estimators=10000
+    )
+
+    best_xgb.fit(
+        X_train, y_train,
+        eval_set=[(X_train, y_train), (X_test, y_test)],
+        eval_metric='rmse',
+        early_stopping_rounds=50,
+        verbose=200
+    )
+
+    results = best_xgb.evals_result()
+    y_pred = best_xgb.predict(X_test)
+    logger.info(f"y_pred_min: {np.min(y_pred)}")
+    y_pred = np.maximum(y_pred, 0)
+    return y_test, y_pred, results
 
 
 def evaluate_models(y_test, y_pred, model_name):
@@ -410,7 +613,7 @@ def plot_loss_curve(results, model_name):
     plt.close()
 
 
-def train_models(log, history, history_transform, model_name):
+def train_models(log, history, model_name, history_transform=False):
     cluster_index_list = DataConfig.CLUSTER_DIR_LIST
     logger.info(f"cluster_index_list: {cluster_index_list}")
     loader = DiskDataLoader()
@@ -436,13 +639,14 @@ def train_models(log, history, history_transform, model_name):
     else:
         features = ["disk_capacity", "vm_cpu", "vm_memory"]
     if model_name == "CatBoost":
-        y_test, y_pred, results = train_catboost(
+        y_test, y_pred, results = search_catboost_params(
             train_items, test_items, features)
     elif model_name == "LightGBM":
-        y_test, y_pred, results = train_lightgbm2(
+        y_test, y_pred, results = search_lightgbm_params(
             train_items, test_items, features)
     elif model_name == "XGBoost":
-        y_test, y_pred = train_xgboost(train_items, test_items, features)
+        y_test, y_pred = search_xgboost_params(
+            train_items, test_items, features)
     logger.info(
         f"log: {log}, history: {history}, history_transform: {history_transform}, model_name: {model_name}")
     if log:
@@ -453,15 +657,7 @@ def train_models(log, history, history_transform, model_name):
 
 
 if __name__ == "__main__":
-    # train_models(log=False, history=False,
-    #              history_transform=False, model_name="CatBoost")
-    # train_models(log=True, history=False,
-    #              history_transform=False, model_name="CatBoost")
-    # train_models(log=True, history=True,
-    #              history_transform=False, model_name="CatBoost")
-    # train_models(log=False, history=True,
-    #              history_transform=False, model_name="CatBoost")
-    # train_models(log=True, history=True,
-    #              history_transform=True, model_name="CatBoost")
-    train_models(log=False, history=True,
-                 history_transform=True, model_name="CatBoost")
+    for log in [False, True]:
+        for history in [False, True]:
+            for model_name in ["CatBoost", "LightGBM", "XGBoost"]:
+                train_models(log, history,  model_name)
