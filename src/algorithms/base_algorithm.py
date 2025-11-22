@@ -52,10 +52,10 @@ class BaseAlgorithm(ABC):
             _, _ = self.place_item(items)
 
             # 评估结果
-            utilize_mean_on_time, violation_count_warehouse, max_violation_duration, all_violation_durations, warehouse_load_imb, imbalance_on_timewindow = self.evaluate_warehouses()
+            utilize_mean_across_time, violation_count_warehouse, max_violation_duration, all_violation_durations, load_imbalance_across_warehouses, imbalance_on_timewindow = self.evaluate_warehouses()
 
-        self.write_result(utilize_mean_on_time, violation_count_warehouse, max_violation_duration,
-                          all_violation_durations, warehouse_load_imb, imbalance_on_timewindow)
+        self.write_result(utilize_mean_across_time, violation_count_warehouse, max_violation_duration,
+                          all_violation_durations, load_imbalance_across_warehouses, imbalance_on_timewindow)
 
     @abstractmethod
     def load_and_preprocess_items(self):
@@ -228,18 +228,21 @@ class BaseAlgorithm(ABC):
         all_violation_durations = [[]
                                    for _ in range(self.warehouse_number)]
         utilize_trace = evaluate_warehouses_trace/self.warehouses_max
+        bandwidth_utilize_trace = utilize_trace[:, :, 1]
         # utilize_trace = np.where(utilize_trace > 1, 1, utilize_trace)
         self.plotter.plot_warehouse_trace(
-            utilize_trace[:, :, 1], self.output_dir, f"{self.algorithm_name}_warehouse_trace")
-        utilize_mean_on_time = np.mean(utilize_trace, axis=0)
+            bandwidth_utilize_trace, self.output_dir, f"{self.algorithm_name}_warehouse_trace")
+        utilize_mean_across_time = np.mean(utilize_trace, axis=0)
         violation_count_warehouse = (
-            utilize_trace >= 1).any(axis=2).sum(axis=0)
-        warehouse_load_std = np.mean(np.std(utilize_trace, axis=1), axis=0)
-        warehouse_load_mean = np.mean(np.mean(utilize_trace, axis=1), axis=0)
-        warehouse_load_imb = np.where(
-            warehouse_load_mean == 0, 0, warehouse_load_std/warehouse_load_mean)
+            bandwidth_utilize_trace >= 1).sum(axis=0)
+        load_std_across_warehouses = np.mean(
+            np.std(utilize_trace, axis=1), axis=0)
+        load_mean_across_warehouses = np.mean(
+            np.mean(utilize_trace, axis=1), axis=0)
+        load_imbalance_across_warehouses = np.where(
+            load_mean_across_warehouses == 0, 0, load_std_across_warehouses/load_mean_across_warehouses)
         for i in range(self.warehouse_number):
-            series = (utilize_trace >= 1).any(axis=2)[:, i]
+            series = (bandwidth_utilize_trace >= 1)[:, i]
             padded_series = np.concatenate(([False], series, [False]))
             int_series = padded_series.astype(int)
             diff_series = np.diff(int_series)
@@ -253,8 +256,8 @@ class BaseAlgorithm(ABC):
                 max_violation_duration[i] = 0
         imbalance_on_timewindow = self.evaluate_imbalance_in_one_day(
             utilize_trace)
-        return (utilize_mean_on_time, violation_count_warehouse, max_violation_duration,
-                all_violation_durations, warehouse_load_imb, imbalance_on_timewindow)
+        return (utilize_mean_across_time, violation_count_warehouse, max_violation_duration,
+                all_violation_durations, load_imbalance_across_warehouses, imbalance_on_timewindow)
 
     def evaluate_imbalance_in_one_day(self, utilize_trace: np.ndarray) -> float:
         bandwidth_trace = utilize_trace[:, :, 1]
@@ -273,7 +276,7 @@ class BaseAlgorithm(ABC):
             imbalance_on_timewindow[windows_length_in_one_day] = imbalance_among_warehouses
         return imbalance_on_timewindow
 
-    def write_result(self, utilize_mean_on_time, violation_count_warehouse, max_violation_duration, all_violation_durations, warehouse_load_imb, imbalance_on_timewindow):
+    def write_result(self, utilize_mean_across_time, violation_count_warehouse, max_violation_duration, all_violation_durations, load_imbalance_across_warehouses, imbalance_on_timewindow):
         """写入结果"""
         result_dir = os.path.join(
             self.output_dir, f"{self.algorithm_name}_result.txt")
@@ -296,13 +299,13 @@ class BaseAlgorithm(ABC):
 
             # 写入各项结果
             f.write(
-                f"-----------------------utilize_mean_on_time--------------------------\n")
+                f"-----------------------utilize_mean_across_time--------------------------\n")
             for warehouse in range(self.warehouse_number):
                 f.write(f"warehouse{warehouse}:" + ",".join(map(str,
-                        utilize_mean_on_time[warehouse])) + "\n")
+                        utilize_mean_across_time[warehouse])) + "\n")
             f.write(
                 f"-----------------------warehouse_load------------------------------\n")
-            warehouse_load = utilize_mean_on_time*self.warehouses_max
+            warehouse_load = utilize_mean_across_time*self.warehouses_max
             for warehouse in range(self.warehouse_number):
                 f.write(
                     f"warehouse{warehouse}:" + ",".join(map(str, warehouse_load[warehouse])) + "\n")
@@ -324,9 +327,9 @@ class BaseAlgorithm(ABC):
                 f.write(f"warehouse{warehouse}:" + ",".join(map(str,
                         all_violation_durations[warehouse])) + "\n")
             f.write(
-                "--------------------------warehouse_load_imb-------------------------\n")
+                "--------------------------load_imbalance_across_warehouses-------------------------\n")
             f.write(
-                "capacity:"+str(warehouse_load_imb[0]) + "\nbandwidth:"+str(warehouse_load_imb[1]) + "\n")
+                "capacity:"+str(load_imbalance_across_warehouses[0]) + "\nbandwidth:"+str(load_imbalance_across_warehouses[1]) + "\n")
             f.write(
                 "--------------------------imbalance_across_timewindow-------------------------\n")
             for windows_length_in_one_day in DataConfig.WINDOWS_LENGTH_IN_ONE_DAY:
@@ -335,7 +338,7 @@ class BaseAlgorithm(ABC):
             f.write(
                 f"-----------------------utilize_mean----------------------------------\n")
             f.write(f"average_utilize_mean:" +
-                    ','.join(map(str, np.mean(utilize_mean_on_time, axis=0))) + "\n")
+                    ','.join(map(str, np.mean(utilize_mean_across_time, axis=0))) + "\n")
         logger.info(f"结果已写入 {result_dir}")
 
     def encode_item(self, items: pd.DataFrame) -> pd.DataFrame:

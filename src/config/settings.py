@@ -28,7 +28,9 @@ class DirConfig:
     BUSINESS_TYPE_DIR = os.path.join(PROJECT_ROOT, "business_type")
     # 模型保存目录
     MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
-    TEMPLE_DIR = os.path.join(OUTPUT_DIR, "temple")
+    TEMP_DIR = os.path.join(OUTPUT_DIR, "temp")
+    TRASH_DIR = os.path.join(TEMP_DIR, "trash")
+    INTERMEDIATE_DIR = os.path.join(TEMP_DIR, "intermediate")
     # 确保目录存在
 
     @classmethod
@@ -111,8 +113,8 @@ class ModelConfig:
 
 
 class WarehouseConfig:
-    capacity_mean = 150000*9/6
-    bandwidth_mean = 25000000*9/6
+    capacity_mean = 1383882/6
+    bandwidth_mean = 192201738/6
 
     MAX_CAPACITY = np.array(
         [1, 1, 1, 1, 1, 1])*capacity_mean

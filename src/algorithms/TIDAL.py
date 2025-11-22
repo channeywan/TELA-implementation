@@ -57,9 +57,11 @@ class TIDAL(BaseAlgorithm):
         while True:
             monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
             combined_mask = capacity_mask & monitor_mask
+            if not combined_mask.any():
+                combined_mask = np.ones_like(capacity_mask, dtype=bool)
             eligible_warehouses_indices = np.where(combined_mask)[0]
-            if len(eligible_warehouses_indices) == 0:
-                return -1
+            # if len(eligible_warehouses_indices) == 0:
+            #     return -1
             original_bandwidth_util_deviation = np.var(
                 original_bandwidth_util[:, eligible_warehouses_indices], axis=0)
             absolute_deviation = np.var(
@@ -68,8 +70,11 @@ class TIDAL(BaseAlgorithm):
             min_delta_deviation_index = np.argmin(delta_deviation)
             selected_warehouse = eligible_warehouses_indices[min_delta_deviation_index]
             if not overload_mask[selected_warehouse]:
-                self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
-                continue
+                if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
+                    break
+                else:
+                    self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+                    continue
             else:
                 break
         return selected_warehouse
@@ -148,7 +153,7 @@ class TIDAL(BaseAlgorithm):
         for field in self.cat_type_list:
             data_predict[field] = data_predict[field].astype(str)
         data_predict.to_csv(os.path.join(
-            DirConfig.TEMPLE_DIR, 'trash', 'data_predict.csv'))
+            DirConfig.INTERMEDIATE_DIR, 'data_predict.csv'))
         bandwidth_scale = model_regressor.predict(data_predict)
         return bandwidth_scale
 

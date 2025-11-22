@@ -7,6 +7,7 @@ from data.loader import DiskDataLoader
 from visualization.plotter import TelaPlotter
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
 sys.path.insert(0, str(Path(__file__).parent))
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -17,27 +18,10 @@ logging.basicConfig(level=logging.INFO)
 # ,id,region,disk_uuid,zone_id,depot_id,set_uuid,set_name,setType,setSize,set_volume_type,vm_uuid,vm_alias,vm_cpu,vm_mem,vm_os_name,vm_type,vm_deadline,appid,is_vip,is_pdd,ins_type,project_name,buss_name,disk_alias,phy_id,disk_usage,disk_size,disk_type,volume_type,pay_mode,ccbs_status,disk_status,life_state,add_time,create_date_time,last_op_date_time,modify_time,deadline
 # depot_id,set_uuid,set_volume_type,vm_os_name,vm_type,disk_type,volume_type,pay_mode,life_state
 if __name__ == "__main__":
-    catboost_cv_search_results = pd.read_csv(os.path.join(
-        DirConfig.TIDAL_DIR, 'catboost_cv_search_results.csv'))
-    catboost_cv_search_results.sort_values(
-        by='rank_test_score', ascending=True, inplace=True)
-    catboost_cv_search_results = catboost_cv_search_results[[
-        "params", "mean_test_score", "rank_test_score"]].copy()
-    catboost_cv_search_results.to_csv(os.path.join(
-        DirConfig.TIDAL_DIR, 'catboost_cv_search_results_sorted.csv'), index=False)
-    lightgbm_cv_search_results = pd.read_csv(os.path.join(
-        DirConfig.TIDAL_DIR, 'lightgbm_cv_search_results.csv'))
-    lightgbm_cv_search_results.sort_values(
-        by='rank_test_score', ascending=True, inplace=True)
-    lightgbm_cv_search_results = lightgbm_cv_search_results[[
-        "params", "mean_test_score", "rank_test_score"]].copy()
-    lightgbm_cv_search_results.to_csv(os.path.join(
-        DirConfig.TIDAL_DIR, 'lightgbm_cv_search_results_sorted.csv'), index=False)
-    xgboost_cv_search_results = pd.read_csv(os.path.join(
-        DirConfig.TIDAL_DIR, 'xgboost_cv_search_results.csv'))
-    xgboost_cv_search_results.sort_values(
-        by='rank_test_score', ascending=True, inplace=True)
-    xgboost_cv_search_results = xgboost_cv_search_results[[
-        "params", "mean_test_score", "rank_test_score"]].copy()
-    xgboost_cv_search_results.to_csv(os.path.join(
-        DirConfig.TIDAL_DIR, 'xgboost_cv_search_results_sorted.csv'), index=False)
+    loader = DiskDataLoader()
+    items = loader.load_selected_items()
+    train_items, test_items = train_test_split(
+        items, test_size=0.3, random_state=42)
+    avaliable_items = test_items.sample(n=6048, random_state=42, replace=False)
+    print(np.sum(avaliable_items["avg_bandwidth"]))
+    print(np.sum(avaliable_items["disk_capacity"]))

@@ -41,16 +41,21 @@ class ODA(BaseAlgorithm):
         while True:
             monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
             combined_mask = capacity_mask & monitor_mask
+            if not combined_mask.any():
+                combined_mask = np.ones_like(capacity_mask, dtype=bool)
             eligible_warehouses_indices = np.where(combined_mask)[0]
-            if len(eligible_warehouses_indices) == 0:
-                return -1
+            # if len(eligible_warehouses_indices) == 0:
+            #     return -1
             allocated_capacity = self.warehouses_resource_allocated[eligible_warehouses_indices, 0]
             min_utilization_index = np.argmin(
                 allocated_capacity/WarehouseConfig.WAREHOUSE_MAX[eligible_warehouses_indices, 0])
             selected_warehouse = eligible_warehouses_indices[min_utilization_index]
             if not overload_mask[selected_warehouse]:
-                self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
-                continue
+                if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
+                    break
+                else:
+                    self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+                    continue
             else:
                 break
         return selected_warehouse

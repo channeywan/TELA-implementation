@@ -77,7 +77,7 @@ def plot_prediction_comparison(real_data, predicted_data, model_name, axis):
     plt.title(f"{model_name} Prediction Comparison")
     plt.grid(True, linestyle='--', alpha=0.5)
     time_str = datetime.now().strftime("%d%H%M")
-    save_dir = os.path.join(DirConfig.TEMPLE_DIR, f'{model_name}')
+    save_dir = os.path.join(DirConfig.TEMP_DIR, f'{model_name}')
     os.makedirs(save_dir, exist_ok=True)
     plt.savefig(os.path.join(
         save_dir, f'{model_name}_{axis}_prediction_comparison_{time_str}.png'))
@@ -111,7 +111,7 @@ def search_catboost_params(train_items, test_items, features):
     cb = CatBoostRegressor(
         cat_features=cat_type_list,
         verbose=0,
-        thread_count=12,
+        thread_count=6,
         eval_metric='RMSE'
     )
     model_regressor = RandomizedSearchCV(
@@ -120,7 +120,7 @@ def search_catboost_params(train_items, test_items, features):
         n_iter=1000,
         cv=5,
         scoring='r2',
-        n_jobs=8,
+        n_jobs=12,
         verbose=1,
         random_state=42
     )
@@ -139,7 +139,7 @@ def search_catboost_params(train_items, test_items, features):
     best_catboost = CatBoostRegressor(
         cat_features=cat_type_list,
         verbose=0,
-        thread_count=100,
+        thread_count=80,
         **best_params,
         eval_metric='RMSE'
     )
@@ -286,7 +286,7 @@ def search_lightgbm_params(train_items, test_items, features):
         'n_estimators': randint(100, 3000)
     }
     lgbm = lgb.LGBMRegressor(
-        metric='rmse', random_state=42, n_jobs=8, verbose=-1)
+        metric='rmse', random_state=42, n_jobs=6, verbose=-1)
     model_regressor = RandomizedSearchCV(estimator=lgbm, param_distributions=params_distributions,
                                          n_iter=1000, cv=5, scoring='r2', n_jobs=12, verbose=1)
     model_regressor.fit(X_train, y_train)
@@ -302,7 +302,7 @@ def search_lightgbm_params(train_items, test_items, features):
     logger.info(f"best_score: {model_regressor.best_score_:.6f}")
     best_params = model_regressor.best_params_.copy()
     best_lgbm = lgb.LGBMRegressor(
-        metric='rmse', random_state=4, n_jobs=100, verbose=-1, **best_params)
+        metric='rmse', random_state=4, n_jobs=80, verbose=-1, **best_params)
     best_lgbm.fit(
         X_train, y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
@@ -314,124 +314,6 @@ def search_lightgbm_params(train_items, test_items, features):
     y_pred = best_lgbm.predict(X_test)
     logger.info(f"y_pred_min: {np.min(y_pred)}")
     y_pred = np.maximum(y_pred, 0)
-    return y_test, y_pred, results
-
-
-def search_xgboost_params_r2(train_items, test_items, features):
-    import xgboost as xgb
-    from scipy.stats import randint, uniform, loguniform
-
-    # 1. 数据预处理：类别特征转换为 category 类型
-    cat_type_list = ["disk_if_VIP", "disk_type",
-                     "volume_type", "business_type"]
-    cat_dtypes_dict = {}
-
-    X_train = train_items[features + cat_type_list].copy()
-    for field in cat_type_list:
-        X_train[field] = X_train[field].astype("category")
-        cat_dtypes_dict[field] = X_train[field].dtype
-    y_train = train_items["avg_bandwidth"]
-
-    X_test = test_items[features + cat_type_list].copy()
-    y_test = test_items["avg_bandwidth"]
-
-    # 确保测试集类别类型与训练集一致（防止类别编码错误）
-    for field in cat_type_list:
-        if field in cat_dtypes_dict:
-            target_type = cat_dtypes_dict[field]
-            X_test[field] = X_test[field].astype(target_type)
-        else:
-            X_test[field] = X_test[field].astype("category")
-
-    # 2. 参数分布设置
-    params_distributions = {
-        'learning_rate': loguniform(0.001, 0.2),
-        'max_depth': randint(3, 15),         # 树深
-        'min_child_weight': randint(1, 100),  # 类似 LGBM 的 min_child_samples
-        'subsample': uniform(0.6, 0.35),     # 样本采样
-        'colsample_bytree': uniform(0.6, 0.35),  # 列采样
-
-        # 目标函数选择：
-        # reg:squarederror (MSE), reg:absoluteerror (MAE)
-        # reg:pseudohubererror (适合有异常值的带宽数据)
-        # reg:tweedie (适合非负、长尾分布)
-        'objective': ['reg:squarederror', 'reg:absoluteerror', 'reg:pseudohubererror', 'reg:tweedie'],
-
-        # 正则化
-        'reg_alpha': loguniform(1e-3, 10.0),  # L1
-        'reg_lambda': loguniform(1e-3, 10.0),  # L2
-
-        # Tweedie 分布的方差幂 (仅当 objective='reg:tweedie' 时生效)
-        'tweedie_variance_power': uniform(1.1, 0.8),
-
-        'n_estimators': randint(100, 3000)
-    }
-
-    # 3. 初始化搜索用的估算器
-    # tree_method='hist' 和 enable_categorical=True 是启用原生类别支持的关键
-    xgb_reg = xgb.XGBRegressor(
-        tree_method='hist',
-        enable_categorical=True,
-        n_jobs=18,
-        random_state=42,
-        eval_metric='rmse'  # 默认监控指标
-    )
-
-    # 4. 随机搜索 (Scoring 使用 R2)
-    model_regressor = RandomizedSearchCV(
-        estimator=xgb_reg,
-        param_distributions=params_distributions,
-        n_iter=2,
-        cv=5,
-        scoring='r2',  # 选出 R2 最高的参数组合
-        n_jobs=5,
-        verbose=1
-    )
-
-    model_regressor.fit(X_train, y_train)
-
-    # 5. 获取最佳模型和特征重要性
-    best_xgb_search = model_regressor.best_estimator_
-    feature_names = X_train.columns.tolist()
-    importances = best_xgb_search.feature_importances_
-    feature_imp_df = pd.DataFrame({
-        'Feature': feature_names,
-        'Importance': importances
-    }).sort_values(by='Importance', ascending=False)
-
-    logger.info(feature_imp_df)
-    logger.info(f"best_params: {model_regressor.best_params_}")
-    logger.info(f"best_score: {model_regressor.best_score_:.6f}")
-
-    # 6. 最终训练 (使用 Early Stopping)
-    best_params = model_regressor.best_params_
-
-    # 重新初始化，覆盖 n_estimators 为大数值
-    best_xgb = xgb.XGBRegressor(
-        tree_method='hist',
-        enable_categorical=True,
-        n_jobs=100,
-        random_state=42,
-        **best_params,
-        n_estimators=10000
-    )
-
-    # 在 fit 中传入早停参数
-    best_xgb.fit(
-        X_train, y_train,
-        eval_set=[(X_train, y_train), (X_test, y_test)],
-        eval_metric='rmse',  # 即使搜索用 R2，早停依然建议用 RMSE
-        early_stopping_rounds=50,
-        verbose=200
-    )
-
-    # 7. 获取结果
-    results = best_xgb.evals_result()
-    y_pred = best_xgb.predict(X_test)
-
-    logger.info(f"y_pred_min: {np.min(y_pred)}")
-    y_pred = np.maximum(y_pred, 0)
-
     return y_test, y_pred, results
 
 
@@ -468,7 +350,7 @@ def search_xgboost_params(train_items, test_items, features):
     xgb_reg = XGBRegressor(
         tree_method='hist',
         enable_categorical=True,
-        n_jobs=8,
+        n_jobs=6,
         random_state=42,
         eval_metric='rmse'  # 默认监控指标
     )
@@ -490,7 +372,7 @@ def search_xgboost_params(train_items, test_items, features):
     best_xgb = XGBRegressor(
         tree_method='hist',
         enable_categorical=True,
-        n_jobs=100,
+        n_jobs=80,
         random_state=42,
         **best_params,
         n_estimators=10000
@@ -604,7 +486,7 @@ def plot_loss_curve(results, model_name):
     plt.title(f'{model_name} Training Loss Curve')
     plt.grid(True)
     time_str = datetime.now().strftime("%d%H%M")
-    save_dir = os.path.join(DirConfig.TEMPLE_DIR, f'{model_name}')
+    save_dir = os.path.join(DirConfig.TEMP_DIR, f'{model_name}')
     os.makedirs(save_dir, exist_ok=True)
     plt.savefig(os.path.join(
         save_dir, f'{model_name}_loss_curve_{time_str}.png'))

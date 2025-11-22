@@ -151,21 +151,21 @@ class PeakValleyWindowsDistribution:
         total_peak_counter /= np.sum(total_peak_counter, axis=1, keepdims=True)
         total_valley_counter /= np.sum(total_valley_counter,
                                        axis=1, keepdims=True)
-        np.savetxt(os.path.join(DirConfig.TEMPLE_DIR,
+        np.savetxt(os.path.join(DirConfig.INTERMEDIATE_DIR,
                    "peak_windows_distribution.txt"), total_peak_counter*100, delimiter=',')
-        np.savetxt(os.path.join(DirConfig.TEMPLE_DIR, "valley_windows_distribution.txt"),
+        np.savetxt(os.path.join(DirConfig.INTERMEDIATE_DIR, "valley_windows_distribution.txt"),
                    total_valley_counter*100, delimiter=',')
         logger.info(
-            f"Peak and valley windows distribution saved to {os.path.join(DirConfig.TEMPLE_DIR, 'peak_windows_distribution.txt')} and {os.path.join(DirConfig.TEMPLE_DIR, 'valley_windows_distribution.txt')}")
+            f"Peak and valley windows distribution saved to {os.path.join(DirConfig.INTERMEDIATE_DIR, 'peak_windows_distribution.txt')} and {os.path.join(DirConfig.INTERMEDIATE_DIR, 'valley_windows_distribution.txt')}")
         fig, axes = plt.subplots(2, 1, figsize=(10, 14))
         self.plot_stacked_bar(
             axes[0], total_peak_counter*100, "Peak Windows Distribution")
         self.plot_stacked_bar(
             axes[1], total_valley_counter*100, "Valley Windows Distribution")
-        fig.savefig(os.path.join(DirConfig.TEMPLE_DIR,
+        fig.savefig(os.path.join(DirConfig.INTERMEDIATE_DIR,
                     "peak_valley_windows_distribution.png"))
         logger.info(
-            f"Peak and valley windows distribution saved to {os.path.join(DirConfig.TEMPLE_DIR, 'peak_valley_windows_distribution.png')}")
+            f"Peak and valley windows distribution saved to {os.path.join(DirConfig.INTERMEDIATE_DIR, 'peak_valley_windows_distribution.png')}")
         plt.close(fig)
         return
 

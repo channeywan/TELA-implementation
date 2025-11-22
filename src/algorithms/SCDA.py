@@ -145,11 +145,13 @@ class SCDA(BaseAlgorithm):
         while True:
             monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
             combined_mask = capacity_mask & monitor_mask
+            if not combined_mask.any():
+                combined_mask = np.ones_like(capacity_mask, dtype=bool)
             eligible_warehouses_indices = np.where(combined_mask)[0]
             min_manhatten_distance = float('inf')
             selected_warehouse = -1
-            if len(eligible_warehouses_indices) == 0:
-                return -1
+            # if len(eligible_warehouses_indices) == 0:
+            #     return -1
             for warehouse in eligible_warehouses_indices:
                 # 计算放置后的利用率
                 current_capacity_utilization = ((self.warehouses_resource_allocated[warehouse][0] + disk_capacity) /
@@ -165,8 +167,11 @@ class SCDA(BaseAlgorithm):
                     min_manhatten_distance = current_manhatten_distance
                     selected_warehouse = warehouse
             if not overload_mask[selected_warehouse]:
-                self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
-                continue
+                if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
+                    break
+                else:
+                    self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+                    continue
             else:
                 break
         return selected_warehouse

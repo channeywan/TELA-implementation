@@ -8158,3 +8158,57 @@ File "/home/wcl/cycle_dete/src/test2.py", line 351, LightGBM_loss_curve.png save
 2025-11-21 17:38:58,747,File "/home/wcl/cycle_dete/src/test2.py", line 611, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temple/CatBoost/CatBoost_loss_curve_211738.png
 2025-11-22 02:21:58,244,File "/home/wcl/cycle_dete/src/test2.py", line 618, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
 2025-11-22 02:21:59,250,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-22 03:21:44,220,File "/home/wcl/cycle_dete/src/test2.py", line 618, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-22 03:21:45,226,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-22 03:45:27,654,File "/home/wcl/cycle_dete/src/test2.py", line 500, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-22 03:45:28,674,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-22 15:53:04,673,File "/home/wcl/cycle_dete/src/test2.py", line 135,          Feature  Importance
+0  disk_capacity   32.149686
+5    volume_type   28.731502
+6  business_type   13.870005
+2      vm_memory   13.721357
+1         vm_cpu    7.508834
+3    disk_if_VIP    2.833170
+4      disk_type    1.185446
+2025-11-22 15:53:04,685,File "/home/wcl/cycle_dete/src/test2.py", line 136, best_params: {'bootstrap_type': 'MVS', 'depth': 12, 'iterations': 4310, 'l2_leaf_reg': 5, 'learning_rate': np.float64(0.017072297137700268), 'loss_function': 'RMSE', 'one_hot_max_size': 50, 'random_strength': 5, 'subsample': np.float64(0.8522845837086772)}
+2025-11-22 15:53:04,685,File "/home/wcl/cycle_dete/src/test2.py", line 137, best_score: 0.634827
+2025-11-22 15:54:28,839,File "/home/wcl/cycle_dete/src/test2.py", line 149, y_pred_min: -208640.3507266498
+2025-11-22 15:54:28,890,File "/home/wcl/cycle_dete/src/test2.py", line 532, log: False, history: False, history_transform: False, model_name: CatBoost
+2025-11-22 15:54:28,891,File "/home/wcl/cycle_dete/src/test2.py", line 397, Evaluating CatBoost model
+2025-11-22 15:54:28,895,File "/home/wcl/cycle_dete/src/test2.py", line 398, RMSE : 671785.780172
+2025-11-22 15:54:28,895,File "/home/wcl/cycle_dete/src/test2.py", line 400, MAE : 148607.338883
+2025-11-22 15:54:28,895,File "/home/wcl/cycle_dete/src/test2.py", line 401, Max Error : 16758109.987669
+2025-11-22 15:54:28,896,File "/home/wcl/cycle_dete/src/test2.py", line 402, R² Score : 0.573932
+2025-11-22 15:54:28,898,File "/home/wcl/cycle_dete/src/test2.py", line 403, log R² Score : -0.713686
+2025-11-22 15:54:28,899,File "/home/wcl/cycle_dete/src/test2.py", line 405, mean bandwidth : 226708.987290
+2025-11-22 15:54:29,093,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temple/CatBoost/CatBoost_normal_prediction_comparison_221554.png
+2025-11-22 15:54:29,249,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temple/CatBoost/CatBoost_log_prediction_comparison_221554.png
+2025-11-22 15:54:29,250,File "/home/wcl/cycle_dete/src/test2.py", line 423, CatBoost: Available keys in evals_result_: ['learn', 'validation']
+2025-11-22 15:54:29,354,File "/home/wcl/cycle_dete/src/test2.py", line 493, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temple/CatBoost/CatBoost_loss_curve_221554.png
+2025-11-22 15:54:29,399,File "/home/wcl/cycle_dete/src/test2.py", line 500, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-22 15:54:30,199,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-22 16:11:28,890,File "/home/wcl/cycle_dete/src/test2.py", line 300,          Feature  Importance
+0  disk_capacity       15624
+6  business_type        8051
+2      vm_memory        6757
+5    volume_type        4048
+1         vm_cpu        4033
+3    disk_if_VIP        1438
+4      disk_type         687
+2025-11-22 16:11:28,895,File "/home/wcl/cycle_dete/src/test2.py", line 301, best_params: {'learning_rate': np.float64(0.11018925466149401), 'max_depth': -1, 'min_child_samples': 86, 'n_estimators': 1563, 'num_leaves': 27, 'objective': 'regression', 'subsample': np.float64(0.9148534766041994), 'subsample_freq': 2}
+2025-11-22 16:11:28,895,File "/home/wcl/cycle_dete/src/test2.py", line 302, best_score: 0.626785
+2025-11-22 16:11:31,465,File "/home/wcl/cycle_dete/src/test2.py", line 315, y_pred_min: -480822.31797480694
+2025-11-22 16:11:31,470,File "/home/wcl/cycle_dete/src/test2.py", line 532, log: False, history: False, history_transform: False, model_name: LightGBM
+2025-11-22 16:11:31,470,File "/home/wcl/cycle_dete/src/test2.py", line 397, Evaluating LightGBM model
+2025-11-22 16:11:31,472,File "/home/wcl/cycle_dete/src/test2.py", line 398, RMSE : 701146.409729
+2025-11-22 16:11:31,472,File "/home/wcl/cycle_dete/src/test2.py", line 400, MAE : 171863.234968
+2025-11-22 16:11:31,472,File "/home/wcl/cycle_dete/src/test2.py", line 401, Max Error : 18554119.486592
+2025-11-22 16:11:31,473,File "/home/wcl/cycle_dete/src/test2.py", line 402, R² Score : 0.535875
+2025-11-22 16:11:31,474,File "/home/wcl/cycle_dete/src/test2.py", line 403, log R² Score : -1.336296
+2025-11-22 16:11:31,474,File "/home/wcl/cycle_dete/src/test2.py", line 405, mean bandwidth : 226708.987290
+2025-11-22 16:11:31,636,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temple/LightGBM/LightGBM_normal_prediction_comparison_221611.png
+2025-11-22 16:11:31,797,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temple/LightGBM/LightGBM_log_prediction_comparison_221611.png
+2025-11-22 16:11:31,797,File "/home/wcl/cycle_dete/src/test2.py", line 423, LightGBM: Available keys in evals_result_: ['training', 'valid_1']
+2025-11-22 16:11:31,897,File "/home/wcl/cycle_dete/src/test2.py", line 493, LightGBM_loss_curve.png saved to /home/wcl/cycle_dete/output/temple/LightGBM/LightGBM_loss_curve_221611.png
+2025-11-22 16:11:31,920,File "/home/wcl/cycle_dete/src/test2.py", line 500, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-22 16:11:32,915,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
