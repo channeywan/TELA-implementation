@@ -8212,3 +8212,434 @@ File "/home/wcl/cycle_dete/src/test2.py", line 351, LightGBM_loss_curve.png save
 2025-11-22 16:11:31,897,File "/home/wcl/cycle_dete/src/test2.py", line 493, LightGBM_loss_curve.png saved to /home/wcl/cycle_dete/output/temple/LightGBM/LightGBM_loss_curve_221611.png
 2025-11-22 16:11:31,920,File "/home/wcl/cycle_dete/src/test2.py", line 500, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
 2025-11-22 16:11:32,915,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-23 02:03:47,189,File "/home/wcl/cycle_dete/src/test2.py", line 501, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-23 02:03:48,191,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-23 14:11:04,697,File "/home/wcl/cycle_dete/src/test2.py", line 135,          Feature  Importance
+0  disk_capacity   32.149686
+5    volume_type   28.731502
+6  business_type   13.870005
+2      vm_memory   13.721357
+1         vm_cpu    7.508834
+3    disk_if_VIP    2.833170
+4      disk_type    1.185446
+2025-11-23 14:11:04,706,File "/home/wcl/cycle_dete/src/test2.py", line 136, best_params: {'bootstrap_type': 'MVS', 'depth': 12, 'iterations': 4310, 'l2_leaf_reg': 5, 'learning_rate': np.float64(0.017072297137700268), 'loss_function': 'RMSE', 'one_hot_max_size': 50, 'random_strength': 5, 'subsample': np.float64(0.8522845837086772)}
+2025-11-23 14:11:04,706,File "/home/wcl/cycle_dete/src/test2.py", line 137, best_score: 0.634827
+2025-11-23 14:12:52,518,File "/home/wcl/cycle_dete/src/test2.py", line 149, y_pred_min: -208640.3507266498
+2025-11-23 14:12:52,550,File "/home/wcl/cycle_dete/src/test2.py", line 533, log: False, history: False, history_transform: False, model_name: CatBoost
+2025-11-23 14:12:52,550,File "/home/wcl/cycle_dete/src/test2.py", line 398, Evaluating CatBoost model
+2025-11-23 14:12:52,555,File "/home/wcl/cycle_dete/src/test2.py", line 399, RMSE : 671785.780172
+2025-11-23 14:12:52,556,File "/home/wcl/cycle_dete/src/test2.py", line 401, MAE : 148607.338883
+2025-11-23 14:12:52,556,File "/home/wcl/cycle_dete/src/test2.py", line 402, Max Error : 16758109.987669
+2025-11-23 14:12:52,556,File "/home/wcl/cycle_dete/src/test2.py", line 403, R² Score : 0.573932
+2025-11-23 14:12:52,559,File "/home/wcl/cycle_dete/src/test2.py", line 404, log R² Score : -0.713686
+2025-11-23 14:12:52,559,File "/home/wcl/cycle_dete/src/test2.py", line 406, mean bandwidth : 226708.987290
+2025-11-23 14:12:52,727,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_normal_prediction_comparison_231412.png
+2025-11-23 14:12:52,880,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_log_prediction_comparison_231412.png
+2025-11-23 14:12:52,880,File "/home/wcl/cycle_dete/src/test2.py", line 424, CatBoost: Available keys in evals_result_: ['learn', 'validation']
+2025-11-23 14:12:52,982,File "/home/wcl/cycle_dete/src/test2.py", line 494, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_loss_curve_231412.png
+2025-11-23 14:12:53,002,File "/home/wcl/cycle_dete/src/test2.py", line 501, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-23 14:12:53,776,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-23 14:34:16,549,File "/home/wcl/cycle_dete/src/test2.py", line 368,          Feature  Importance
+4      disk_type    0.262133
+0  disk_capacity    0.259772
+6  business_type    0.113866
+1         vm_cpu    0.110668
+5    volume_type    0.092581
+2      vm_memory    0.089256
+3    disk_if_VIP    0.071724
+2025-11-23 14:34:16,556,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_params: {'colsample_bytree': np.float64(0.8417183279613764), 'learning_rate': np.float64(0.049126960622962464), 'max_depth': 7, 'min_child_weight': 77, 'n_estimators': 1926, 'objective': 'reg:tweedie', 'reg_alpha': np.float64(0.10242912746860126), 'reg_lambda': np.float64(0.3346200296209346), 'subsample': np.float64(0.8675725131675502), 'tweedie_variance_power': np.float64(1.7633980935091198)}
+2025-11-23 14:34:16,556,File "/home/wcl/cycle_dete/src/test2.py", line 370, best_score: 0.649095
+2025-11-24 02:16:51,296,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 02:16:52,309,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 02:17:24,144,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 02:17:25,171,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 02:19:03,879,File "/home/wcl/cycle_dete/src/test2.py", line 546, log: False, history: False, model_name: CatBoost
+2025-11-24 02:19:03,879,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 02:19:04,894,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 02:20:11,966,File "/home/wcl/cycle_dete/src/test2.py", line 546, log: False, history: False, model_name: XGBoost
+2025-11-24 02:20:11,966,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 02:20:12,978,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 02:20:41,846,File "/home/wcl/cycle_dete/src/test2.py", line 367,          Feature  Importance
+0  disk_capacity    0.245446
+5    volume_type    0.198358
+6  business_type    0.177861
+2      vm_memory    0.122454
+1         vm_cpu    0.118290
+4      disk_type    0.069287
+3    disk_if_VIP    0.068304
+2025-11-24 02:20:41,853,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.6610887983135856), 'learning_rate': np.float64(0.07049662619409602), 'max_depth': 8, 'min_child_weight': 10, 'n_estimators': 1538, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(0.0010044877720819375), 'reg_lambda': np.float64(0.002739289752213825), 'subsample': np.float64(0.9083388047718612)}
+2025-11-24 02:20:41,853,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.626228
+2025-11-24 05:21:35,861,File "/home/wcl/cycle_dete/src/test2.py", line 546, log: False, history: False, model_name: XGBoost
+2025-11-24 05:21:35,861,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 05:21:36,865,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 05:22:09,781,File "/home/wcl/cycle_dete/src/test2.py", line 367,          Feature  Importance
+5    volume_type    0.261448
+0  disk_capacity    0.246801
+2      vm_memory    0.185037
+6  business_type    0.139855
+1         vm_cpu    0.091909
+3    disk_if_VIP    0.047759
+4      disk_type    0.027190
+2025-11-24 05:22:09,788,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.8725036945714839), 'learning_rate': np.float64(0.021409114267218157), 'max_depth': 12, 'min_child_weight': 51, 'n_estimators': 1151, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(0.01789169626344747), 'reg_lambda': np.float64(0.0026038939023542798), 'subsample': np.float64(0.8313887611202262)}
+2025-11-24 05:22:09,788,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.605951
+2025-11-24 05:42:01,249,File "/home/wcl/cycle_dete/src/test2.py", line 546, log: False, history: False, model_name: XGBoost
+2025-11-24 05:42:01,249,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 05:42:02,250,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 05:42:44,458,File "/home/wcl/cycle_dete/src/test2.py", line 367,          Feature  Importance
+0  disk_capacity    0.263829
+5    volume_type    0.240532
+2      vm_memory    0.169971
+6  business_type    0.136434
+1         vm_cpu    0.102137
+3    disk_if_VIP    0.047371
+4      disk_type    0.039725
+2025-11-24 05:42:44,466,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.7606680670794936), 'learning_rate': np.float64(0.021475681533664862), 'max_depth': 14, 'min_child_weight': 18, 'n_estimators': 1219, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(0.2778661341517037), 'reg_lambda': np.float64(0.0671951310870835), 'subsample': np.float64(0.8217407721994758)}
+2025-11-24 05:42:44,466,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.622674
+2025-11-24 05:42:46,772,File "/home/wcl/cycle_dete/src/test2.py", line 390, y_pred_min: -233616.53125
+2025-11-24 05:44:20,417,File "/home/wcl/cycle_dete/src/test2.py", line 546, log: False, history: False, model_name: XGBoost
+2025-11-24 05:44:20,417,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 05:44:21,392,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 05:45:02,128,File "/home/wcl/cycle_dete/src/test2.py", line 367,          Feature  Importance
+0  disk_capacity    0.243408
+5    volume_type    0.213242
+2      vm_memory    0.165953
+6  business_type    0.157340
+1         vm_cpu    0.108304
+3    disk_if_VIP    0.063519
+4      disk_type    0.048233
+2025-11-24 05:45:02,136,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.793456010396457), 'learning_rate': np.float64(0.029422784271178715), 'max_depth': 8, 'min_child_weight': 29, 'n_estimators': 2924, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(3.537387265910496), 'reg_lambda': np.float64(0.8026381743768437), 'subsample': np.float64(0.7663515514488)}
+2025-11-24 05:45:02,136,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.621834
+2025-11-24 05:45:03,341,File "/home/wcl/cycle_dete/src/test2.py", line 390, y_pred_min: -220053.71875
+2025-11-24 05:45:03,347,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: False, history_transform: False, model_name: XGBoost
+2025-11-24 05:45:03,347,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating XGBoost model
+2025-11-24 05:45:03,349,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 711791.639929
+2025-11-24 05:45:03,350,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 183114.421852
+2025-11-24 05:45:03,350,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18671273.123760
+2025-11-24 05:45:03,351,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.521675
+2025-11-24 05:45:03,352,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -0.445662
+2025-11-24 05:45:03,352,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-24 05:45:03,560,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_normal_prediction_comparison_240545.png
+2025-11-24 05:45:03,722,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_log_prediction_comparison_240545.png
+2025-11-24 05:45:03,722,File "/home/wcl/cycle_dete/src/test2.py", line 422, XGBoost: Available keys in evals_result_: ['validation_0', 'validation_1']
+2025-11-24 05:45:03,722,File "/home/wcl/cycle_dete/src/test2.py", line 458, XGBoost: No valid train or validation key found in results
+2025-11-24 05:45:03,753,File "/home/wcl/cycle_dete/src/test2.py", line 546, log: False, history: True, model_name: CatBoost
+2025-11-24 05:45:03,753,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 05:45:04,478,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 05:46:15,131,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: False, history: False, model_name: CatBoost
+2025-11-24 05:46:15,132,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 05:46:16,114,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 17:36:48,156,File "/home/wcl/cycle_dete/src/test2.py", line 135,          Feature  Importance
+0  disk_capacity   32.149686
+5    volume_type   28.731502
+6  business_type   13.870005
+2      vm_memory   13.721357
+1         vm_cpu    7.508834
+3    disk_if_VIP    2.833170
+4      disk_type    1.185446
+2025-11-24 17:36:48,181,File "/home/wcl/cycle_dete/src/test2.py", line 136, best_params: {'bootstrap_type': 'MVS', 'depth': 12, 'iterations': 4310, 'l2_leaf_reg': 5, 'learning_rate': np.float64(0.017072297137700268), 'loss_function': 'RMSE', 'one_hot_max_size': 50, 'random_strength': 5, 'subsample': np.float64(0.8522845837086772)}
+2025-11-24 17:36:48,181,File "/home/wcl/cycle_dete/src/test2.py", line 137, best_score: 0.634827
+2025-11-24 17:38:08,832,File "/home/wcl/cycle_dete/src/test2.py", line 149, y_pred_min: -208640.3507266498
+2025-11-24 17:38:08,857,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: False, history_transform: False, model_name: CatBoost
+2025-11-24 17:38:08,858,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating CatBoost model
+2025-11-24 17:38:08,863,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 671785.780172
+2025-11-24 17:38:08,863,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 148607.338883
+2025-11-24 17:38:08,864,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 16758109.987669
+2025-11-24 17:38:08,864,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.573932
+2025-11-24 17:38:08,866,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -0.713686
+2025-11-24 17:38:08,867,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-24 17:38:09,112,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_normal_prediction_comparison_241738.png
+2025-11-24 17:38:09,270,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_log_prediction_comparison_241738.png
+2025-11-24 17:38:09,270,File "/home/wcl/cycle_dete/src/test2.py", line 422, CatBoost: Available keys in evals_result_: ['learn', 'validation']
+2025-11-24 17:38:09,382,File "/home/wcl/cycle_dete/src/test2.py", line 492, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_loss_curve_241738.png
+2025-11-24 17:38:09,448,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: False, history: False, model_name: LightGBM
+2025-11-24 17:38:09,448,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 17:38:10,242,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 17:55:53,267,File "/home/wcl/cycle_dete/src/test2.py", line 300,          Feature  Importance
+0  disk_capacity       53377
+2      vm_memory       28973
+6  business_type       21312
+1         vm_cpu       20391
+5    volume_type       10056
+3    disk_if_VIP        6324
+4      disk_type        5424
+2025-11-24 17:55:53,274,File "/home/wcl/cycle_dete/src/test2.py", line 301, best_params: {'learning_rate': np.float64(0.054654660484543115), 'max_depth': 10, 'min_child_samples': 64, 'n_estimators': 2349, 'num_leaves': 86, 'objective': 'regression', 'subsample': np.float64(0.8225572823832881), 'subsample_freq': 6}
+2025-11-24 17:55:53,274,File "/home/wcl/cycle_dete/src/test2.py", line 302, best_score: 0.625340
+2025-11-24 17:55:57,312,File "/home/wcl/cycle_dete/src/test2.py", line 315, y_pred_min: -606168.5624143449
+2025-11-24 17:55:57,325,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: False, history_transform: False, model_name: LightGBM
+2025-11-24 17:55:57,325,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating LightGBM model
+2025-11-24 17:55:57,326,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 703918.226530
+2025-11-24 17:55:57,327,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 174568.527393
+2025-11-24 17:55:57,327,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18613251.127572
+2025-11-24 17:55:57,328,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.532198
+2025-11-24 17:55:57,329,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -1.059438
+2025-11-24 17:55:57,329,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-24 17:55:57,487,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_normal_prediction_comparison_241755.png
+2025-11-24 17:55:57,646,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_log_prediction_comparison_241755.png
+2025-11-24 17:55:57,646,File "/home/wcl/cycle_dete/src/test2.py", line 422, LightGBM: Available keys in evals_result_: ['training', 'valid_1']
+2025-11-24 17:55:57,755,File "/home/wcl/cycle_dete/src/test2.py", line 492, LightGBM_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_loss_curve_241755.png
+2025-11-24 17:55:57,797,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: False, history: False, model_name: XGBoost
+2025-11-24 17:55:57,797,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 17:55:59,574,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-24 18:12:09,816,File "/home/wcl/cycle_dete/src/test2.py", line 367,          Feature  Importance
+0  disk_capacity    0.222889
+5    volume_type    0.221519
+2      vm_memory    0.151076
+6  business_type    0.123252
+1         vm_cpu    0.112969
+4      disk_type    0.101801
+3    disk_if_VIP    0.066494
+2025-11-24 18:12:09,822,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.6353278535077602), 'learning_rate': np.float64(0.007340317020448888), 'max_depth': 12, 'min_child_weight': 2, 'n_estimators': 1382, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(1.5100269755827718), 'reg_lambda': np.float64(1.9845966371661077), 'subsample': np.float64(0.8194114602375835)}
+2025-11-24 18:12:09,822,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.634546
+2025-11-24 18:12:14,679,File "/home/wcl/cycle_dete/src/test2.py", line 390, y_pred_min: -490917.1875
+2025-11-24 18:12:14,684,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: False, history_transform: False, model_name: XGBoost
+2025-11-24 18:12:14,684,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating XGBoost model
+2025-11-24 18:12:14,686,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 680928.444690
+2025-11-24 18:12:14,687,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 161605.865922
+2025-11-24 18:12:14,687,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 17595099.139385
+2025-11-24 18:12:14,688,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.562256
+2025-11-24 18:12:14,689,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -0.772889
+2025-11-24 18:12:14,689,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-24 18:12:14,850,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_normal_prediction_comparison_241812.png
+2025-11-24 18:12:15,007,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_log_prediction_comparison_241812.png
+2025-11-24 18:12:15,007,File "/home/wcl/cycle_dete/src/test2.py", line 422, XGBoost: Available keys in evals_result_: ['validation_0', 'validation_1']
+2025-11-24 18:12:15,008,File "/home/wcl/cycle_dete/src/test2.py", line 458, XGBoost: No valid train or validation key found in results
+2025-11-24 18:12:15,049,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: False, history: True, model_name: CatBoost
+2025-11-24 18:12:15,049,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-24 18:12:15,798,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-25 11:39:24,089,File "/home/wcl/cycle_dete/src/test2.py", line 135,                            Feature  Importance
+3  recent_history_bandwidth_memory   25.737006
+0                    disk_capacity   22.451212
+6                      volume_type   20.893876
+7                    business_type   10.875573
+2                        vm_memory    8.828054
+1                           vm_cpu    6.761472
+4                      disk_if_VIP    3.007580
+5                        disk_type    1.445227
+2025-11-25 11:39:24,095,File "/home/wcl/cycle_dete/src/test2.py", line 136, best_params: {'bootstrap_type': 'MVS', 'depth': 12, 'iterations': 4310, 'l2_leaf_reg': 5, 'learning_rate': np.float64(0.017072297137700268), 'loss_function': 'RMSE', 'one_hot_max_size': 50, 'random_strength': 5, 'subsample': np.float64(0.8522845837086772)}
+2025-11-25 11:39:24,095,File "/home/wcl/cycle_dete/src/test2.py", line 137, best_score: 0.690629
+2025-11-25 11:42:12,650,File "/home/wcl/cycle_dete/src/test2.py", line 149, y_pred_min: -94640.04586371972
+2025-11-25 11:42:12,685,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: True, history_transform: False, model_name: CatBoost
+2025-11-25 11:42:12,686,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating CatBoost model
+2025-11-25 11:42:12,690,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 662166.319592
+2025-11-25 11:42:12,690,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 162986.507236
+2025-11-25 11:42:12,691,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18675234.593903
+2025-11-25 11:42:12,691,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.586046
+2025-11-25 11:42:12,693,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -0.364579
+2025-11-25 11:42:12,694,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-25 11:42:12,853,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_normal_prediction_comparison_251142.png
+2025-11-25 11:42:13,007,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_log_prediction_comparison_251142.png
+2025-11-25 11:42:13,007,File "/home/wcl/cycle_dete/src/test2.py", line 422, CatBoost: Available keys in evals_result_: ['learn', 'validation']
+2025-11-25 11:42:13,115,File "/home/wcl/cycle_dete/src/test2.py", line 492, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_loss_curve_251142.png
+2025-11-25 11:42:13,145,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: False, history: True, model_name: LightGBM
+2025-11-25 11:42:13,145,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-25 11:42:13,885,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-25 12:02:38,932,File "/home/wcl/cycle_dete/src/test2.py", line 300,                            Feature  Importance
+3  recent_history_bandwidth_memory       28907
+0                    disk_capacity       21018
+7                    business_type       12547
+2                        vm_memory        7727
+1                           vm_cpu        5508
+6                      volume_type        5349
+4                      disk_if_VIP        1411
+5                        disk_type        1248
+2025-11-25 12:02:38,937,File "/home/wcl/cycle_dete/src/test2.py", line 301, best_params: {'learning_rate': np.float64(0.12800460724804458), 'max_depth': 14, 'min_child_samples': 96, 'n_estimators': 2617, 'num_leaves': 33, 'objective': 'regression', 'subsample': np.float64(0.9225221214596178), 'subsample_freq': 4}
+2025-11-25 12:02:38,937,File "/home/wcl/cycle_dete/src/test2.py", line 302, best_score: 0.678424
+2025-11-25 12:02:39,927,File "/home/wcl/cycle_dete/src/test2.py", line 315, y_pred_min: -931965.4897083417
+2025-11-25 12:02:39,937,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: True, history_transform: False, model_name: LightGBM
+2025-11-25 12:02:39,937,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating LightGBM model
+2025-11-25 12:02:39,938,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 667984.205459
+2025-11-25 12:02:39,938,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 169872.545380
+2025-11-25 12:02:39,939,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18737899.527450
+2025-11-25 12:02:39,939,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.578740
+2025-11-25 12:02:39,940,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -1.970198
+2025-11-25 12:02:39,940,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-25 12:02:40,114,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_normal_prediction_comparison_251202.png
+2025-11-25 12:02:40,288,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_log_prediction_comparison_251202.png
+2025-11-25 12:02:40,288,File "/home/wcl/cycle_dete/src/test2.py", line 422, LightGBM: Available keys in evals_result_: ['training', 'valid_1']
+2025-11-25 12:02:40,392,File "/home/wcl/cycle_dete/src/test2.py", line 492, LightGBM_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_loss_curve_251202.png
+2025-11-25 12:02:40,423,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: False, history: True, model_name: XGBoost
+2025-11-25 12:02:40,423,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-25 12:02:41,167,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-25 12:22:47,010,File "/home/wcl/cycle_dete/src/test2.py", line 367,                            Feature  Importance
+6                      volume_type    0.253301
+3  recent_history_bandwidth_memory    0.210816
+0                    disk_capacity    0.156473
+7                    business_type    0.108732
+2                        vm_memory    0.106697
+1                           vm_cpu    0.070673
+5                        disk_type    0.051229
+4                      disk_if_VIP    0.042080
+2025-11-25 12:22:47,016,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.7611370756000213), 'learning_rate': np.float64(0.009512379298294132), 'max_depth': 12, 'min_child_weight': 1, 'n_estimators': 346, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(5.2941161228659555), 'reg_lambda': np.float64(0.012620992324037704), 'subsample': np.float64(0.7006495257183126)}
+2025-11-25 12:22:47,016,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.681466
+2025-11-25 12:22:49,382,File "/home/wcl/cycle_dete/src/test2.py", line 390, y_pred_min: 873.4752197265625
+2025-11-25 12:22:49,390,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: False, history: True, history_transform: False, model_name: XGBoost
+2025-11-25 12:22:49,390,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating XGBoost model
+2025-11-25 12:22:49,392,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 629420.976412
+2025-11-25 12:22:49,393,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 169868.919565
+2025-11-25 12:22:49,393,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18093602.701885
+2025-11-25 12:22:49,394,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.625976
+2025-11-25 12:22:49,395,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : -0.344081
+2025-11-25 12:22:49,396,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-25 12:22:49,596,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_normal_prediction_comparison_251222.png
+2025-11-25 12:22:49,759,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_log_prediction_comparison_251222.png
+2025-11-25 12:22:49,759,File "/home/wcl/cycle_dete/src/test2.py", line 422, XGBoost: Available keys in evals_result_: ['validation_0', 'validation_1']
+2025-11-25 12:22:49,759,File "/home/wcl/cycle_dete/src/test2.py", line 458, XGBoost: No valid train or validation key found in results
+2025-11-25 12:22:49,789,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: True, history: False, model_name: CatBoost
+2025-11-25 12:22:49,790,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-25 12:22:50,536,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-26 00:52:11,798,File "/home/wcl/cycle_dete/src/test2.py", line 135,          Feature  Importance
+0  disk_capacity   27.606447
+1         vm_cpu   14.214231
+5    volume_type   13.074881
+6  business_type   13.037398
+4      disk_type   12.301198
+2      vm_memory   12.083320
+3    disk_if_VIP    7.682524
+2025-11-26 00:52:11,804,File "/home/wcl/cycle_dete/src/test2.py", line 136, best_params: {'bootstrap_type': 'MVS', 'depth': 13, 'iterations': 8896, 'l2_leaf_reg': 6, 'learning_rate': np.float64(0.012163073515481234), 'loss_function': 'RMSE', 'one_hot_max_size': 50, 'random_strength': 10, 'subsample': np.float64(0.6162752052540229)}
+2025-11-26 00:52:11,804,File "/home/wcl/cycle_dete/src/test2.py", line 137, best_score: 0.639369
+2025-11-26 00:56:58,854,File "/home/wcl/cycle_dete/src/test2.py", line 149, y_pred_min: 2.5837069897534723
+2025-11-26 00:56:59,039,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: True, history: False, history_transform: False, model_name: CatBoost
+2025-11-26 00:56:59,042,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating CatBoost model
+2025-11-26 00:56:59,044,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 719785.340573
+2025-11-26 00:56:59,044,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 121846.302773
+2025-11-26 00:56:59,045,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18896054.603677
+2025-11-26 00:56:59,045,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.510871
+2025-11-26 00:56:59,046,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : 0.653400
+2025-11-26 00:56:59,047,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-26 00:56:59,205,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_normal_prediction_comparison_260056.png
+2025-11-26 00:56:59,358,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_log_prediction_comparison_260056.png
+2025-11-26 00:56:59,359,File "/home/wcl/cycle_dete/src/test2.py", line 422, CatBoost: Available keys in evals_result_: ['learn', 'validation']
+2025-11-26 00:56:59,472,File "/home/wcl/cycle_dete/src/test2.py", line 492, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_loss_curve_260056.png
+2025-11-26 00:56:59,513,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: True, history: False, model_name: LightGBM
+2025-11-26 00:56:59,513,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-26 00:57:00,287,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-26 01:16:41,271,File "/home/wcl/cycle_dete/src/test2.py", line 300,          Feature  Importance
+0  disk_capacity       86711
+2      vm_memory       50395
+1         vm_cpu       42670
+6  business_type       25714
+4      disk_type       14380
+3    disk_if_VIP       14328
+5    volume_type       10756
+2025-11-26 01:16:41,275,File "/home/wcl/cycle_dete/src/test2.py", line 301, best_params: {'learning_rate': np.float64(0.02238906984905967), 'max_depth': 15, 'min_child_samples': 30, 'n_estimators': 1842, 'num_leaves': 134, 'objective': 'regression', 'subsample': np.float64(0.7430186555078663), 'subsample_freq': 3}
+2025-11-26 01:16:41,276,File "/home/wcl/cycle_dete/src/test2.py", line 302, best_score: 0.626507
+2025-11-26 01:16:48,985,File "/home/wcl/cycle_dete/src/test2.py", line 315, y_pred_min: 2.784449415225738
+2025-11-26 01:16:48,999,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: True, history: False, history_transform: False, model_name: LightGBM
+2025-11-26 01:16:48,999,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating LightGBM model
+2025-11-26 01:16:49,001,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 748767.522468
+2025-11-26 01:16:49,001,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 129585.722044
+2025-11-26 01:16:49,002,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18898556.286998
+2025-11-26 01:16:49,002,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.470688
+2025-11-26 01:16:49,003,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : 0.639985
+2025-11-26 01:16:49,003,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-26 01:16:49,158,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_normal_prediction_comparison_260116.png
+2025-11-26 01:16:49,319,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_log_prediction_comparison_260116.png
+2025-11-26 01:16:49,319,File "/home/wcl/cycle_dete/src/test2.py", line 422, LightGBM: Available keys in evals_result_: ['training', 'valid_1']
+2025-11-26 01:16:49,424,File "/home/wcl/cycle_dete/src/test2.py", line 492, LightGBM_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_loss_curve_260116.png
+2025-11-26 01:16:49,449,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: True, history: False, model_name: XGBoost
+2025-11-26 01:16:49,449,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-26 01:16:50,191,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-26 01:34:05,187,File "/home/wcl/cycle_dete/src/test2.py", line 367,          Feature  Importance
+4      disk_type    0.292854
+0  disk_capacity    0.199865
+1         vm_cpu    0.122770
+6  business_type    0.111457
+2      vm_memory    0.098378
+5    volume_type    0.092173
+3    disk_if_VIP    0.082502
+2025-11-26 01:34:05,192,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.8531027927377107), 'learning_rate': np.float64(0.012466241099369333), 'max_depth': 9, 'min_child_weight': 1, 'n_estimators': 1599, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(0.00420764022827937), 'reg_lambda': np.float64(0.6320372322158274), 'subsample': np.float64(0.9347692509628189)}
+2025-11-26 01:34:05,192,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.634111
+2025-11-26 01:34:12,702,File "/home/wcl/cycle_dete/src/test2.py", line 390, y_pred_min: 2.2332334518432617
+2025-11-26 01:34:12,714,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: True, history: False, history_transform: False, model_name: XGBoost
+2025-11-26 01:34:12,714,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating XGBoost model
+2025-11-26 01:34:12,716,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 751162.471410
+2025-11-26 01:34:12,716,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 122824.615928
+2025-11-26 01:34:12,716,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18897996.187725
+2025-11-26 01:34:12,717,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.467297
+2025-11-26 01:34:12,718,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : 0.650540
+2025-11-26 01:34:12,718,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-26 01:34:12,871,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_normal_prediction_comparison_260134.png
+2025-11-26 01:34:13,028,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_log_prediction_comparison_260134.png
+2025-11-26 01:34:13,028,File "/home/wcl/cycle_dete/src/test2.py", line 422, XGBoost: Available keys in evals_result_: ['validation_0', 'validation_1']
+2025-11-26 01:34:13,028,File "/home/wcl/cycle_dete/src/test2.py", line 458, XGBoost: No valid train or validation key found in results
+2025-11-26 01:34:13,058,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: True, history: True, model_name: CatBoost
+2025-11-26 01:34:13,058,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-26 01:34:13,803,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-26 19:35:55,355,File "/home/wcl/cycle_dete/src/test2.py", line 135,                            Feature  Importance
+0                    disk_capacity   24.108576
+3  recent_history_bandwidth_memory   13.089874
+5                        disk_type   11.724130
+1                           vm_cpu   11.664158
+6                      volume_type   11.533164
+7                    business_type   11.483213
+2                        vm_memory   10.031205
+4                      disk_if_VIP    6.365681
+2025-11-26 19:35:55,362,File "/home/wcl/cycle_dete/src/test2.py", line 136, best_params: {'bootstrap_type': 'MVS', 'depth': 13, 'iterations': 5427, 'l2_leaf_reg': 6, 'learning_rate': np.float64(0.015360787301767537), 'loss_function': 'RMSE', 'one_hot_max_size': 50, 'random_strength': 2, 'subsample': np.float64(0.7839146075745625)}
+2025-11-26 19:35:55,362,File "/home/wcl/cycle_dete/src/test2.py", line 137, best_score: 0.636806
+2025-11-26 19:43:13,008,File "/home/wcl/cycle_dete/src/test2.py", line 149, y_pred_min: 1.579327180150159
+2025-11-26 19:43:13,069,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: True, history: True, history_transform: False, model_name: CatBoost
+2025-11-26 19:43:13,071,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating CatBoost model
+2025-11-26 19:43:13,074,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 697438.359924
+2025-11-26 19:43:13,075,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 127010.225119
+2025-11-26 19:43:13,075,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18902042.042291
+2025-11-26 19:43:13,076,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.540771
+2025-11-26 19:43:13,076,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : 0.640810
+2025-11-26 19:43:13,077,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-26 19:43:13,249,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_normal_prediction_comparison_261943.png
+2025-11-26 19:43:13,403,File "/home/wcl/cycle_dete/src/test2.py", line 84, CatBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_log_prediction_comparison_261943.png
+2025-11-26 19:43:13,404,File "/home/wcl/cycle_dete/src/test2.py", line 422, CatBoost: Available keys in evals_result_: ['learn', 'validation']
+2025-11-26 19:43:13,511,File "/home/wcl/cycle_dete/src/test2.py", line 492, CatBoost_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/CatBoost/CatBoost_loss_curve_261943.png
+2025-11-26 19:43:13,552,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: True, history: True, model_name: LightGBM
+2025-11-26 19:43:13,553,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-26 19:43:14,289,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-26 20:04:42,595,File "/home/wcl/cycle_dete/src/test2.py", line 300,                            Feature  Importance
+3  recent_history_bandwidth_memory       42221
+0                    disk_capacity       26879
+2                        vm_memory       13629
+1                           vm_cpu       11808
+7                    business_type        7137
+5                        disk_type        4751
+4                      disk_if_VIP        3548
+6                      volume_type        2853
+2025-11-26 20:04:42,599,File "/home/wcl/cycle_dete/src/test2.py", line 301, best_params: {'learning_rate': np.float64(0.041138521723398644), 'max_depth': 13, 'min_child_samples': 24, 'n_estimators': 1612, 'num_leaves': 71, 'objective': 'regression', 'subsample': np.float64(0.9283467044976585), 'subsample_freq': 1}
+2025-11-26 20:04:42,599,File "/home/wcl/cycle_dete/src/test2.py", line 302, best_score: 0.612156
+2025-11-26 20:04:46,706,File "/home/wcl/cycle_dete/src/test2.py", line 315, y_pred_min: 0.8744265352268991
+2025-11-26 20:04:46,715,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: True, history: True, history_transform: False, model_name: LightGBM
+2025-11-26 20:04:46,715,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating LightGBM model
+2025-11-26 20:04:46,716,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 735921.511301
+2025-11-26 20:04:46,716,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 134274.310045
+2025-11-26 20:04:46,717,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18901378.453579
+2025-11-26 20:04:46,717,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.488694
+2025-11-26 20:04:46,718,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : 0.625063
+2025-11-26 20:04:46,718,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-26 20:04:46,893,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_normal_prediction_comparison_262004.png
+2025-11-26 20:04:47,052,File "/home/wcl/cycle_dete/src/test2.py", line 84, LightGBM_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_log_prediction_comparison_262004.png
+2025-11-26 20:04:47,053,File "/home/wcl/cycle_dete/src/test2.py", line 422, LightGBM: Available keys in evals_result_: ['training', 'valid_1']
+2025-11-26 20:04:47,156,File "/home/wcl/cycle_dete/src/test2.py", line 492, LightGBM_loss_curve.png saved to /home/wcl/cycle_dete/output/temp/LightGBM/LightGBM_loss_curve_262004.png
+2025-11-26 20:04:47,173,File "/home/wcl/cycle_dete/src/test2.py", line 544, log: True, history: True, model_name: XGBoost
+2025-11-26 20:04:47,173,File "/home/wcl/cycle_dete/src/test2.py", line 499, cluster_index_list: [400, 401, 405, 406, 407, 408, 413, 414, 415, 436, 437, 452, 456, 458, 476, 477, 478, 486, 487, 511, 517, 518, 519, 520, 521, 529, 532, 538, 546, 547, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 576, 577, 578, 588, 589, 602, 604, 605, 606, 609, 610, 650, 652, 653, 656, 662, 674, 676, 677, 685, 686, 697, 698, 700, 704, 709, 727, 735, 736, 742, 748, 752, 753, 754, 756, 757, 771]
+2025-11-26 20:04:48,171,File "/home/wcl/cycle_dete/src/data/loader.py", line 61, total loaded 33079 disks
+2025-11-26 20:26:05,762,File "/home/wcl/cycle_dete/src/test2.py", line 367,                            Feature  Importance
+5                        disk_type    0.403549
+0                    disk_capacity    0.179773
+1                           vm_cpu    0.092470
+7                    business_type    0.070178
+6                      volume_type    0.068798
+2                        vm_memory    0.065753
+3  recent_history_bandwidth_memory    0.063772
+4                      disk_if_VIP    0.055707
+2025-11-26 20:26:05,766,File "/home/wcl/cycle_dete/src/test2.py", line 368, best_params: {'colsample_bytree': np.float64(0.736271163550117), 'learning_rate': np.float64(0.005498910361356235), 'max_depth': 14, 'min_child_weight': 6, 'n_estimators': 1482, 'objective': 'reg:squarederror', 'reg_alpha': np.float64(0.01307463098477114), 'reg_lambda': np.float64(6.274127997880921), 'subsample': np.float64(0.7340177314306613)}
+2025-11-26 20:26:05,767,File "/home/wcl/cycle_dete/src/test2.py", line 369, best_score: 0.627986
+2025-11-26 20:26:20,963,File "/home/wcl/cycle_dete/src/test2.py", line 390, y_pred_min: 1.4600900411605835
+2025-11-26 20:26:20,973,File "/home/wcl/cycle_dete/src/test2.py", line 531, log: True, history: True, history_transform: False, model_name: XGBoost
+2025-11-26 20:26:20,973,File "/home/wcl/cycle_dete/src/test2.py", line 396, Evaluating XGBoost model
+2025-11-26 20:26:20,974,File "/home/wcl/cycle_dete/src/test2.py", line 397, RMSE : 693545.651498
+2025-11-26 20:26:20,975,File "/home/wcl/cycle_dete/src/test2.py", line 399, MAE : 130986.951376
+2025-11-26 20:26:20,975,File "/home/wcl/cycle_dete/src/test2.py", line 400, Max Error : 18901352.002422
+2025-11-26 20:26:20,975,File "/home/wcl/cycle_dete/src/test2.py", line 401, R² Score : 0.545883
+2025-11-26 20:26:20,976,File "/home/wcl/cycle_dete/src/test2.py", line 402, log R² Score : 0.637650
+2025-11-26 20:26:20,976,File "/home/wcl/cycle_dete/src/test2.py", line 404, mean bandwidth : 226708.987290
+2025-11-26 20:26:21,121,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_normal_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_normal_prediction_comparison_262026.png
+2025-11-26 20:26:21,288,File "/home/wcl/cycle_dete/src/test2.py", line 84, XGBoost_log_prediction_comparison.png saved to /home/wcl/cycle_dete/output/temp/XGBoost/XGBoost_log_prediction_comparison_262026.png
+2025-11-26 20:26:21,288,File "/home/wcl/cycle_dete/src/test2.py", line 422, XGBoost: Available keys in evals_result_: ['validation_0', 'validation_1']
+2025-11-26 20:26:21,288,File "/home/wcl/cycle_dete/src/test2.py", line 458, XGBoost: No valid train or validation key found in results

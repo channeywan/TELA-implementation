@@ -161,7 +161,9 @@ async def process_single_description(client: AsyncOpenAI, description: str, sema
 
 
 async def request_business_type():
-    items_with_description = process_description()
+    # items_with_description = process_description()
+    items_with_description = pd.read_csv(os.path.join(DirConfig.TRASH_DIR,
+                                                      "all_tencent_disk_description.csv"))
     client = AsyncOpenAI(api_key=os.getenv(
         "DEEPSEEK_API_KEY"), base_url="https://api.deepseek.com")
     semaphore = asyncio.Semaphore(20)
@@ -181,7 +183,7 @@ async def request_business_type():
         }
     print("inference finished")
     output_filename = os.path.join(
-        DirConfig.CLUSTER_INFO_BUSINESS_TYPE_ROOT, "business_type_results.txt")
+        DirConfig.BUSINESS_TYPE_DIR, "tencent_disk_business_type_results.txt")
     with open(output_filename, "w") as f:
         for description in items_description:
             classification = results_map[description]["classification"]
@@ -200,10 +202,12 @@ async def request_business_type():
     print("business_type results saved")
     items_df["business_type"] = items_df["description"].map(
         lambda desc: results_map.get(desc, {}).get("classification", ""))
-    for cluster_index in DataConfig.REQUEST_BUSINESS_TYPE_CLUSTER_INDEX_LIST:
-        df = items_df[items_df["cluster_index"] == cluster_index]
-        df.to_csv(
-            os.path.join(DirConfig.CLUSTER_INFO_BUSINESS_TYPE_ROOT, f"cluster{cluster_index}.csv"), index=False)
+    items_df.to_csv(os.path.join(DirConfig.BUSINESS_TYPE_DIR,
+                                 "tencent_disk_business_type.csv"), index=False)
+    # for cluster_index in DataConfig.REQUEST_BUSINESS_TYPE_CLUSTER_INDEX_LIST:
+    #     df = items_df[items_df["cluster_index"] == cluster_index]
+    #     df.to_csv(
+    #         os.path.join(DirConfig.CLUSTER_INFO_BUSINESS_TYPE_ROOT, f"cluster{cluster_index}.csv"), index=False)
 
 
 def run_request_business_type():

@@ -49,3 +49,7 @@
 - timestamp_num < 8640
 - peak_bandwidth > warehouse_resource*0.8
 - avg_bandwidth>3
+
+不使用加权loss时，最佳的模型'eval_accuracy': 0.8319226118500604, 'eval_f1_macro': 0.776756
+4071958128, 'eval_f1_weighted': 0.8328314073495453,
+使用加权loss时，最佳的模型'eval_accuracy': 0.8097037484885127, 'eval_f1_macro': 0.7386592841329268, 'eval_f1_weighted': 0.8128752196733068, 

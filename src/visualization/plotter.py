@@ -4,6 +4,7 @@ from datetime import datetime
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.patches as mpatches
 import os
 import logging
 import numpy as np
@@ -24,8 +25,9 @@ class BasePlotter:
         self.data_config = DataConfig()
         self.loader = DiskDataLoader()
         plt.rcParams['font.family'] = [
-            'Noto Serif CJK SC'
+            'serif'
         ]
+        plt.rcParams['font.serif'] = ['Times New Roman']
         plt.rcParams['axes.unicode_minus'] = False
 
     def plot_cdf(self, data: List[float], save_dir: str, title: str):
@@ -319,23 +321,360 @@ class TelaPlotter(BasePlotter):
             f"type_pie.png saved to {os.path.join(save_dir, 'type_pie.png')}")
 
     def plot_business_type_vector(self, business_type_vector: pd.DataFrame, save_dir: str, start_hour=8):
+        trace_vector_interval = DataConfig.TRACE_VECTOR_INTERVAL
+        window_number = int(24 / trace_vector_interval)  # 确保是整数
         df_transposed = business_type_vector.T
         df_transposed.index = df_transposed.index.astype(int)
-        new_order = [(start_hour + i) % 24 for i in range(24)]
+        new_order = [(start_hour + i*trace_vector_interval) %
+                     24 for i in range(window_number)]
         df_reordered = df_transposed.reindex(new_order)
         df_reordered = df_reordered.reset_index(drop=True)
-        df_reordered.index = range(24)
+        df_reordered.index = [
+            i*trace_vector_interval for i in range(window_number)]
         os.makedirs(save_dir, exist_ok=True)
-        plt.figure(figsize=(12, 6))
-        df_reordered.plot(ax=plt.gca(), legend=False)
+        plt.figure(figsize=(18, 6))
+        df_reordered.plot(ax=plt.gca())
+        plt.legend(loc='upper right')
+        plt.xlim(0, 29-trace_vector_interval)
+        # plt.ylim(0.02, 0.1)
         plt.xlabel('Hour')
         x_tick_labels = [f'{h}h' for h in new_order]
-        plt.xticks(range(24), x_tick_labels)
+        plt.xticks(df_reordered.index, x_tick_labels)
         plt.grid(True)
         plt.savefig(os.path.join(save_dir, 'business_type_vector.png'))
         logger.info(
             f"business_type_vector saved to {os.path.join(save_dir, 'business_type_vector.png')}")
         plt.close()
+
+
+class MotivationPlotter(BasePlotter):
+    def __init__(self):
+        super().__init__()
+
+    def plot_figure_2a(self,  save_dir: str):
+        frequently_peak_hours_ratio = np.loadtxt(os.path.join(
+            DirConfig.TEMP_DIR, 'peak_valley_analyze', 'frequently_peak_hours_ratio.txt'), delimiter=',')
+        frequently_valley_hours_ratio = np.loadtxt(os.path.join(
+            DirConfig.TEMP_DIR, 'peak_valley_analyze', 'frequently_valley_hours_ratio.txt'), delimiter=',')
+        plt.figure(figsize=(5, 6.2))
+        sns.ecdfplot(frequently_peak_hours_ratio,
+                     label='Peak', color='#2a9d8f')
+        sns.ecdfplot(frequently_valley_hours_ratio,
+                     label='Valley', color='#f4a261')
+        plt.legend(fontsize=14)
+        plt.xlabel('Stability of Peak/Valley', fontsize=16)
+        plt.ylabel('Cumulative Distribution Function', fontsize=16)
+        plt.tick_params(axis='both', which='major', labelsize=16)
+        plt.savefig(os.path.join(save_dir, 'figure_2a.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_2a saved to {os.path.join(save_dir, 'figure_2a.svg')}")
+
+    def plot_figure_2b(self, save_dir: str):
+        peak_windows_distribution = np.loadtxt(os.path.join(
+            DirConfig.TEMP_DIR, 'peak_valley_analyze', 'peak_windows_distribution.txt'), delimiter=',')
+        valley_windows_distribution = np.loadtxt(os.path.join(
+            DirConfig.TEMP_DIR, 'peak_valley_analyze', 'valley_windows_distribution.txt'), delimiter=',')
+        fig, axes = plt.subplots(2, 1, figsize=(6, 6), sharex=True)
+        plt.subplots_adjust(hspace=0.18)
+        x_pos = np.arange(peak_windows_distribution.shape[0])
+        peak_bottom = np.zeros(peak_windows_distribution.shape[0])
+        valley_bottom = np.zeros(valley_windows_distribution.shape[0])
+        colors = ['#2a9d8f', '#f4a261', '#e9c46a', '#e76f51']
+        legend_labels = ['0-6h', '6-12h', '12-18h', '18-24h']
+        for i in range(peak_windows_distribution.shape[1]):
+            heights = peak_windows_distribution[:, i]
+            axes[0].bar(x_pos, heights, color=colors[i], label=legend_labels[i],
+                        bottom=peak_bottom, edgecolor='black', linewidth=0.6, width=0.5)
+            peak_bottom += heights
+        for i in range(valley_windows_distribution.shape[1]):
+            heights = valley_windows_distribution[:, i]
+            axes[1].bar(x_pos, heights, color=colors[i],
+                        bottom=valley_bottom, edgecolor='black', linewidth=0.6, width=0.5)
+            valley_bottom += heights
+        axes[0].axvline(x=4.5, color='red', linestyle='--', linewidth=1.5)
+        axes[1].axvline(x=4.5, color='red', linestyle='--', linewidth=1.5)
+        axes[0].set_title('Peak Windows Distribution',
+                          fontsize=16)
+        axes[1].set_title('Valley Windows Distribution',
+                          fontsize=16)
+        axes[0].text(2, 105, 'Weekdays', ha='center',
+                     fontsize=14, color='black')
+        axes[0].text(5.5, 105, 'Weekend', ha='center',
+                     fontsize=14, color='black')
+        axes[0].set_ylim(0, 115)
+        # axes[0].set_xticks(x_pos)
+        axes[0].set_yticks(np.arange(0, 101, 20))
+        axes[1].set_yticks(np.arange(0, 101, 20))
+        axes[0].tick_params(axis='x', which='major', length=0)
+        axes[0].tick_params(axis='y', labelsize=16)
+        axes[1].tick_params(axis='x', labelsize=16)
+        axes[1].tick_params(axis='y', labelsize=16)
+        axes[1].set_xticks(np.arange(7), labels=[
+                           "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+        # axes[0].grid(axis='y', color='gray', linestyle='-',
+        #              linewidth=1.5, alpha=0.5)
+        # axes[1].grid(axis='y', color='gray', linestyle='-',
+        #              linewidth=1.5, alpha=0.5)
+        axes[0].set_axisbelow(True)
+        axes[1].set_axisbelow(True)
+        axes[0].legend(loc='lower center', bbox_to_anchor=(
+            0.5, 1.1), ncol=4, fontsize=14, frameon=True,  handlelength=0.85, handletextpad=0.6)
+        fig.supylabel('Percentage (%)', x=0.02, fontsize=17)
+        fig.savefig(os.path.join(save_dir,
+                    "peak_valley_windows_distribution.svg"), bbox_inches='tight')
+        logger.info(
+            f"Peak and valley windows distribution saved to {os.path.join(save_dir, 'peak_valley_windows_distribution.svg')}")
+        plt.close(fig)
+
+    def plot_figure_4a(self, save_dir: str):
+        SHADOW_OFFSET_X = 0.01   # 水平偏移
+        SHADOW_OFFSET_Y = -0.012  # 垂直偏移 (负数表示向下，即6点钟方向)
+
+        # 阴影颜色和透明度
+        SHADOW_COLOR = '#333333'  # 深灰色
+        SHADOW_ALPHA = 0.4       # 透明度 (0-1)
+        SHADOW_RADIUS = 1
+        label_mapping = {
+            'game-service': 'Gaming',
+            'office-system': 'OA/ERP',
+            'gov-public-service': 'Gov/Public',
+            'corp-website-portal': 'Corp Web',
+            'ecommerce-retail': 'E-comm',
+            'local-service-delivery': 'O2O/Local',
+            'media-video-streaming': 'Video',
+            'media-news-portal': 'News',
+            'finance-payment': 'Fin/Pay',
+            'data-collection-delivery': 'Data/CDN',
+            'ai-machine-learning': 'AI/ML',
+            'dev-test-env': 'Dev/Test',
+            'education-learning': 'Edu',
+            'community-social-forum': 'Social',
+            'compute-simulation': 'HPC/Sim',
+            'personal-use': 'Personal',
+            'iot-saas-platform': 'IoT/SaaS',
+            'logistics-mobility': 'Logistics',
+            'travel-hospitality': 'Travel',
+            'infra-node': 'K8s Node',
+            'infra-coordination': 'Coord',
+            'infra-database': 'DB',
+            'infra-message-queue': 'MQ',
+            'infra-cloud-function': 'Serverless',
+            'infra-jumpbox': 'Jumpbox',
+            'infra-cache': 'Cache',
+            'infra-logging-monitoring': 'Monitor',
+            'generic-autoscaling': 'ASG',
+            'generic-unknown': 'Unknown'
+        }
+        labels = [
+            # --- 左上区 (从小到大) ---
+            'News', 'Gov/Public', 'Social', 'Cache', 'Jumpbox',
+            'Fin/Pay', 'AI/ML', 'ASG', 'Data/CDN', 'HPC/Sim', 'Gaming', 'MQ',
+
+            # --- 锚定点 ---
+            'Unknown',   # 左下 (No.2)
+            'K8s Node',  # 底部 (No.1)
+            'DB',        # 右下 (No.3)
+
+            # --- 右上区 (从大到小) ---
+            'Dev/Test', 'Video', 'Monitor', 'OA/ERP', 'Coord', 'IoT/SaaS',
+            'Edu', 'Corp Web', 'E-comm', 'Travel', 'Logistics', 'O2O/Local', 'Serverless'
+        ]
+        values = [
+            # --- 左上区 (从小到大) ---
+            40, 76, 104, 164, 233,
+            278, 485, 592, 724, 1024, 1341, 1900,
+
+            # --- 锚定点 ---
+            2493,  # Unknown
+            6526,  # K8s Node
+            1978,  # DB
+
+            # --- 右上区 (从大到小) ---
+            1757, 1142, 816, 695, 531, 482,
+            263, 191, 133, 99, 54, 28, 17
+        ]
+        colors = [
+            # --- 左上区 (蓝紫色系渐变：浅 -> 深) ---
+            '#045A90', '#08799E',  '#0B8AA6',
+            '#0C93AA', '#2CA7B5', '#199BAE', '#39B0B9', '#4BBBBF', '#4FBFAE', '#54C495', '#57C785', '#91E69C',
+
+            # --- 锚定点颜色 ---
+            '#b3ddc5',  # Unknown (青色/Turquoise)
+            '#fef1e9',  # K8s Node (米白色/OldLace)
+            '#fde3d6',  # DB (淡黄色/LightYellow)
+
+            # --- 右上区 (橙红色系渐变：深 -> 浅) ---
+            # 注意：这里是从大到小排，所以颜色是从深到浅，保证靠近中轴线的小类是浅色的
+            '#EDDD53', '#E6CB5E', '#E2BE66', '#E0B969', '#CD8E51', '#BA6238',
+            '#CE542F', '#E04728', '#C6371B', '#BF3F08', '#8F0000', '#570000', '#004285'
+        ]
+        data_package = list(zip(values, labels, colors))
+        sorted_data = sorted(data_package, key=lambda x: x[0], reverse=True)
+        total = sum(values)
+        legend_handles = []
+        legend_labels = []
+        for value, label, color in sorted_data:
+            # A. 计算百分比
+            percentage = (value / total) * 100
+            formatted_label = f'{label} ({percentage:.1f}%)'
+            legend_labels.append(formatted_label)
+            patch = mpatches.Patch(color=color, label=formatted_label)
+            legend_handles.append(patch)
+
+        def make_autopct(pct):
+            return ('%1.1f%%' % pct) if pct > 100 else ''
+
+        plt.figure(figsize=(10, 6))
+        plt.pie(
+            values,
+            labels=None,
+            colors=[SHADOW_COLOR] * len(values),
+            startangle=90,
+            counterclock=True,
+            radius=SHADOW_RADIUS,
+            center=(SHADOW_OFFSET_X, SHADOW_OFFSET_Y),
+            wedgeprops={'alpha': SHADOW_ALPHA, 'edgecolor': None}
+        )
+        plt.pie(values, labels=None, colors=colors, startangle=90,
+                counterclock=True,
+                autopct=make_autopct,
+                wedgeprops={'edgecolor': 'white', 'linewidth': 0.2}
+                )
+        plt.legend(handles=legend_handles, labels=legend_labels,
+                   loc='center left', bbox_to_anchor=(0.95, 0.5), fontsize=14, ncol=2, handlelength=0.85, columnspacing=0.3)
+        plt.pie(
+            x=[1],
+            labels=None,
+            colors=['white'],
+            counterclock=True,
+            radius=0.35,
+            center=(0, 0)
+        )
+        plt.axis('equal')
+        plt.subplots_adjust(left=0, bottom=0, right=0.6, top=0.95)
+        plt.savefig(os.path.join(save_dir, 'figure_4a.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_4a.png saved to {os.path.join(save_dir, 'figure_4a.svg')}")
+
+    def plot_figure_4b(self, save_dir: str):
+        label_mapping = {
+            'game-service': 'Gaming',
+            'office-system': 'OA/ERP',
+            'gov-public-service': 'Gov/Public',
+            'corp-website-portal': 'Corp Web',
+            'ecommerce-retail': 'E-comm',
+            'local-service-delivery': 'O2O/Local',
+            'media-video-streaming': 'Video',
+            'media-news-portal': 'News',
+            'finance-payment': 'Fin/Pay',
+            'data-collection-delivery': 'Data/CDN',
+            'ai-machine-learning': 'AI/ML',
+            'dev-test-env': 'Dev/Test',
+            'education-learning': 'Edu',
+            'community-social-forum': 'Social',
+            'compute-simulation': 'HPC/Sim',
+            'personal-use': 'Personal',
+            'iot-saas-platform': 'IoT/SaaS',
+            'logistics-mobility': 'Logistics',
+            'travel-hospitality': 'Travel',
+            'infra-node': 'K8s Node',
+            'infra-coordination': 'Coord',
+            'infra-database': 'DB',
+            'infra-message-queue': 'MQ',
+            'infra-cloud-function': 'Serverless',
+            'infra-jumpbox': 'Jumpbox',
+            'infra-cache': 'Cache',
+            'infra-logging-monitoring': 'Monitor',
+            'generic-autoscaling': 'ASG',
+            'generic-unknown': 'Unknown'
+        }
+        vectors = pd.read_csv(os.path.join(
+            DirConfig.BUSINESS_TYPE_DIR, 'business_type_vector_all_disk.csv'), delimiter=',', index_col=0)
+        vectors.index = vectors.index.map(label_mapping)
+        vectors.drop(index=['Personal'], inplace=True)
+        style_config = {
+            'News': ('#EDDD53', 1.0),
+            'Gov/Public': ('#08799E', 0.3),
+            'Social': ('#0B8AA6', 0.3),
+            'Cache': ('#0C93AA', 0.3),
+            'Jumpbox': ('#2a9d8f', 1.0),
+            'Fin/Pay': ('#199BAE', 0.3),
+            'AI/ML': ('#67b1e2', 1.0),
+            'ASG': ('#4BBBBF', 0.3),
+            'Data/CDN': ('#4FBFAE', 0.3),
+            'HPC/Sim': ('#54C495', 0.3),
+            'Gaming': ('#e9c46a', 1.0),
+            'MQ': ('#91E69C', 0.3),
+            'Unknown': ('#b3ddc5', 0.3),
+            'K8s Node': ('#fef1e9', 0.3),
+            'DB': ('#67b1e2', 0.3),
+            'Dev/Test': ('#EDDD53', 0.3),
+            'Video': ('#E6CB5E', 0.3),
+            'Monitor': ('#E2BE66', 0.3),
+            'OA/ERP': ('#E0B969', 0.3),
+            'Coord': ('#CD8E51', 0.3),
+            'IoT/SaaS': ('#BA6238', 0.3),
+            'Edu': ('#CE542F', 1.0),
+            'Corp Web': ('#0074aa', 1.0),
+            'E-comm': ('#C6371B', 0.3),
+            'Travel': ('#BF3F08', 0.3),
+            'Logistics': ('#8F0000', 0.3),
+            'O2O/Local': ('#570000', 0.3),
+            'Serverless': ('#004285', 0.3)
+        }
+
+        def plot_row(label, row_data, color, alpha, is_highlight):
+            data = np.array(row_data)
+            shifted_data = np.roll(data, -8)
+            plt.plot(
+                shifted_data,
+                label=label,
+                color=color if is_highlight else 'gray',
+                alpha=alpha,
+                linewidth=1.2 if is_highlight else 0.8,
+                zorder=10 if is_highlight else 1
+            )
+        plt.figure(figsize=(10, 5))
+        plt.ylabel('Normalized Throughput', fontsize=16)
+        plt.xlabel('Time (Hour)', fontsize=16)
+        plt.tick_params(axis='both', which='major', labelsize=12)
+        plt.xticks(range(0, 24, 2), labels=[
+                   f'{(8+i)%24}:00' for i in range(0, 24, 2)])
+        first_other_label = False
+        for label, row in vectors.iterrows():
+            color, alpha = style_config[label]
+            if alpha == 1.0:
+                plot_row(label, row, color, alpha, is_highlight=True)
+            else:
+                if not first_other_label:
+                    plot_row('Others', row, color, alpha, is_highlight=False)
+                    first_other_label = True
+                else:
+                    plot_row(None, row, color, alpha, is_highlight=False)
+        handles, labels = plt.gca().get_legend_handles_labels()
+        new_handles = []
+        new_labels = []
+        others_handle = None
+        others_label = None
+
+        for h, l in zip(handles, labels):
+            if l == 'Others':
+                others_handle = h
+                others_label = l
+            else:
+                new_handles.append(h)
+                new_labels.append(l)
+
+        if others_handle:
+            new_handles.append(others_handle)
+            new_labels.append(others_label)
+        plt.legend(handles=new_handles, labels=new_labels, fontsize=14)
+        plt.savefig(os.path.join(save_dir, f'figure_4b.pdf'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_4b.png saved to {os.path.join(save_dir, f'figure_4b.pdf')}")
 
 
 class DiskPlotter(BasePlotter):

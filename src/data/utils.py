@@ -128,12 +128,16 @@ def get_circular_trace(disk_trace_bandwidth: pd.DataFrame, begin_line: int, trac
 
 class PeakValleyWindowsDistribution:
     def __init__(self):
-        self.windows_length_in_one_day = 4
+        self.windows_length_in_one_day = 6
         self.loader = DiskDataLoader()
-        self.items, self.disks_trace = self.loader.load_items_and_trace(
-            cluster_index_list=DataConfig.CLUSTER_DIR_LIST)
+        self.items = self.loader.load_selected_items()
+        self.disks_trace = self.loader.load_all_trace()
+        # self.items, self.disks_trace = self.loader.load_items_and_trace(
+        #     cluster_index_list=DataConfig.CLUSTER_DIR_LIST)
 
     def calculate_peak_valley_windows_distribution(self):
+        save_dir = os.path.join(DirConfig.TEMP_DIR, 'peak_valley_analyze')
+        os.makedirs(save_dir, exist_ok=True)
         total_peak_counter = np.zeros(
             (7, int(24/self.windows_length_in_one_day)))
         total_valley_counter = np.zeros(
@@ -151,22 +155,13 @@ class PeakValleyWindowsDistribution:
         total_peak_counter /= np.sum(total_peak_counter, axis=1, keepdims=True)
         total_valley_counter /= np.sum(total_valley_counter,
                                        axis=1, keepdims=True)
-        np.savetxt(os.path.join(DirConfig.INTERMEDIATE_DIR,
+        np.savetxt(os.path.join(save_dir,
                    "peak_windows_distribution.txt"), total_peak_counter*100, delimiter=',')
-        np.savetxt(os.path.join(DirConfig.INTERMEDIATE_DIR, "valley_windows_distribution.txt"),
+        np.savetxt(os.path.join(save_dir, "valley_windows_distribution.txt"),
                    total_valley_counter*100, delimiter=',')
         logger.info(
-            f"Peak and valley windows distribution saved to {os.path.join(DirConfig.INTERMEDIATE_DIR, 'peak_windows_distribution.txt')} and {os.path.join(DirConfig.INTERMEDIATE_DIR, 'valley_windows_distribution.txt')}")
-        fig, axes = plt.subplots(2, 1, figsize=(10, 14))
-        self.plot_stacked_bar(
-            axes[0], total_peak_counter*100, "Peak Windows Distribution")
-        self.plot_stacked_bar(
-            axes[1], total_valley_counter*100, "Valley Windows Distribution")
-        fig.savefig(os.path.join(DirConfig.INTERMEDIATE_DIR,
-                    "peak_valley_windows_distribution.png"))
-        logger.info(
-            f"Peak and valley windows distribution saved to {os.path.join(DirConfig.INTERMEDIATE_DIR, 'peak_valley_windows_distribution.png')}")
-        plt.close(fig)
+            f"Peak and valley windows distribution saved to {os.path.join(save_dir, 'peak_windows_distribution.txt')} and {os.path.join(save_dir, 'valley_windows_distribution.txt')}")
+        return total_peak_counter*100, total_valley_counter*100
         return
 
     def get_certain_disk_peak_valley_week(self, disk_id: str, cluster_index: int):
@@ -186,29 +181,3 @@ class PeakValleyWindowsDistribution:
         weekly_peak_distribution = weekly_peak_distribution.dt.hour.to_list()
         weekly_valley_distribution = weekly_valley_distribution.dt.hour.to_list()
         return weekly_peak_distribution, weekly_valley_distribution
-
-    def plot_stacked_bar(self, ax, data, title=""):
-
-        x_pos = np.arange(data.shape[0])
-        colors = ['yellow', 'lightgreen', 'cyan',
-                  'mediumpurple', 'red', 'saddlebrown']
-        hatches = ['//', '', '', '/', 'o', 'x']
-        bottom = np.zeros(data.shape[0])
-        for i in range(data.shape[1]):
-            heights = data[:, i]
-            ax.bar(x_pos, heights, color=colors[i], hatch=hatches[i],
-                   bottom=bottom, edgecolor='black', linewidth=1, width=0.8)
-            bottom += heights
-        ax.axvline(x=4.5, color='red', linestyle='--', linewidth=2.5)
-        y_pos_text = 103  # 放在图表内部的顶部
-        ax.text(2, y_pos_text, 'Weekdays', ha='center',
-                fontsize=16, fontweight='bold', color='black')
-        ax.text(5.5, y_pos_text, 'Weekend', ha='center',
-                fontsize=16, fontweight='bold', color='black')
-        ax.set_ylim(0, 110)
-        ax.set_yticks(np.arange(0, 101, 20))
-        ax.tick_params(axis='y', labelsize=16)
-        ax.grid(axis='y', color='gray', linestyle='-',
-                linewidth=1.5, alpha=0.5)
-        ax.set_axisbelow(True)
-        ax.set_title(title, fontsize=18, fontweight='bold')

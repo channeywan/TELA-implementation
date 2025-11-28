@@ -14,6 +14,11 @@ sys.path.insert(0, str(Path(__file__).parent))
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 if __name__ == "__main__":
-    plotter = TelaPlotter()
-    plotter.plot_scatter([(0.09564457627678793+0.053437550831631285)/2, (0.12504237340863641+0.19014722964133898)/2, (0.0915686407016325+0.1726856698957383)/2, (0.03487939092014046+0.09669256904934487)/2],
-                         [0.04960462225684755, 0.04807727739462747, 0.04841741902497335, 0.046515012581257946], save_dir=os.path.join(DirConfig.TEMPLE_DIR, "trash"), title="space-time-imbalance", xlabel="space imbalance", ylabel="time imbalance")
+    leave_disk_info = pd.read_csv(os.path.join(
+        DirConfig.BUSINESS_TYPE_DIR, "leave_disk_info_business_type.csv"))
+    leave_disk_info = leave_disk_info[["description", "business_type"]]
+    remain_disk_info = pd.read_csv(os.path.join(
+        DirConfig.BUSINESS_TYPE_DIR, "remain_disks_valid_business_type.csv"))
+    remain_disk_info = remain_disk_info[["description", "business_type"]]
+    remain_disk_workload = pd.concat([leave_disk_info, remain_disk_info])
+    print(remain_disk_workload["business_type"].value_counts())

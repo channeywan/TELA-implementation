@@ -64,6 +64,8 @@ def get_circular_trace(disk_trace_bandwidth: pd.DataFrame, begin_line: int, trac
 def analyze_peak_hours(df: pd.DataFrame, disks_trace: dict, window_length: str):
     peak_hour_counts = defaultdict(
         lambda: defaultdict(lambda: defaultdict(int)))
+    valley_hour_counts = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(int)))
     for _, row in tqdm(df.iterrows(), total=len(df), desc=f"处理 {window_length}"):
         disk_id = row['disk_ID']
         cluster_index = row['cluster_index']
@@ -79,6 +81,13 @@ def analyze_peak_hours(df: pd.DataFrame, disks_trace: dict, window_length: str):
         daily_peak_timestamps = week_df['bandwidth'].resample(f'{window_length}').mean().resample('D').apply(
             lambda x: x.idxmax() if (not x.empty and x.max() > x.mean()*1.1) else pd.NaT
         )
+        daily_valley_timestamps = week_df['bandwidth'].resample(f'{window_length}').mean().resample('D').apply(
+            lambda x: x.idxmin() if (not x.empty and x.min() < x.mean()*0.9) else pd.NaT
+        )
+        daily_valley_timestamps = daily_valley_timestamps.dropna()
+        valley_hours = daily_valley_timestamps.dt.hour
+        for hour in valley_hours:
+            valley_hour_counts[cluster_index][disk_id][hour] += 1
         # if daily_peak_timestamps.dropna().empty:
         #     daily_peak_timestamps = week_df['bandwidth'].resample(f'{window_length}').apply(lambda x: x.max() if (not x.empty and x.max() > x.mean()*1.1) else np.nan).resample('D').apply(
         #         lambda x: x.idxmax() if (not x.empty and x.max() > 0) else pd.NaT)
@@ -86,29 +95,40 @@ def analyze_peak_hours(df: pd.DataFrame, disks_trace: dict, window_length: str):
         peak_hours = daily_peak_timestamps.dt.hour
         for hour in peak_hours:
             peak_hour_counts[cluster_index][disk_id][hour] += 1
-    return peak_hour_counts
+    return peak_hour_counts, valley_hour_counts
 
 
 def peak_hour_frequency():
-    items, disks_trace = DiskDataLoader().load_items_and_trace(
-        cluster_index_list=DataConfig.CLUSTER_DIR_LIST)
-    items = pd.read_csv(os.path.join(DirConfig.PLACEMENT_DIR,
-                        "motivation", 'selected_items.csv'))
-    peak_hour_counts = analyze_peak_hours(
+    disks_trace = DiskDataLoader().load_all_trace()
+    items = DiskDataLoader().load_selected_items()
+    peak_hour_counts, valley_hour_counts = analyze_peak_hours(
         items, disks_trace, window_length='6h')
-    with open(os.path.join(TestConfig.TEST_DIR, 'peak_hour_counts'), 'w') as f:
-        for cluster_index, disk_dict in peak_hour_counts.items():
-            for disk_id, hour_dict in disk_dict.items():
-                f.write(f"{cluster_index},{disk_id}\n")
-        logger.info(
-            f"peak_hour_counts saved to {os.path.join(TestConfig.TEST_DIR, 'peak_hour_counts')}")
-    all_inner_values = []
+    save_dir = os.path.join(DirConfig.TEMP_DIR, 'peak_valley_analyze')
+    os.makedirs(save_dir, exist_ok=True)
+    # with open(os.path.join(save_dir, 'peak_hour_counts.csv'), 'w') as f:
+    #     for cluster_index, disk_dict in peak_hour_counts.items():
+    #         for disk_id, hour_dict in disk_dict.items():
+    #             f.write(f"{cluster_index},{disk_id}\n")
+    #     logger.info(
+    #         f"peak_hour_counts saved to {os.path.join(save_dir, 'peak_hour_counts.csv')}")
+    frequently_peak_hours_ratio = []
+    frequently_valley_hours_ratio = []
     for disk_dict in peak_hour_counts.values():
         for hour_dict in disk_dict.values():
-            all_inner_values.append(
+            frequently_peak_hours_ratio.append(
                 np.max(np.array(list(hour_dict.values())))/np.sum(np.array(list(hour_dict.values()))))
-    TelaPlotter().plot_cdf(all_inner_values, save_dir=TestConfig.TEST_DIR,
-                           title='Peak_Hour_frequency')
+    for disk_dict in valley_hour_counts.values():
+        for hour_dict in disk_dict.values():
+            frequently_valley_hours_ratio.append(
+                np.min(np.array(list(hour_dict.values())))/np.sum(np.array(list(hour_dict.values()))))
+    frequently_peak_hours_ratio = np.array(frequently_peak_hours_ratio)
+    frequently_valley_hours_ratio = np.array(frequently_valley_hours_ratio)
+    np.savetxt(os.path.join(save_dir, 'frequently_peak_hours_ratio.txt'),
+               frequently_peak_hours_ratio, delimiter=',')
+    np.savetxt(os.path.join(save_dir, 'frequently_valley_hours_ratio.txt'),
+               frequently_valley_hours_ratio, delimiter=',')
+    TelaPlotter().plot_figure_2(frequently_peak_hours_ratio,
+                                frequently_valley_hours_ratio, save_dir=save_dir)
 
 
 def plot_all_disks_peak_hour_distribution(peak_hour_counts: dict, window_length: str):

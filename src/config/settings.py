@@ -11,7 +11,7 @@ class DirConfig:
     # 数据目录
     TRACE_ROOT = "/data/Tencent_CVD/workload/0521"
     CLUSTER_INFO_ROOT = "/home/wcl/cluster_info"
-    CLUSTER_INFO_BUSINESS_TYPE_ROOT = "/home/wcl/cluster_info_business_type"
+    CLUSTER_INFO_BUSINESS_TYPE_ROOT = "/home/wcl/history_file/cluster_info_business_type"
     CLUSTER_TRACE_DB_ROOT = "/home/wcl/cluster_trace_db"
     # 输出目录
     OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
@@ -31,6 +31,7 @@ class DirConfig:
     TEMP_DIR = os.path.join(OUTPUT_DIR, "temp")
     TRASH_DIR = os.path.join(TEMP_DIR, "trash")
     INTERMEDIATE_DIR = os.path.join(TEMP_DIR, "intermediate")
+    MOTIVATION_DIR = os.path.join(OUTPUT_DIR, "motivation")
     # 确保目录存在
 
     @classmethod
@@ -86,7 +87,7 @@ class DataConfig:
     RESERVATION_RATE_FOR_MONITOR = 0.8
     WINDOWS_LENGTH_IN_ONE_DAY = [
         "5min",  "30min", "1h", "3h", "4h", "6h", "8h"]
-    TRACE_VECTOR_INTERVAL = 6
+    TRACE_VECTOR_INTERVAL = 1
     BUSINESS_TYPE_LIST = ["game-service", "office-system", "gov-public-service", "corp-website-portal", "ecommerce-retail", "local-service-delivery", "media-video-streaming", "media-news-portal", "finance-payment", "data-collection-delivery", "ai-machine-learning", "dev-test-env", "education-learning", "community-social-forum",
                           "compute-simulation", "personal-use", "iot-saas-platform", "logistics-mobility", "travel-hospitality", "infra-node", "infra-coordination", "infra-database", "infra-message-queue", "infra-cloud-function", "infra-jumpbox", "infra-cache", "infra-logging-monitoring", "generic-autoscaling", "generic-unknown"]
 

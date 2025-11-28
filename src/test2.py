@@ -341,10 +341,9 @@ def search_xgboost_params(train_items, test_items, features):
         'min_child_weight': randint(1, 100),
         'subsample': uniform(0.6, 0.35),
         'colsample_bytree': uniform(0.6, 0.35),
-        'objective': ['reg:squarederror', 'reg:absoluteerror', 'reg:pseudohubererror', 'reg:tweedie'],
+        'objective': ['reg:squarederror', 'reg:absoluteerror', 'reg:pseudohubererror'],
         'reg_alpha': loguniform(1e-3, 10.0),
         'reg_lambda': loguniform(1e-3, 10.0),
-        'tweedie_variance_power': uniform(1.1, 0.8),
         'n_estimators': randint(100, 3000)
     }
     xgb_reg = XGBRegressor(
@@ -356,6 +355,7 @@ def search_xgboost_params(train_items, test_items, features):
     )
     model_regressor = RandomizedSearchCV(estimator=xgb_reg, param_distributions=params_distributions,
                                          n_iter=1000, cv=5, scoring='r2', n_jobs=12, verbose=1)
+    model_regressor.fit(X_train, y_train)
     best_xgb_search = model_regressor.best_estimator_
     feature_names = X_train.columns.tolist()
     importances = best_xgb_search.feature_importances_
@@ -374,15 +374,14 @@ def search_xgboost_params(train_items, test_items, features):
         enable_categorical=True,
         n_jobs=80,
         random_state=42,
+        eval_metric='rmse',
+        early_stopping_rounds=50,
         **best_params,
-        n_estimators=10000
     )
 
     best_xgb.fit(
         X_train, y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
-        eval_metric='rmse',
-        early_stopping_rounds=50,
         verbose=200
     )
 
@@ -527,7 +526,7 @@ def train_models(log, history, model_name, history_transform=False):
         y_test, y_pred, results = search_lightgbm_params(
             train_items, test_items, features)
     elif model_name == "XGBoost":
-        y_test, y_pred = search_xgboost_params(
+        y_test, y_pred, results = search_xgboost_params(
             train_items, test_items, features)
     logger.info(
         f"log: {log}, history: {history}, history_transform: {history_transform}, model_name: {model_name}")
@@ -542,4 +541,6 @@ if __name__ == "__main__":
     for log in [False, True]:
         for history in [False, True]:
             for model_name in ["CatBoost", "LightGBM", "XGBoost"]:
+                logger.info(
+                    f"log: {log}, history: {history}, model_name: {model_name}")
                 train_models(log, history,  model_name)

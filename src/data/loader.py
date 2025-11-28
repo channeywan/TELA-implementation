@@ -35,6 +35,10 @@ class DiskDataLoader:
                 DirConfig.CLUSTER_INFO_ROOT,
                 f"cluster{cluster_index}"
             )
+            # item_dir = os.path.join(
+            #     DirConfig.CLUSTER_INFO_BUSINESS_TYPE_ROOT,
+            #     f"cluster{cluster_index}.csv"
+            # )
             if not os.path.exists(item_dir):
                 logger.warning(f"data file not exists: {item_dir}")
                 continue
