@@ -356,11 +356,11 @@ class MotivationPlotter(BasePlotter):
             DirConfig.TEMP_DIR, 'peak_valley_analyze', 'frequently_peak_hours_ratio.txt'), delimiter=',')
         frequently_valley_hours_ratio = np.loadtxt(os.path.join(
             DirConfig.TEMP_DIR, 'peak_valley_analyze', 'frequently_valley_hours_ratio.txt'), delimiter=',')
-        plt.figure(figsize=(5, 6.2))
+        plt.figure(figsize=(5, 4.7))
         sns.ecdfplot(frequently_peak_hours_ratio,
-                     label='Peak', color='#2a9d8f')
+                     label='Peak', color='#2a9d8f', linewidth=2.5)
         sns.ecdfplot(frequently_valley_hours_ratio,
-                     label='Valley', color='#f4a261')
+                     label='Valley', color='#f4a261', linewidth=2.5)
         plt.legend(fontsize=14)
         plt.xlabel('Stability of Peak/Valley', fontsize=16)
         plt.ylabel('Cumulative Distribution Function', fontsize=16)
@@ -375,13 +375,13 @@ class MotivationPlotter(BasePlotter):
             DirConfig.TEMP_DIR, 'peak_valley_analyze', 'peak_windows_distribution.txt'), delimiter=',')
         valley_windows_distribution = np.loadtxt(os.path.join(
             DirConfig.TEMP_DIR, 'peak_valley_analyze', 'valley_windows_distribution.txt'), delimiter=',')
-        fig, axes = plt.subplots(2, 1, figsize=(6, 6), sharex=True)
+        fig, axes = plt.subplots(2, 1, figsize=(6, 4.5), sharex=True)
         plt.subplots_adjust(hspace=0.18)
         x_pos = np.arange(peak_windows_distribution.shape[0])
         peak_bottom = np.zeros(peak_windows_distribution.shape[0])
         valley_bottom = np.zeros(valley_windows_distribution.shape[0])
         colors = ['#2a9d8f', '#f4a261', '#e9c46a', '#e76f51']
-        legend_labels = ['0-6h', '6-12h', '12-18h', '18-24h']
+        legend_labels = ['1-7hr', '7-13hr', '13-19hr', '19-1hr']
         for i in range(peak_windows_distribution.shape[1]):
             heights = peak_windows_distribution[:, i]
             axes[0].bar(x_pos, heights, color=colors[i], label=legend_labels[i],
@@ -398,9 +398,9 @@ class MotivationPlotter(BasePlotter):
                           fontsize=16)
         axes[1].set_title('Valley Windows Distribution',
                           fontsize=16)
-        axes[0].text(2, 105, 'Weekdays', ha='center',
+        axes[0].text(2, 104.5, 'Weekdays', ha='center',
                      fontsize=14, color='black')
-        axes[0].text(5.5, 105, 'Weekend', ha='center',
+        axes[0].text(5.5, 104.5, 'Weekend', ha='center',
                      fontsize=14, color='black')
         axes[0].set_ylim(0, 115)
         # axes[0].set_xticks(x_pos)
@@ -422,9 +422,9 @@ class MotivationPlotter(BasePlotter):
             0.5, 1.1), ncol=4, fontsize=14, frameon=True,  handlelength=0.85, handletextpad=0.6)
         fig.supylabel('Percentage (%)', x=0.02, fontsize=17)
         fig.savefig(os.path.join(save_dir,
-                    "peak_valley_windows_distribution.svg"), bbox_inches='tight')
+                    "figure_2b.svg"), bbox_inches='tight')
         logger.info(
-            f"Peak and valley windows distribution saved to {os.path.join(save_dir, 'peak_valley_windows_distribution.svg')}")
+            f"Peak and valley windows distribution saved to {os.path.join(save_dir, 'figure_2b.svg')}")
         plt.close(fig)
 
     def plot_figure_4a(self, save_dir: str):

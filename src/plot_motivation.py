@@ -17,4 +17,5 @@ sys.path.insert(0, str(Path(__file__).parent))
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 if __name__ == "__main__":
-    pass
+    MotivationPlotter().plot_figure_2a(save_dir=DirConfig.MOTIVATION_DIR)
+    MotivationPlotter().plot_figure_2b(save_dir=DirConfig.MOTIVATION_DIR)

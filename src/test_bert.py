@@ -129,18 +129,17 @@ if __name__ == "__main__":
         model_name="distilbert-base-multilingual-cased")
     items = pd.read_csv(os.path.join(
         DirConfig.BUSINESS_TYPE_DIR, "combined_description_business_type.csv"))
-    print(items['business_type'].value_counts())
-    # distill_bert.run(items)
-    # items_with_ids = distill_bert.preprocess_data(items)
+    trainer = distill_bert.run(items)
+    items_with_ids = distill_bert.preprocess_test_data(items)
     # trainer = distill_bert.load_trained_model()
-    # tokenized_dataset = distill_bert.from_df_to_tokenized_dataset(
-    #     items_with_ids)
-    # report_df = generate_prediction_report(
-    #     trainer, tokenized_dataset, items_with_ids, distill_bert.id2label)
+    tokenized_dataset = distill_bert.from_df_to_tokenized_dataset(
+        items_with_ids)
+    report_df = generate_prediction_report(
+        trainer, tokenized_dataset, items_with_ids, distill_bert.id2label)
     # distill_bert.plot_confusion_matrix(trainer, tokenized_dataset)
-    # report_df.to_csv(os.path.join(DirConfig.TEMP_DIR,
-    #                  distill_bert.model_checkpoint, "prediction_report.csv"), index=False)
-    # report_df = pd.read_csv(os.path.join(
-    #     DirConfig.TEMP_DIR, "distilbert-base-multilingual-cased", "prediction_report.csv"))
-    # plot_error_heatmaps(
-    #     report_df, model_name="distilbert-base-multilingual-cased")
+    report_df.to_csv(os.path.join(DirConfig.TEMP_DIR,
+                     distill_bert.model_checkpoint, "prediction_report.csv"), index=False)
+    report_df = pd.read_csv(os.path.join(
+        DirConfig.TEMP_DIR, "distilbert-base-multilingual-cased", "prediction_report.csv"))
+    plot_error_heatmaps(
+        report_df, model_name="distilbert-base-multilingual-cased")
