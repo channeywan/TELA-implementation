@@ -9,6 +9,8 @@ from algorithms.SCDA import SCDA
 from algorithms.TELA import TELA
 from algorithms.Oracle import Oracle
 from algorithms.TIDAL import TIDAL
+from algorithms.round_robin import RoundRobin
+from visualization.plotter import MotivationPlotter, EvaluationPlotter
 import logging
 import argparse
 import sys
@@ -161,6 +163,10 @@ def main():
     trace_parser = plot_sub_parser.add_parser('trace', help='绘制单个磁盘追踪图')
     cluster_parser = plot_sub_parser.add_parser('cluster', help='绘制集群分析图')
     web_parser = plot_sub_parser.add_parser('web', help='绘制web界面')
+    motivation_parser = plot_sub_parser.add_parser('motivation', help='绘制动机分析图')
+    motivation_parser.add_argument('--fig', type=str, help='绘图编号')
+    evaluation_parser = plot_sub_parser.add_parser('evaluation', help='绘制评估分析图')
+    evaluation_parser.add_argument('--fig', type=str, help='绘图编号')
     peak_hour_parser = plot_sub_parser.add_parser(
         'peak_hour', help='绘制峰值小时分布图')
     peak_hour_parser.add_argument('--window-length', type=str, help='窗口长度')
@@ -173,7 +179,7 @@ def main():
     # placement 子命令
     placement_parser = subparsers.add_parser('placement', help='放置策略分析')
     placement_parser.add_argument(
-        '--algorithm', choices=['odp', 'scda', 'tela', 'oracle', 'tidal'], required=True, help='放置方法')
+        '--algorithm', choices=['odp', 'scda', 'tela', 'oracle', 'tidal', 'rr'], required=True, help='放置方法')
 
     args = parser.parse_args()
 
@@ -217,6 +223,12 @@ def main():
             disk_trace_dashboard.show_dashboard()
         elif args.type == 'peak_hour':
             logger.info(f"绘制峰值小时分布图: {args.window_length}缺失参数")
+        elif args.type == 'motivation':
+            getattr(MotivationPlotter(), f'plot_figure_{args.fig}')(
+                save_dir=DirConfig.MOTIVATION_DIR)
+        elif args.type == 'evaluation':
+            getattr(EvaluationPlotter(), f'plot_figure_{args.fig}')(
+        save_dir=DirConfig.EVALUATION_DIR)
         else:
             logger.error(f"未知的plot绘图方法: {args.type}")
             sys.exit(1)
@@ -241,6 +253,10 @@ def main():
             logger.info("运行TIDAL放置策略分析")
             tidal_analyzer = TIDAL(model_name="distill_bert")
             tidal_analyzer.run()
+        elif args.algorithm == 'rr':
+            logger.info("运行RoundRobin放置策略分析")
+            round_robin_analyzer = RoundRobin()
+            round_robin_analyzer.run()
         else:
             logger.error(f"未知的placement放置方法: {args.method}")
             sys.exit(1)

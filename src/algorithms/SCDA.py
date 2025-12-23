@@ -14,6 +14,7 @@ from sklearn.preprocessing import FunctionTransformer
 from .base_algorithm import BaseAlgorithm
 from config.settings import WarehouseConfig, DataConfig, ModelConfig, DirConfig
 import joblib
+import time
 logger = logging.getLogger(__name__)
 
 
@@ -66,7 +67,7 @@ class SCDA(BaseAlgorithm):
         self.scaler = MinMaxScaler()
         train_data_scaled = self.scaler.fit_transform(train_data)
 
-        model_cluster = KMeans(n_clusters=cluster_K)
+        model_cluster = KMeans(n_clusters=cluster_K,random_state=42)
         model_cluster.fit(train_data_scaled)
         labels_cluster = model_cluster.labels_
         cluster_centers = model_cluster.cluster_centers_
@@ -99,7 +100,7 @@ class SCDA(BaseAlgorithm):
         train_data_encoded = self.encode_item(train_data)
 
         model_classify = GridSearchCV(
-            estimator=DecisionTreeClassifier(criterion="gini"),
+            estimator=DecisionTreeClassifier(criterion="gini",random_state=42),
             param_grid=params_grid, cv=5, scoring='accuracy', n_jobs=1, verbose=0
         )
         model_classify.fit(train_data_encoded, labels_cluster)
@@ -118,6 +119,7 @@ class SCDA(BaseAlgorithm):
             labels_classify: 物品的聚类标签
         """
         model_cluster, model_classify = self.load_model()
+        self.start_time = time.perf_counter()
         data_predict = items[["disk_capacity",
                               "disk_type", "vm_cpu", "vm_memory"]]
         data_predict_encoded = self.encode_item(data_predict)
@@ -128,7 +130,7 @@ class SCDA(BaseAlgorithm):
             cluster_centers)
         center_coords = cluster_centers_original[pre_labels_classify]
         items_predict = items[["disk_ID", "disk_capacity",
-                               "timestamp_num", "avg_bandwidth", "peak_bandwidth", "cluster_index"]]
+                               "timestamp_num", "avg_bandwidth", "peak_bandwidth", "cluster_index"]].copy()
         items_predict["pre_bandwidth"] = center_coords[:, 0]
 
         items_predict.to_csv(os.path.join(
@@ -139,12 +141,12 @@ class SCDA(BaseAlgorithm):
         """选择仓库（基于曼哈顿距离的负载均衡策略）"""
         disk_capacity = item["disk_capacity"]
         disk_pre_bandwidth = item["pre_bandwidth"]
-        overload_mask = self.check_warehouse_overload_after_placement(item)
+        # overload_mask = self.check_warehouse_overload_after_placement(item)
         capacity_mask = (self.warehouses_resource_allocated[:, 0]+item["disk_capacity"] <=
                          self.warehouses_max[:, 0])
         while True:
             monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
-            combined_mask = capacity_mask & monitor_mask
+            combined_mask = capacity_mask
             if not combined_mask.any():
                 combined_mask = np.ones_like(capacity_mask, dtype=bool)
             eligible_warehouses_indices = np.where(combined_mask)[0]
@@ -166,17 +168,18 @@ class SCDA(BaseAlgorithm):
                 if current_manhatten_distance < min_manhatten_distance:
                     min_manhatten_distance = current_manhatten_distance
                     selected_warehouse = warehouse
-            if not overload_mask[selected_warehouse]:
-                if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
-                    break
-                else:
-                    self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
-                    continue
-            else:
-                break
+            # if not overload_mask[selected_warehouse]:
+            #     if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
+            #         break
+            #     else:
+            #         self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+            #         continue
+            # else:
+            #     break
+            return selected_warehouse
         return selected_warehouse
 
-    def load_model(self, train_models: bool = True) -> Tuple[KMeans, DecisionTreeClassifier]:
+    def load_model(self, train_models: bool = False) -> Tuple[KMeans, DecisionTreeClassifier]:
         if train_models:
             self.train_model()
             return self.load_model(train_models=False)

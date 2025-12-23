@@ -13,6 +13,10 @@ import pandas as pd
 from data.loader import DiskDataLoader
 from data.utils import get_circular_trace, iterate_first_day
 from tqdm import tqdm
+from scipy.stats import gaussian_kde
+from scipy.optimize import brentq
+import pickle
+import matplotlib.ticker as mticker
 matplotlib.use('Agg')
 
 
@@ -320,26 +324,26 @@ class TelaPlotter(BasePlotter):
         logger.info(
             f"type_pie.png saved to {os.path.join(save_dir, 'type_pie.png')}")
 
-    def plot_business_type_vector(self, business_type_vector: pd.DataFrame, save_dir: str, start_hour=8):
+    def plot_business_type_vector(self, business_type_vector: pd.DataFrame, save_dir: str):
         trace_vector_interval = DataConfig.TRACE_VECTOR_INTERVAL
         window_number = int(24 / trace_vector_interval)  # 确保是整数
         df_transposed = business_type_vector.T
         df_transposed.index = df_transposed.index.astype(int)
-        new_order = [(start_hour + i*trace_vector_interval) %
-                     24 for i in range(window_number)]
-        df_reordered = df_transposed.reindex(new_order)
-        df_reordered = df_reordered.reset_index(drop=True)
-        df_reordered.index = [
-            i*trace_vector_interval for i in range(window_number)]
+        # new_order = [(start_hour + i*trace_vector_interval) %
+        #              24 for i in range(window_number)]
+        # df_reordered = df_transposed.loc[new_order]
+        # df_reordered = df_reordered.reset_index(drop=True)
+        # df_reordered.index = [
+        #     i*trace_vector_interval for i in range(window_number)]
         os.makedirs(save_dir, exist_ok=True)
         plt.figure(figsize=(18, 6))
-        df_reordered.plot(ax=plt.gca())
-        plt.legend(loc='upper right')
+        df_transposed.plot(ax=plt.gca())
+        # plt.legend(loc='upper right')
         plt.xlim(0, 29-trace_vector_interval)
         # plt.ylim(0.02, 0.1)
         plt.xlabel('Hour')
-        x_tick_labels = [f'{h}h' for h in new_order]
-        plt.xticks(df_reordered.index, x_tick_labels)
+        # x_tick_labels = [f'{h}h' for h in new_order]
+        # plt.xticks(df_reordered.index, x_tick_labels)
         plt.grid(True)
         plt.savefig(os.path.join(save_dir, 'business_type_vector.png'))
         logger.info(
@@ -675,6 +679,754 @@ class MotivationPlotter(BasePlotter):
                     bbox_inches='tight')
         logger.info(
             f"figure_4b.png saved to {os.path.join(save_dir, f'figure_4b.pdf')}")
+
+
+class EvaluationPlotter(BasePlotter):
+    def __init__(self):
+        super().__init__()
+ 
+    def softpercentile(self, data: List[float], percentile: float) -> float:
+        kde=gaussian_kde(data)
+        threshold=brentq(lambda x: kde.integrate_box_1d(-np.inf, x) - percentile, 0, 2016)
+        return threshold
+    def hardpercentile(self, data: List[float], percentile: float) -> float:
+        return np.percentile(data, percentile*100)
+    def plot_figure_0(self, save_dir: str):
+        plt.figure(figsize=(10, 6))
+        data=pd.DataFrame({
+            "space_imbalance": [0.1939226908472013,0.20163715308298316,0.20212043471978977,0.04119041969783254,0.10853242793751935,0.7556687704733587],
+            "time_imbalance": [0.034176,0.034569,0.038996385,0.025688,0.03096,0.037 ],
+            "algorithm_name": ["CBP", "SCDA", "Tela", "Oracle", "TIDAL", "RoundRobin"]
+        })
+        data.to_csv("figure_0.csv")
+        sns.scatterplot(x="space_imbalance", y="time_imbalance", hue="algorithm_name", data=data,s=100)
+        for i, algorithm_name in enumerate(data["algorithm_name"]):
+            plt.annotate(algorithm_name, (data["space_imbalance"][i], data["time_imbalance"][i]),
+                         xytext=(5, 0), textcoords='offset points',
+                         fontsize=15, alpha=0.8)
+        plt.legend(fontsize=14, ncol=2)
+        plt.xlabel('Spatial Imbalance', fontsize=16)
+        plt.ylabel('Temporal Imbalance', fontsize=16)
+        plt.tick_params(axis='both', which='major', labelsize=12)
+        plt.savefig(os.path.join(save_dir, f'figure_0.svg'), bbox_inches='tight')
+        plt.close()
+        logger.info(
+            f"figure_0.svg saved to {os.path.join(save_dir, f'figure_0.svg')}")
+    def plot_figure_1(self, save_dir: str):
+        shape = ['+', '*', 'x', 'o', 's', 'd', '^']
+        X = np.array([5200, 5400, 5500,
+                      5600, 5700, 5800, 5900, 6000, 6048])/6048*100
+        method_list = ["ODA", "SCDA", "Tela", "Oracle", "TIDAL", "RoundRobin"]
+        plt.figure(figsize=(6, 6))
+        data=pd.DataFrame()
+        for method in method_list:
+            data_dir = os.path.join(
+                DirConfig.PLACEMENT_DIR, method, "violation_count.txt")
+            with open(data_dir, "r") as f:
+                lines = f.readlines()
+                last_line = lines[-1].strip()
+                Y_method = np.array([float(x)
+                            for x in last_line.split(",") if x.strip() != ""])/2016*100
+                data[method]=Y_method
+                plt.plot(X, Y_method, label=method, linewidth=2.5,
+                         marker=shape[method_list.index(method)])
+        data.to_csv("figure_1.csv")
+        plt.legend(fontsize=14, ncol=2)
+        plt.xlabel('Disk Placed(%)', fontsize=16)
+        plt.ylabel('OTF(%)', fontsize=16)
+        plt.tick_params(axis='both', which='major', labelsize=12)
+        plt.savefig(os.path.join(save_dir, f'figure_1.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_2a.svg saved to {os.path.join(save_dir, f'figure_1.svg')}")
+        plt.close()
+
+    def plot_figure_2(self, save_dir: str):
+        CBP = [2,1,1,3,4,1,3,1,4,3,4,3,4,3,4,2,1,4,3,2,1,1,1,5,1,1,4,2,1,1,4,1,2,1,1,1,2,2,5,2,2,2,3,1,2,3,4,2,3,4,2,9,8,8,1,1,1,1,2,1,4,1,1,2,2,2,8,1,2,1,1,11,1,3,1,1,4,1,2,2,1,1,2,2,1,1,2,1,1,2,6,1,5,7,1,11,1,12,9,41,7,1,1,1,1,2,2,4,1,2,2,10,1,3,1,1,12,1,1,1,2,5,5,1,3,2,5,1,19,14,5,66,10,17,3,2,1,1,2,1,1,2,1,2,6,1,3,2,1,2,2,4,2,6,1,1,1,2,1,2,1,1,1,1,1,1,5,1,2,2,1,3,3,4,1,1,1,2,3,1,1,3,1,1,4,9,4,1,2,3,1,1,1,1,3,1,7,3,5,2,1,4,6,6,4,2,5,1,1,1,1,1,1,1,1,1,4,9,1,1,2,2,1,4,4,5,2,1,1,1,1,1,1,1,2,1,35,7,3,3,1,5,5,1,1,4,1,3,6,1,1,4,2,2,4,1,1,3,1,1,1,1,1,1,2,1,1,8,8,2,1,2,2,1,3,14,3,9,2,1,1,3,2,2,1,2,2,11,7,1,1,1,1,26,8,1,2,7,2,1,2,2,2,2,1,1,1,1,2,4,1,1,3,4,3,7,1,1,1,2,17,3,4,2,3,4,1,1,1,1,2,5,3,1,1,1,1,2,3,1,3,1,3,4,1,1,6,103,7,63,23,4,1,4,2,2,1,1,2,3,2,1,1,1,1,2,2,18,2,55,127,1,7,2,1,5,2,2,4,4,1,7,1,4,31,5,179,3,5,10,5,14,6,11,137,117,18,220,2,1,2,6,1,8,3,1,2,1,11,5,8,1,2,7,23,133,27,18,1,5,1,1,4,1,2,1,3,4,6,2,2,3,4,2,1,8,28,4,3,1,42,121]
+        SCDA = [11,3,4,4,13,1,2,4,4,1,5,2,3,1,9,2,15,3,3,107,4,24,2,2,8,5,1,1,1,5,4,2,1,2,1,1,1,2,2,1,1,1,1,1,1,2,1,1,1,1,2,3,5,1,2,9,1,33,4,6,3,2,6,9,1,3,1,1,5,1,5,1,3,2,2,1,4,9,1,1,1,3,1,2,1,1,2,1,4,1,1,3,1,1,1,2,1,2,2,3,15,1,1,7,33,38,28,4,2,18,18,11,1,3,1,1,2,6,2,8,3,1,3,1,1,1,1,6,3,4,1,2,3,1,3,1,3,79,415,1,1,11,3,38,204,12,8,11,1,1,44,178,1,1,2,2,2,2,1,1,1,2,4,1,1,1,2,1,1,1,1,1,1,1,2,6,3,1,5,7,1,1,1,2,6,3,3,4,2,1,1,1,1,4,2,4,1,1,1,1,1,1,1,1,1,1,1,1,2,1,2,2,6,5,2,1,2,2,2,1,1,2,1,1,1,1,1,1,2,1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,2,1,2,1,1,3,3,1,1,2,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,5,1,1,1,1,1,2,1,1,2,1,1,5,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,5,1,1,3,1,2,1,2,1,1,2,8,1,1,1,1,1,6,14,3,3,1,5,8,5,77,5,1,1,1,1,5,1,2,1,2,1,1,1,1,1,1,1,56,1,1,1,1,1,7,1,1,5,12,24,3,63,1,5,1,1,1,2,1,1,1,1,4,1,1,1,1,5,1,1,5,1,1,1,1,1,8,2,1,13,9,4,3,2,1,1,1,1,4,1,1,1,2,1,5,3,2,2,1,4,1,3,4,1,1,1,5,1,1,1,1,2,4,8,3,1,2,1,1]
+        TELA = [1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3]
+        Oracle = [1,1,1,3,1,1,1,5,3,2,1,3,7,3,1,2,1,1,1,8,4,1,1,1,1,2,1,1,2,3,1,2,1,3,1,4,3,4,3,4,4,4,2,1,4,3]
+        TIDAL = [1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1]
+        RoundRobin = [2016,2016,1548,467]
+        x_grid = np.linspace(1, 2016, 2015)
+        cutoff_data = [0, 0.8, 0.95, 0.99, 1, 1.1]
+        cutoff_view = [0, 0.2, 0.4, 0.6, 0.9, 1]
+        data_dic = {'CBP': CBP, 'SCDA': SCDA, 'TELA': TELA,
+                    'Oracle': Oracle, 'TIDAL': TIDAL, 'RoundRobin': RoundRobin}
+        data=pd.DataFrame(data_dic)
+        data.to_csv("figure_2.csv")
+        def forward(x):
+            """将数据值映射到视觉坐标"""
+            whole_scale = -np.log10(0.0001)
+            result = np.where(x <= 0.9999,
+                              # 避免 log(0)
+                              -np.log10(np.clip(1 - x, 1e-10, None)),
+                              (x + 0.0001) * whole_scale)
+            return result
+            # return np.interp(x, cutoff_data, cutoff_view)
+
+        def inverse(x):
+            """将视觉坐标映射回数据值"""
+            whole_scale = -np.log10(0.0001)
+            result = np.where(x <= whole_scale,
+                              1 - 10**(-x),
+                              x / whole_scale - 0.0001)
+            return result
+            # return np.interp(x, cutoff_view, cutoff_data)
+        plt.figure(figsize=(9, 6))
+        for label, data in data_dic.items():
+            kde = gaussian_kde(data)
+            kde.set_bandwidth(bw_method='scott')
+            pdf = kde(x_grid)
+            cdf = np.cumsum(pdf) * (x_grid[1] - x_grid[0])
+            cdf = cdf / cdf[-1]
+            plt.plot(x_grid, cdf, label=label, linewidth=1)
+        plt.xscale("log")
+        # plt.yscale("function", functions=(forward, inverse))
+        plt.legend(fontsize=14, ncol=2, loc='upper left',
+                   bbox_to_anchor=(0.4, 0.5), columnspacing=0.1)
+        plt.ylabel('PDF', fontsize=16)
+        plt.xlabel('Overload Duration', fontsize=16)
+        major_yticks = [0, 0.5, 0.95, 0.99, 1]
+        minor_yticks = [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8,0.9]
+        plt.yticks(major_yticks, [f"{x}" for x in major_yticks])
+        plt.gca().set_yticks(minor_yticks, minor=True)
+        plt.tick_params(axis='y', which='major', labelsize=12)
+        plt.xlim(1, 2016)
+        plt.ylim(0, 1.05)
+        plt.savefig(os.path.join(save_dir, f'figure_2.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_2b.svg saved to {os.path.join(save_dir, f'figure_2.svg')}")
+        plt.close()
+    def plot_figure_2_test(self, save_dir: str,tela_overload_duration,violation_count,violation_window_size,max_violation_occurrence):
+        CBP = [2,1,1,3,4,1,3,1,4,3,4,3,4,3,4,2,1,4,3,2,1,1,1,5,1,1,4,2,1,1,4,1,2,1,1,1,2,2,5,2,2,2,3,1,2,3,4,2,3,4,2,9,8,8,1,1,1,1,2,1,4,1,1,2,2,2,8,1,2,1,1,11,1,3,1,1,4,1,2,2,1,1,2,2,1,1,2,1,1,2,6,1,5,7,1,11,1,12,9,41,7,1,1,1,1,2,2,4,1,2,2,10,1,3,1,1,12,1,1,1,2,5,5,1,3,2,5,1,19,14,5,66,10,17,3,2,1,1,2,1,1,2,1,2,6,1,3,2,1,2,2,4,2,6,1,1,1,2,1,2,1,1,1,1,1,1,5,1,2,2,1,3,3,4,1,1,1,2,3,1,1,3,1,1,4,9,4,1,2,3,1,1,1,1,3,1,7,3,5,2,1,4,6,6,4,2,5,1,1,1,1,1,1,1,1,1,4,9,1,1,2,2,1,4,4,5,2,1,1,1,1,1,1,1,2,1,35,7,3,3,1,5,5,1,1,4,1,3,6,1,1,4,2,2,4,1,1,3,1,1,1,1,1,1,2,1,1,8,8,2,1,2,2,1,3,14,3,9,2,1,1,3,2,2,1,2,2,11,7,1,1,1,1,26,8,1,2,7,2,1,2,2,2,2,1,1,1,1,2,4,1,1,3,4,3,7,1,1,1,2,17,3,4,2,3,4,1,1,1,1,2,5,3,1,1,1,1,2,3,1,3,1,3,4,1,1,6,103,7,63,23,4,1,4,2,2,1,1,2,3,2,1,1,1,1,2,2,18,2,55,127,1,7,2,1,5,2,2,4,4,1,7,1,4,31,5,179,3,5,10,5,14,6,11,137,117,18,220,2,1,2,6,1,8,3,1,2,1,11,5,8,1,2,7,23,133,27,18,1,5,1,1,4,1,2,1,3,4,6,2,2,3,4,2,1,8,28,4,3,1,42,121]
+        SCDA = [11,3,4,4,13,1,2,4,4,1,5,2,3,1,9,2,15,3,3,107,4,24,2,2,8,5,1,1,1,5,4,2,1,2,1,1,1,2,2,1,1,1,1,1,1,2,1,1,1,1,2,3,5,1,2,9,1,33,4,6,3,2,6,9,1,3,1,1,5,1,5,1,3,2,2,1,4,9,1,1,1,3,1,2,1,1,2,1,4,1,1,3,1,1,1,2,1,2,2,3,15,1,1,7,33,38,28,4,2,18,18,11,1,3,1,1,2,6,2,8,3,1,3,1,1,1,1,6,3,4,1,2,3,1,3,1,3,79,415,1,1,11,3,38,204,12,8,11,1,1,44,178,1,1,2,2,2,2,1,1,1,2,4,1,1,1,2,1,1,1,1,1,1,1,2,6,3,1,5,7,1,1,1,2,6,3,3,4,2,1,1,1,1,4,2,4,1,1,1,1,1,1,1,1,1,1,1,1,2,1,2,2,6,5,2,1,2,2,2,1,1,2,1,1,1,1,1,1,2,1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,2,1,2,1,1,3,3,1,1,2,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,5,1,1,1,1,1,2,1,1,2,1,1,5,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,5,1,1,3,1,2,1,2,1,1,2,8,1,1,1,1,1,6,14,3,3,1,5,8,5,77,5,1,1,1,1,5,1,2,1,2,1,1,1,1,1,1,1,56,1,1,1,1,1,7,1,1,5,12,24,3,63,1,5,1,1,1,2,1,1,1,1,4,1,1,1,1,5,1,1,5,1,1,1,1,1,8,2,1,13,9,4,3,2,1,1,1,1,4,1,1,1,2,1,5,3,2,2,1,4,1,3,4,1,1,1,5,1,1,1,1,2,4,8,3,1,2,1,1]
+        # TELA = [1,1,4,1,3,1,3,4,2,1,1,2,1,2,1,1,1,4,2,2,2,2,7,2,2,3,3,2,2,1,1,7,3,2,1,3,2,2,1,3,1,2,3,1,1,1,1,4,2,5,2,4,5,1,2,1,1,3,1,1,3,5,2,1,1,1,4,2,4,2,1,1,10,10,1,2,1,6,17,17,6,3,1,6,87,3,1,3,9,2,3,1,1,10,47,49,1,4,1,1,1,1,3,1,1,1,1,3,9,7,2,28,14,6,4,3,1,1,1,1,3,1,2,1,1,1,1,2,1,1,7,1,1,1,1,2,1,1,3,22,2,2,1,6,1,1,3,2,1,2,1,1,2,1,1,1,1,2,1,1,2,4,5,1,1,19,2,25,2,4,1,2,10,3,11,2,3,2,1,3,2,2,1,2,9,1,1,28,5,6,1,2,1,4,3,1,1,1,3,3,1,5,3,1,2,1,1,2,2,1,1,1,1,1,3,1,1,4,1,2,2,1,1,1,1,1,1,2,1,2,1,1,2,1,1,1,1,1,1,1,4,1,1,2,1,1,1,3,1,1,1,2,1,2,2,2,4,1,1,1,1,1,1,1,1,1,1,1,1,2,3,1,1,1,1,1,1,1,16,8,20,1,12,1,1,1,15,2,17,204,31,1,3,3,1,11,59,4,1,1,1,2,2,3,2,1,1,2,1,5,1,3,4,7,1,1,4,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,2,1,1,1,1,1,3,1,2,2,1,3,2,5,1,8,4,1,1,1,1,1,4,2,1,1,1,1,2,1,2,1,1,2,2,1,1,2,1,1,2,1,1,1,1,2,2,1,2,3,1,1,3,1,2,1,1,1,1,1,1,3,1,1,2,1,2,1,3,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,2,1,1,2,2,6,1,2,1,1,1,1,2,1,1,4,5,2,3,2,1,1,2,2,5,1,5,1,4,1,3,2,1,1,2,2,2,1,3,2,1,2,2,3,2,2,1,1,5,9,4,2,5,2,1,1,1,2,5,2,2,2,1,1,1,1,1,1,1,3,1,1,2,2,2,1,1,1,1,1,1,2,1,1,1,3,1,1,1,1,2,1,1,1,2,1,1,1,1,3,1,2,1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,1,1,2,1,1,1,1,1,1,2,1,1,2,1,1,1,3,1,1,1,1,1,2,5,1,1,5,3,1,1,2,1,1,3,2,2,1,1,1,1,1,1,4,1,3,1,3,5,1,2,3,7,18,9,1,1,1,1,1,1,1,2,1,3,1,1,1,1,2,1,1,1,7,1,1,1,1,3,1,1,1,1,3,1,1,1,1,1,1,1,1,2,1,1,1,4,3,1,4,1,2,4,1,4,3,4,1,3,1,4,1,1,5,3,1,4,1,2,4,4,3,1]
+        TELA = tela_overload_duration
+        Oracle = [1,1,1,3,1,1,1,5,3,2,1,3,7,3,1,2,1,1,1,8,4,1,1,1,1,2,1,1,2,3,1,2,1,3,1,4,3,4,3,4,4,4,2,1,4,3]
+        TIDAL = [1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1]
+        RoundRobin = [2016,2016,1548,467]
+        x_grid = np.linspace(1, 2016, 2015)
+        data_dic = {'CBP': CBP, 'SCDA': SCDA, 'TELA': TELA,
+                    'Oracle': Oracle, 'TIDAL': TIDAL, 'RoundRobin': RoundRobin}
+
+        def forward(x):
+            """将数据值映射到视觉坐标"""
+            whole_scale = -np.log10(0.0001)
+            result = np.where(x <= 0.9999,
+                              # 避免 log(0)
+                              -np.log10(np.clip(1 - x, 1e-10, None)),
+                              (x + 0.0001) * whole_scale)
+            return result
+            # return np.interp(x, cutoff_data, cutoff_view)
+
+        def inverse(x):
+            """将视觉坐标映射回数据值"""
+            whole_scale = -np.log10(0.0001)
+            result = np.where(x <= whole_scale,
+                              1 - 10**(-x),
+                              x / whole_scale - 0.0001)
+            return result
+            # return np.interp(x, cutoff_view, cutoff_data)
+        fig,axes = plt.subplots(1,2,figsize=(14, 6))
+        fig.suptitle(f'Violation Window Size: {violation_window_size}, Max Violation Occurrence: {max_violation_occurrence}', fontsize=16)
+        for label, data in data_dic.items():
+            kde = gaussian_kde(data)
+            kde.set_bandwidth(bw_method='scott')
+            pdf = kde(x_grid)
+            cdf = np.cumsum(pdf) * (x_grid[1] - x_grid[0])
+            cdf = cdf / cdf[-1]
+            axes[0].plot(x_grid, cdf, label=label, linewidth=1)
+        axes[0].set_xscale("log")
+        axes[0].set_yscale("function", functions=(forward, inverse))
+        axes[0].legend(fontsize=14, ncol=2, loc='upper left',
+                   bbox_to_anchor=(0.02, 0.97), columnspacing=0.1)
+        axes[0].set_ylabel('Mean Bandwidth Utilization', fontsize=16)
+        axes[0].set_xlabel('Overload Occurrence', fontsize=16)
+        major_yticks = [0, 0.5, 0.95, 0.99, 1]
+        minor_yticks = [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8,0.9]
+        axes[0].set_yticks(major_yticks, [f"{x}" for x in major_yticks])
+        axes[0].set_yticks(minor_yticks, minor=True)
+        axes[0].tick_params(axis='y', which='major', labelsize=12)
+        axes[0].set_xlim(1, 2016)
+        axes[0].set_ylim(0, 1.05)
+
+
+        shape = ['+', '*', 'x', 'o', 's', 'd', '^']
+        X = np.array([5200, 5400, 5500,
+                      5600, 5700, 5800, 5900, 6000, 6048])/6048*100
+        method_list = ["CBP", "SCDA", "Tela", "Oracle", "TIDAL", "RoundRobin"]
+        for method in method_list:
+            if method == "Tela":
+                Y_method = np.array(violation_count)/2016*100
+                axes[1].plot(X, Y_method, label=method, linewidth=2.5,
+                            marker='o')
+            else:
+                data_dir = os.path.join(
+                    DirConfig.PLACEMENT_DIR, method, "violation_count.txt")
+                with open(data_dir, "r") as f:
+                    lines = f.readlines()
+                    last_line = lines[-1].strip()
+                    Y_method = np.array([float(x)
+                                for x in last_line.split(",") if x.strip() != ""])/2016*100
+                    axes[1].plot(X, Y_method, label=method, linewidth=2.5,
+                            marker=shape[method_list.index(method)])
+        axes[1].legend(fontsize=14, ncol=2)
+        axes[1].set_xlabel('Disk Placed(%)', fontsize=16)
+        axes[1].set_ylabel('Overload Percentage(%)', fontsize=16)
+        axes[1].tick_params(axis='both', which='major', labelsize=12)
+        plt.savefig(os.path.join(save_dir, f'figure_2_test_{violation_window_size}_{max_violation_occurrence}.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_2b.svg saved to {os.path.join(save_dir, f'figure_2_test_{violation_window_size}_{max_violation_occurrence}.svg')}")
+        plt.close()
+    def plot_figure_3(self,  save_dir: str) -> None:
+        with open(os.path.join(DirConfig.TEMP_DIR, f'imbalance_across_time_ODA'), 'rb') as f:
+            CBP = pickle.load(f)
+        with open(os.path.join(DirConfig.TEMP_DIR, f'imbalance_across_time_TELA'), 'rb') as f:
+            TELA = pickle.load(f)
+        with open(os.path.join(DirConfig.TEMP_DIR, f'imbalance_across_time_SCDA'), 'rb') as f:
+            SCDA = pickle.load(f)
+        with open(os.path.join(DirConfig.TEMP_DIR, f'imbalance_across_time_Oracle'), 'rb') as f:
+            Oracle = pickle.load(f)
+        with open(os.path.join(DirConfig.TEMP_DIR, f'imbalance_across_time_TIDAL'), 'rb') as f:
+            TIDAL = pickle.load(f)
+        with open(os.path.join(DirConfig.TEMP_DIR, f'imbalance_across_time_RoundRobin'), 'rb') as f:
+            RoundRobin = pickle.load(f)
+        data_dic = {'CBP': CBP, 'SCDA': SCDA, 'TELA': TELA,
+                    'Oracle': Oracle, 'TIDAL': TIDAL, 'RoundRobin': RoundRobin}
+
+        # data_dic level0:[CBP,SCDA,TELA,Oracle,TIDAL,RoundRobin]
+        # data_dic level1:items_placed[5200,5400,5500,5600,5700,5800,5900,6000,6048]
+        # data_dic level2:windows_length_in_one_day["5min",  "30min", "1h","2h" ,"3h", "4h", "6h", "8h"]
+        # data_dic level3:cv,std
+        algorithm_name_list=["CBP","SCDA","TELA","Oracle","TIDAL","RoundRobin"]
+        items_placed_list=[5200,5400,5500,5600,5700,5800,5900,6000,6048]
+        windows_length_in_one_day_list=["5min",  "30min", "1h","2h" ,"3h", "4h", "6h", "8h"]
+        method_list=["cv","std","var"]
+
+        # for items_placed in items_placed_list:
+        #     for windows_length_in_one_day in windows_length_in_one_day_list:
+        #         cv_violin_data=[]
+        #         std_violin_data=[]
+        #         var_violin_data=[]
+        #         for algorithm_name in algorithm_name_list:
+        #             cv_violin_data.append(data_dic[algorithm_name][items_placed][windows_length_in_one_day]["cv"])
+        #             std_violin_data.append(data_dic[algorithm_name][items_placed][windows_length_in_one_day]["std"])
+        #             var_violin_data.append(data_dic[algorithm_name][items_placed][windows_length_in_one_day]["var"])
+        #         fig, axes = plt.subplots(1, 3, figsize=(20, 8))
+        #         fig.suptitle(
+        #             f'time_window:{windows_length_in_one_day},Disk Number:{items_placed}', fontsize=16, fontweight='bold')
+        #         sns.violinplot(cv_violin_data,ax=axes[0])
+        #         axes[0].set_title("CV")
+        #         axes[0].set_xticks(range(len(algorithm_name_list)), algorithm_name_list)
+        #         sns.violinplot(std_violin_data,ax=axes[1])
+        #         axes[1].set_title("STD")
+        #         axes[1].set_xticks(range(len(algorithm_name_list)), algorithm_name_list)
+        #         sns.violinplot(var_violin_data,ax=axes[2])
+        #         axes[2].set_title("VAR")
+        #         axes[2].set_xticks(range(len(algorithm_name_list)), algorithm_name_list)
+        #         plt.savefig(os.path.join(DirConfig.EVALUATION_DIR,"figure3", f'figure3_{items_placed}_{windows_length_in_one_day}.png'), bbox_inches='tight')
+        #         plt.close(fig)
+        violin_data=[]
+        data=pd.DataFrame()
+        for algorithm_name in algorithm_name_list:
+            data[algorithm_name]=data_dic[algorithm_name][6048]["2h"]["cv"]
+            violin_data.append(data_dic[algorithm_name][6048]["2h"]["cv"])
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(violin_data,palette="vlag",width=0.5)
+        data.to_csv("figure_3.csv")
+        # sns.despine()
+        plt.xticks(range(len(algorithm_name_list)), algorithm_name_list)
+        plt.ylabel("Temporal Imbalance",fontsize=16)
+        plt.savefig(os.path.join(save_dir, f'figure_3.svg'), bbox_inches='tight')
+        plt.close()
+        logger.info(
+            f"figure_3.svg saved to {os.path.join(save_dir, f'figure_3.svg')}")
+
+    def plot_figure_4(self, save_dir: str) -> None:
+        soft_percentile=False
+        metric=["OTF", "P95", "P99","Temporal Imbalance","Spatial Imbalance"]
+        n_metric=len(metric)
+        categories=["CBP","Intensity Only","Full TIDAL"]
+        n_method=len(categories)
+        plt.figure(figsize=(8, 6))
+        overload_count=np.array([474.6666666666667, 202.33333333333334, 64.33333333333333])/2016
+        overload_count=overload_count/np.max(overload_count)
+        overload_duration1=np.array([2,1,1,3,4,1,3,1,4,3,4,3,4,3,4,2,1,4,3,2,1,1,1,5,1,1,4,2,1,1,4,1,2,1,1,1,2,2,5,2,2,2,3,1,2,3,4,2,3,4,2,9,8,8,1,1,1,1,2,1,4,1,1,2,2,2,8,1,2,1,1,11,1,3,1,1,4,1,2,2,1,1,2,2,1,1,2,1,1,2,6,1,5,7,1,11,1,12,9,41,7,1,1,1,1,2,2,4,1,2,2,10,1,3,1,1,12,1,1,1,2,5,5,1,3,2,5,1,19,14,5,66,10,17,3,2,1,1,2,1,1,2,1,2,6,1,3,2,1,2,2,4,2,6,1,1,1,2,1,2,1,1,1,1,1,1,5,1,2,2,1,3,3,4,1,1,1,2,3,1,1,3,1,1,4,9,4,1,2,3,1,1,1,1,3,1,7,3,5,2,1,4,6,6,4,2,5,1,1,1,1,1,1,1,1,1,4,9,1,1,2,2,1,4,4,5,2,1,1,1,1,1,1,1,2,1,35,7,3,3,1,5,5,1,1,4,1,3,6,1,1,4,2,2,4,1,1,3,1,1,1,1,1,1,2,1,1,8,8,2,1,2,2,1,3,14,3,9,2,1,1,3,2,2,1,2,2,11,7,1,1,1,1,26,8,1,2,7,2,1,2,2,2,2,1,1,1,1,2,4,1,1,3,4,3,7,1,1,1,2,17,3,4,2,3,4,1,1,1,1,2,5,3,1,1,1,1,2,3,1,3,1,3,4,1,1,6,103,7,63,23,4,1,4,2,2,1,1,2,3,2,1,1,1,1,2,2,18,2,55,127,1,7,2,1,5,2,2,4,4,1,7,1,4,31,5,179,3,5,10,5,14,6,11,137,117,18,220,2,1,2,6,1,8,3,1,2,1,11,5,8,1,2,7,23,133,27,18,1,5,1,1,4,1,2,1,3,4,6,2,2,3,4,2,1,8,28,4,3,1,42,121])
+        overload_duration2=np.array([1,1,1,5,1,3,3,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,3,1,1,3,1,1,1,1,2,5,4,1,2,2,1,1,1,3,1,1,4,4,1,3,4,1,1,1,1,2,1,1,1,7,1,3,1,1,4,1,2,3,1,4,2,8,11,17,18,1,1,2,2,1,2,1,2,1,1,6,2,3,1,4,5,1,2,2,1,1,1,1,2,1,1,3,2,3,1,1,1,1,1,1,2,1,1,2,6,2,1,3,2,2,10,3,7,3,4,1,1,1,2,2,1,14,1,3,2,1,1,1,6,2,3,3,3,4,4,2,1,1,1,1,1,1,1,3,3,1,2,4,3,1,2,6,1,13,8,6,1,2,86,4,1,7,1,5,1,1,1,10,2,1,1,2,7,12,11,35,2,50,3,61,3,2,1,6,2,1,1,1,2,1,2,1,8,2,1,2,1,8,2,1,3,6,2,3,2,1,2,8,2,6,1,14,2,2,23,26,4,6,2,1,1,2,1,1,4,4,1,2,1,1,1,1,4,1,1,1,1,2,1,1,2,1,1,2,4,2,1,1,6,2,4,1,1,1,1,1,1,1,2,3,1,1,16,4,1,1,1,1,1,10,2,1,1,1,1,1,2,1,2,4,2,1,1,1,1,1,6,6,1,2,3,2,1,51,2,8,3,5,1,8,4,15,1,1,7,17,1,1,20,3,3,1,2,1,3,3,3,2,3,2,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1])
+        overload_duration3=np.array([1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1])
+        time_imbalance=np.array([0.034176277838632835,0.03679765620390361,0.03095974326429853])
+        space_imbalance=np.array([0.1939226908472013,0.13257569241864994,0.10853242793751935])
+        if soft_percentile:
+            p99=np.array([self.softpercentile(overload_duration1, 0.99) ,self.softpercentile(overload_duration2, 0.99) ,self.softpercentile(overload_duration3, 0.99)])
+            p95=np.array([self.softpercentile(overload_duration1, 0.95) ,self.softpercentile(overload_duration2, 0.95) ,self.softpercentile(overload_duration3, 0.95)])
+        else:
+            p95=np.array([self.hardpercentile(overload_duration1, 0.95) ,self.hardpercentile(overload_duration2, 0.95) ,self.hardpercentile(overload_duration3, 0.95)])
+            p99=np.array([self.hardpercentile(overload_duration1, 0.99) ,self.hardpercentile(overload_duration2, 0.99) ,self.hardpercentile(overload_duration3, 0.99)])
+        p95=p95/np.max(p95)
+        p99=p99/np.max(p99)
+        time_imbalance=time_imbalance/np.max(time_imbalance)
+        space_imbalance=space_imbalance/np.max(space_imbalance)
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+        x_base = np.arange(n_metric)
+        total_width = 0.8
+        bar_width = total_width / n_method
+        offsets = [(i - (n_method - 1) / 2) * bar_width for i in range(n_method)]
+        colors = ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#d62828']
+        for i in range(n_method):
+            values = [overload_count[i], p95[i], p99[i],time_imbalance[i],space_imbalance[i]]
+            x = [0 + offsets[i], 1 + offsets[i], 2 + offsets[i],3 + offsets[i],4 + offsets[i]]
+            
+            ax1.bar(x, values, width=bar_width, 
+                    color=colors[i], label=categories[i], edgecolor='black', zorder=10)
+        ax1.legend(fontsize=14,bbox_to_anchor=(0.25,0.95),ncol=3)        
+        ax1.set_xticks(x_base, metric, fontsize=14)
+        plt.savefig(os.path.join(save_dir, f'figure_4.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_4.svg saved to {os.path.join(save_dir, f'figure_4.svg')}")
+        plt.close()
+    def plot_figure_5(self, save_dir: str) -> None:
+        soft_percentile=True
+        metric=["OTF", "P95", "P99","Temporal Imbalance","Spatial Imbalance"]
+        n_metric=len(metric)
+        n_method=3
+        mask=np.array([True, True, False, False, True, False])
+        categories = ["min_delta_util_var", "min_util_var", "min_load_var", "min_delta_load_var", "min_peak_load_before_placement","min_peak_load_after_placement"]
+        categories=np.array(categories)[mask]
+        overload_count = np.array([64.33333333333333, 278.5, 278.5, 64.33333333333333, 688.3333333333334,688.3333333333334])[mask]
+        overload_count=overload_count/np.max(overload_count)
+        overload_duration1=[1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1]
+        overload_duration2=[7,3,3,13,5,3,3,3,3,1,3,4,1,12,1,1,2,12,5,49,21,4,15,6,4,4,1,32,1,9,25,2,2,1,7,7,1,3,2,2,2,4,26,2,5,5,1,1,4,1,11,4,3,1,1,1,1,1,1,1,2,1,2,1,1,2,2,3,3,1,5,3,1,1,6,3,1,1,3,1,5,1,4,1,2,1,4,1,1,1,1,1,1,2,1,5,1,1,1,1,2,1,1,1,1,1,3,1,2,2,1,1,4,1,1,1,2,2,1,2,2,1,2,1,1,6,3,1,2,5,5,1,1,5,3,11,38,11,2,5,1,1,4,1,1,1,6,3,1,1,1,1,1,2,1,3,7,3,3,1,10,1,7,22,12,3,1,5,1,9,3,7,3,1,2,3,1,1,1,1,1,1,3,2,1,1,3,1,1,3,1,3,1,1,1,1,2,10,1,4,6,7,1,11,19,12,59,5,1,3,1,1,1,1,5,1,1,4,1,1,24,1,23,143,2,2,1,4,1,1,1,1,1,1,1,1,5,1,1,1,1,1,1,3,1,1,2,3,3,2,4,3,3,3,2,1,1,1,1,2,1,5,1,14,10,2,1,9,3,2,2,2,1,1,1,1,2,1,1,1,1,3,1,1,3,6,3,5,6,4,86,1,1,10,2,1,1,1,1,2,1,1,1,1,1,2,4,1,1,1,6,1,1,2,1,1,1,1,3,1,2,3,10,2,1,1,1,1,2,1,1,2,129,59,1,1,1,1,1,1,3,1,1,1,1,1,4,3,1,1,5,3,1,1,1,1,2,2,2,1,1,1,1,1,4,1,3,1,2,1,1,1,2,1,1,1,2,1,1,1,1,1,1,1]
+        overload_duration3=[7,3,3,13,5,3,3,3,3,1,3,4,1,12,1,1,2,12,5,49,21,4,15,6,4,4,1,32,1,9,25,2,2,1,7,7,1,3,2,2,2,4,26,2,5,5,1,1,4,1,11,4,3,1,1,1,1,1,1,1,2,1,2,1,1,2,2,3,3,1,5,3,1,1,6,3,1,1,3,1,5,1,4,1,2,1,4,1,1,1,1,1,1,2,1,5,1,1,1,1,2,1,1,1,1,1,3,1,2,2,1,1,4,1,1,1,2,2,1,2,2,1,2,1,1,6,3,1,2,5,5,1,1,5,3,11,38,11,2,5,1,1,4,1,1,1,6,3,1,1,1,1,1,2,1,3,7,3,3,1,10,1,7,22,12,3,1,5,1,9,3,7,3,1,2,3,1,1,1,1,1,1,3,2,1,1,3,1,1,3,1,3,1,1,1,1,2,10,1,4,6,7,1,11,19,12,59,5,1,3,1,1,1,1,5,1,1,4,1,1,24,1,23,143,2,2,1,4,1,1,1,1,1,1,1,1,5,1,1,1,1,1,1,3,1,1,2,3,3,2,4,3,3,3,2,1,1,1,1,2,1,5,1,14,10,2,1,9,3,2,2,2,1,1,1,1,2,1,1,1,1,3,1,1,3,6,3,5,6,4,86,1,1,10,2,1,1,1,1,2,1,1,1,1,1,2,4,1,1,1,6,1,1,2,1,1,1,1,3,1,2,3,10,2,1,1,1,1,2,1,1,2,129,59,1,1,1,1,1,1,3,1,1,1,1,1,4,3,1,1,5,3,1,1,1,1,2,2,2,1,1,1,1,1,4,1,3,1,2,1,1,1,2,1,1,1,2,1,1,1,1,1,1,1]
+        overload_duration4=[1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1]
+        overload_duration5=[1,1,7,1,3,4,2,5,2,3,1,2,1,1,3,1,1,1,1,4,1,2,1,7,4,39,19,45,87,22,5,1,241,9,2,9,1,3,34,6,95,23,56,3,1,2,1,1,1,5,4,1,5,3,1,1,1,1,2,4,1,2,3,1,2,1,1,52,16,26,83,3,1,24,2,3,13,8,1,207,2,5,6,1,9,1,7,4,10,4,24,24,129,2,27,21,4,13,1,6,1,17,5,4,36,53,2,9,2,2,1,7,3,70,12,2,1,1,1,3,2,1,5,15,1,6,2,2,1,1,1,2,7,4,10,1,1,6,4,1,1,2,3,6,1,3,16,2,3,6,4,1,9,5,3,1,7,5,3,5,2,2,2,2,2,1,4,5,1,2,2,5,4,4,4,1,1,3,1,1,3,2,3,2,1,1,1,2,1,1,8,2,1,8,3,4,1,3,2,2,19,3,1,13,1,14,13,16,1,2,1,7,23,2,1,1,3,3,2,4,2,3,2,1,3,1,7,1,2,1,1,1,2,1,4,1,1,5,1,1,3,1,4,2,3,10,1,9,8,5,1,1,1,1,5,2,2,1,2,6,3,1,1,2,1,1,1,1,2,30,5,42,19,8,2,10,9,10,2,1,1,1,1,1,4,1,1,2,2,9,25,46,2,3,10,14,19,2,17,1,47,1,12,3,1,3,1,1,15,2,1,1,4,3,10,1,1,1,1,1,1,1,1,3,1,2,1,3,2,2,5,1,2,1,1,2,2,1,1,1,2,2,4,8,1,9,1,1,1,1,1,1,3,1,2,1,2,2,2,1,1,9,1,2,1,2,1,1,1,1,1,1,5,5,4,1,6,10,3,1,2,1,1,1,1,1,4,1,3,4,82,1,1,3,1,1,2,1,2,1,3,1,1,1,1,1,2,1,1,1,2,1,1,1,2,2,1,1,2,1,2,1,1,4,2,2,1,3,3,1,2,1,1,1,1,1,1,2,1,3,6,1,3,1,1,1,1,1,1,1,2,1,1,1,1,1,2,4,2,1,1,1,1,2,1,3,1,1,1,1,2,2,5,2,1,5,1,1,3,1,2,2,2,1,1,1,2,1,1,1,2,4,1,3,1,2,2,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,3,1,2,11,1,2,1,2,1,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,10,2,5,7,1,1,4,1,1,1,12,9,1,2,4,1,1,4,1,2,1,3,1,1,1,4,1,1,1,2,3,1,1,1,1,1,4,1,1,1,3,1,2,1,1,21,2,2,2,1,2,1,3,8,1,2,1,2,6,1,1,2,3,10,1,10,1,6,4,3,7,5,4,3,1,2,1,1,1,2,1,1,1,1,1,2,1,2,1,4,15,5,7,2,1,3,4,5,27,37,152,62,1,1,1,1,4,1,1,3,1,3,5,1,1,2,3,1,1,1,1,2,1,1,1,1,3,1,1,6,7,1,1,1,2,1,2,1,3,1,9,1,4,1,2,4,1,1,2,1,5,3,1,1,1,2,1,1,1,1,1,1,1,1,2,1,2,2,1,2,1,1,1,1,1,6,4,3,2,1,6,3,6,2,3,2,5,3,1,1,7,1,2,1,3,2,4,2,1,2,2,2,3,2,1,1,4,1,1,1,7,1,2,1,1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,2,1,1,3,1,1,6,1,1,1,1,4,2,1,1,1,1,1,2,1,2,2,1,1,1,1,1,1,1,2,3,2,1,2,1,1,1,1,1,1,1,1,1,1,1,3,8,1,4,1,1,2,1,1,1,2,1,1,1,3,3,6,4,1,1,1,2,1,3,1,1,2,1,1,1,2,1,1,1,1,1,1,1,1,1,1]
+        overload_duration6=[1,1,7,1,3,4,2,5,2,3,1,2,1,1,3,1,1,1,1,4,1,2,1,7,4,39,19,45,87,22,5,1,241,9,2,9,1,3,34,6,95,23,56,3,1,2,1,1,1,5,4,1,5,3,1,1,1,1,2,4,1,2,3,1,2,1,1,52,16,26,83,3,1,24,2,3,13,8,1,207,2,5,6,1,9,1,7,4,10,4,24,24,129,2,27,21,4,13,1,6,1,17,5,4,36,53,2,9,2,2,1,7,3,70,12,2,1,1,1,3,2,1,5,15,1,6,2,2,1,1,1,2,7,4,10,1,1,6,4,1,1,2,3,6,1,3,16,2,3,6,4,1,9,5,3,1,7,5,3,5,2,2,2,2,2,1,4,5,1,2,2,5,4,4,4,1,1,3,1,1,3,2,3,2,1,1,1,2,1,1,8,2,1,8,3,4,1,3,2,2,19,3,1,13,1,14,13,16,1,2,1,7,23,2,1,1,3,3,2,4,2,3,2,1,3,1,7,1,2,1,1,1,2,1,4,1,1,5,1,1,3,1,4,2,3,10,1,9,8,5,1,1,1,1,5,2,2,1,2,6,3,1,1,2,1,1,1,1,2,30,5,42,19,8,2,10,9,10,2,1,1,1,1,1,4,1,1,2,2,9,25,46,2,3,10,14,19,2,17,1,47,1,12,3,1,3,1,1,15,2,1,1,4,3,10,1,1,1,1,1,1,1,1,3,1,2,1,3,2,2,5,1,2,1,1,2,2,1,1,1,2,2,4,8,1,9,1,1,1,1,1,1,3,1,2,1,2,2,2,1,1,9,1,2,1,2,1,1,1,1,1,1,5,5,4,1,6,10,3,1,2,1,1,1,1,1,4,1,3,4,82,1,1,3,1,1,2,1,2,1,3,1,1,1,1,1,2,1,1,1,2,1,1,1,2,2,1,1,2,1,2,1,1,4,2,2,1,3,3,1,2,1,1,1,1,1,1,2,1,3,6,1,3,1,1,1,1,1,1,1,2,1,1,1,1,1,2,4,2,1,1,1,1,2,1,3,1,1,1,1,2,2,5,2,1,5,1,1,3,1,2,2,2,1,1,1,2,1,1,1,2,4,1,3,1,2,2,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,3,1,2,11,1,2,1,2,1,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,10,2,5,7,1,1,4,1,1,1,12,9,1,2,4,1,1,4,1,2,1,3,1,1,1,4,1,1,1,2,3,1,1,1,1,1,4,1,1,1,3,1,2,1,1,21,2,2,2,1,2,1,3,8,1,2,1,2,6,1,1,2,3,10,1,10,1,6,4,3,7,5,4,3,1,2,1,1,1,2,1,1,1,1,1,2,1,2,1,4,15,5,7,2,1,3,4,5,27,37,152,62,1,1,1,1,4,1,1,3,1,3,5,1,1,2,3,1,1,1,1,2,1,1,1,1,3,1,1,6,7,1,1,1,2,1,2,1,3,1,9,1,4,1,2,4,1,1,2,1,5,3,1,1,1,2,1,1,1,1,1,1,1,1,2,1,2,2,1,2,1,1,1,1,1,6,4,3,2,1,6,3,6,2,3,2,5,3,1,1,7,1,2,1,3,2,4,2,1,2,2,2,3,2,1,1,4,1,1,1,7,1,2,1,1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,2,1,1,3,1,1,6,1,1,1,1,4,2,1,1,1,1,1,2,1,2,2,1,1,1,1,1,1,1,2,3,2,1,2,1,1,1,1,1,1,1,1,1,1,1,3,8,1,4,1,1,2,1,1,1,2,1,1,1,3,3,6,4,1,1,1,2,1,3,1,1,2,1,1,1,2,1,1,1,1,1,1,1,1,1,1]
+        time_imbalance=np.array([0.03095974326429853,0.03810242830085577,0.05001068264969687])
+        space_imbalance=np.array([0.10853242793751935,0.24023044202901603,0.43785130674827927])
+        if soft_percentile:
+            p95=np.array([self.softpercentile(overload_duration1, 0.95) ,self.softpercentile(overload_duration2, 0.95) ,self.softpercentile(overload_duration3, 0.95) ,self.softpercentile(overload_duration4, 0.95) ,self.softpercentile(overload_duration5, 0.95) ,self.softpercentile(overload_duration6, 0.95) ])[mask]
+            p99=np.array([self.softpercentile(overload_duration1, 0.99) ,self.softpercentile(overload_duration2, 0.99) ,self.softpercentile(overload_duration3, 0.99) ,self.softpercentile(overload_duration4, 0.99) ,self.softpercentile(overload_duration5, 0.99) ,self.softpercentile(overload_duration6, 0.99) ])[mask]
+        else:
+            p95 = np.array([self.hardpercentile(overload_duration1, 0.95) ,self.hardpercentile(overload_duration2, 0.95) ,self.hardpercentile(overload_duration3, 0.95) ,self.hardpercentile(overload_duration4, 0.95) ,self.hardpercentile(overload_duration5, 0.95) ,self.hardpercentile(overload_duration6, 0.95) ])[mask]  
+            p99 = np.array([self.hardpercentile(overload_duration1, 0.99) ,self.hardpercentile(overload_duration2, 0.99) ,self.hardpercentile(overload_duration3, 0.99) ,self.hardpercentile(overload_duration4, 0.99) ,self.hardpercentile(overload_duration5, 0.99) ,self.hardpercentile(overload_duration6, 0.99) ])[mask]  
+        p95=p95/np.max(p95)
+        p99=p99/np.max(p99)
+        time_imbalance=time_imbalance/np.max(time_imbalance)
+        space_imbalance=space_imbalance/np.max(space_imbalance)
+        fig, ax1 = plt.subplots(figsize=(9, 6))
+        x_base = np.arange(n_metric)
+        total_width = 0.8
+        bar_width = total_width / n_method
+        offsets = [(i - (n_method - 1) / 2) * bar_width for i in range(n_method)]
+        colors = ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#d62828']
+        for i in range(n_method):
+            values = [overload_count[i], p95[i], p99[i],time_imbalance[i],space_imbalance[i]]
+            x = [0 + offsets[i], 1 + offsets[i], 2 + offsets[i],3 + offsets[i],4+offsets[i]]
+            
+            ax1.bar(x, values, width=bar_width, 
+                    color=colors[i], label=categories[i], edgecolor='black', zorder=10)
+        ax1.legend(fontsize=14,bbox_to_anchor=(0.25,0.95),ncol=2)        
+        ax1.set_xticks(x_base, metric, fontsize=14)
+        ax1.set_ylabel("normalized scale",fontsize=16)
+        fig.savefig(os.path.join(save_dir, f'figure_5.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_5.svg saved to {os.path.join(save_dir, f'figure_5.svg')}")
+        plt.close(fig)
+    def plot_figure_6(self, save_dir: str) -> None:
+        plt.figure(figsize=(8, 6))
+        x = np.array([312.98060405801516, 156.7602685970487, 388.61815700202715, 277.16720626410097, 15.172481301007792, 15.413530452991836,
+                     319.6162735300604, 48.457951682969, 81.13847002200782, 121.57102644699626, 1.30035094905179, 2.3383498680777848-0.642])/26100*1000
+        logger.info(f"x: {','.join(map(str, x))}")
+        y = np.array([0.8366540951583444, 0.9139472920832176, 0.8988617105350565, 0.9101608878849777, 0.7287316997173031,
+                     0.7632627551744181, 0.8922469369911449, 0.8702678448600223, 0.8975025818374208, 0.9119772765208676, 0.8041966581057343, 0.3105])
+        logger.info(f"y: {','.join(map(str, y))}")
+        labels = ["bert-base-chinese", "distilbert-base-multilingual-cased", "Midsummra/CNMBert", "xlm-roberta-base",
+                  "uer/chinese_roberta_L-2_H-128", "alibaba-pai/pai-bert-tiny-zh", "google/mobilebert-uncased",
+                  "hfl/minirbt-h288", "hfl/rbt3", "hfl/rbtl3", "FastText", "TFIDFLogisticModel"]
+        data = pd.DataFrame({"model": labels, "x": x, "y": y})
+        selected = ["distilbert-base-multilingual-cased", "Midsummra/CNMBert", "alibaba-pai/pai-bert-tiny-zh",
+                    "google/mobilebert-uncased", "hfl/minirbt-h288", "hfl/rbt3", "FastText", "TFIDFLogisticModel"]
+        # data=data[data["model"].isin(selected)]
+        sns.scatterplot(x="x", y="y", data=data,
+                        hue="model")
+        plt.xlabel("Latency (ms)", fontsize=16)
+        plt.ylabel("F1 Score", fontsize=16)
+        plt.legend(fontsize=14)
+        plt.savefig(os.path.join(save_dir, f'figure_6.svg'))
+        logger.info(
+            f"figure_6.svg saved to {os.path.join(save_dir, f'figure_6.svg')}")
+        plt.close()
+        # for i, label in enumerate(labels):
+        #     plt.annotate(label, (x[i], y[i]),
+        #                  xytext=(5, 5), textcoords='offset points',
+        #                  fontsize=10, alpha=0.8)
+
+    def plot_figure_7(self, save_dir: str) -> None:
+        R2 = np.array([0.612042, 0.617795, 0.619709, 0.654557, 0.2788])
+        MAE = np.array([116409.835315,
+                       123820.041646, 116175.635882, 112339.670056, 201848.1978])/300
+        methods = ['CatBoost',
+                   'LightGBM', 'XGBoost', 'RandomForest', 'Classification+\nRandomForest']
+        x = np.arange(len(methods))
+        fig, axe1 = plt.subplots(figsize=(7, 6))
+        axe2 = axe1.twinx()
+        bar_width = 0.3
+        axe1.bar(x, R2, width=bar_width,  label='R2', color='#2a9d8f')
+        axe2.bar(x, MAE, width=bar_width,  label='MAE', color='#e9c46a')
+        axe1.set_ylabel(r'$R^2$ Score', fontsize=14)
+        axe2.set_ylabel('MAE (KB/s)', fontsize=14)
+        # axe2.yaxis.set_major_formatter(mticker.StrMethodFormatter('{x:.0e}'))
+        axe1.set_ylim(0, max(R2) * 1.8)
+        axe2.invert_yaxis()
+        axe2.set_ylim(max(MAE) * 1.8, 0)
+        axe1.set_xticks(x)
+        axe1.set_xticklabels(methods, fontsize=12, fontweight='bold')
+        fig.savefig(os.path.join(save_dir, f'figure_7.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_7.svg saved to {os.path.join(save_dir, f'figure_7.svg')}")
+        plt.close(fig)
+
+    def plot_figure_8(self, save_dir: str) -> None:
+        pass
+
+    def plot_figure_9(self, save_dir: str) -> None:
+        soft_percentile=True
+        standard_overload_percentage = 0.15269510582010581
+        standard_time_imbalance=0.038996385101335566
+        standard_space_imbalance=0.20212043471978977
+        standard_duration = [1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3]
+        standard_mean_overload_duration=np.mean(standard_duration)
+        overload_duration1=np.array([1,1,1,1,3,1,1,5,3,2,1,1,4,1,1,1,4,1,3,1,4,3,1,1,5,1,1,4,2,2,4,6,1,1,1,1,10,2,4,8,4,1,1,1,3,2,1,2,1,3,1,1,1,1,3,2,1,1,1,1,1,1,1,4,1,1,1,4,1,1,1,1,6,3,1,3,7,1,2,2,3,2,3,1,1,2,3,1,1,1,7,1,2,3,1,2,1,1,1,1,1,1,6,2,1,1,2,3,2,1,3,5,2,7,9,3,1,1,1,3,1,2,3,2,2,1,1,1,3,1,3,3,1,1,1,2,1,1,5,1,3,1,4,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,7,5,1,4,2,5,3,2,1,1,1,1,1,7,1,1,1,2,1,1,1,1,6,1,1,1,1,4,1,1,2,1,1,2,1,10,3,1,2,3,1,1,1,1,1,1,2,1,1,1,1,1,2,3,2,3,1,2,1,2,1,4,3,3,3,2,1,1,1,1,6,1,1,1,1,1,1,2,6,1,1,2,1,1,2,4,1,1,3,1,1,2,1,1,1,2,1,2,11,1,4,1,2,3,1,2,1,2,1,1,6,2,1,1,3,1,1,2,14,1,4,3,1,1,1,4,7,1,2,2,1,1,1,1,1,2,2,1,1,1,2,3,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1])
+        overload_duration2=np.array([2,1,2,1,1,3,4,5,3,4,3,2,3,1,1,4,3,1,2,2,1,3,4,3,1,4,2,4,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,3,1,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,2,5,3,1,3,2,2,20,2,1,1,3,3,10,4,1,2,1,1,1,1,1,1,2,2,1,1,2,2,1,1,1,1,1,1,1,1,1,2,2,1,2,1,1,3,2,2,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,4,2,1,4,6,1,1,1,5,3,2,8,3,1,1,4,1,4,2,1,3,3,1,1,1,1,1,1,2,1,1,2,1,1,1,3,1,3,1,1,1,1,2,1,1,2,2,1,1,4,4,3,2,3,2,3,2,2,3,1,1,1,1,8,1,1,18,1,2,1,3,5,1,1,1,1,1,1,1,2,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,2,4,1,1,6,1,1,1,1,1,2,1,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+        overload_duration3=np.array([2,1,3,4,3,2,4,5,4,1,3,5,1,4,2,1,3,5,1,1,4,4,1,2,5,1,1,10,2,1,3,5,1,1,1,1,1,2,1,3,3,2,31,23,10,1,2,3,2,4,2,1,5,4,2,1,1,2,17,1,1,3,6,8,5,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,6,3,12,19,46,2,25,5,1,7,7,23,8,3,2,1,2,2,2,1,2,1,1,2,1,1,1,1,1,3,1,1,1,1,2,3,4,1,1,2,3,1,2,2,1,1,1,1,1,1,2,1,4,2,1,3,3,7,1,1,5,1,2,2,1,1,1,5,1,4,1,4,3,1,2,1,1,2,2,1,1,6,14,3,1,10,26,3,1,3,3,2,5,2,5,4,4,3,11,8,4,1,2,1,1,1,1,1,4,1,3,3,4,3,4,9,33,5,2,9,5,3,1,1,13,35,8,2,1,1,2,1,1,2,1,1,1,2,3,1,1,1,1,4,2,1,2,1,2,1,1,3,3,1,2,3,5,1,4,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,3,1,1,1,1,2,1,1,1,1,1,1,6,1,3,2,2,6,3,2,5,1])
+        overload_duration4=np.array([1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1])
+        overload_duration5=np.array([4,6,1,1,2,1,11,3,15,3,58,14,14,6,8,1,4,9,6,4,15,1,84,4,18,3,20,1,1,1,1,2,71,3,1,1,1,2,1,2,2,1,2,1,2,1,1,1,1,1,1,1,1,1,2,1,3,1,2,2,1,3,1,1,1,1,1,1,1,1,1,1,1,8,2,1,1,1,1,1,5,7,1,2,1,7,1,1,1,2,3,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,8,2,2,1,1,1,1,4,1,1,1,1,1,2,2,1,1,1,7,2,2,2,1,1,1,1,1,10,6,1,1,5,6,1,1,1,1,1,1,2,1,2,2,1,1,1,1,8,2,1,1,1,1,4,1,6,1,2,1,1,1,1,8,1,1,2,1,1,6,2,6,3,4,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,2,3,6,2,1,5,1,1,6,1,1,1,1,1,1,1,1,3,19,1,1,1,2,1,1,1,1,1,1,2,5,2,1,1,3,2,1,1,1,1,2,2,2,1,1,4,4,1,1,4,7,6,1,1,1,1,1,3,2,1,1,1,1,1,3,2,4,1,193,4,1,3,9,1,2,1,2,1,2,1,1,3,1,1,1,1,1,1,2,2,2,3,1,1,1,1,1,1,1,1,8,1,4,16,1,1,1,1,1,1,2,1,1,1,1,2,2,4,4,1,4,2,2,1,1,1,3,8,2,10,2,8,1,2,2,1,5,1,1,3,1,1,1,2,1,1,1,2,1,1,1,1,3,6,2,4,4,1,1,1,2,1,1,1,4,1,2,2,7,1,1,1,1,1,1,2,1,2,1,1,1,1,2,1,2,1,2,2,3,1,5,1,5,1,30,1])
+        overload_duration6=np.array([3,1,2,1,5,1,1,3,2,31,27,1,11,6,4,6,1,10,1,1,2,1,17,1,1,1,7,13,3,2,1,1,1,1,1,3,1,2,5,1,1,2,2,1,3,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,1,5,1,1,4,1,1,1,1,1,1,1,2,3,4,3,1,1,1,1,1,2,2,1,1,1,1,1,3,1,3,4,1,3,26,1,4,14,1,4,7,2,3,13,12,2,2,1,3,10,3,20,3,2,5,1,2,1,1,1,3,41,12,159,2,7,1,1,1,2,1,1,2,1,23,2,1,1,3,1,2,2,2,1,3,2,1,5,2,2,1,4,2,1,1,2,1,1,1,3,8,1,1,2,1,2,1,1,1,1,2,1,1,1,1,22,2,4,3,1,1,1,1,1,1,2,2,1,1,2,1,1,3,5,1,2,1,1,1,1,1,1,2,20,1,1,1,1,1,1,1,1,2,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,2,2,1,1,1,1,1,1,1,5,1,1,9,1,1,1,1,2,1,2,1,1,1,1,2,3,2,3,2,1,1,1,2,1,1,1,1,1,1,1,1,1,10,14,1,1,2,4,3,1,1,1,1,3,1,1,1,1,1,2,1,1,1,2,1,1
+])      
+        overload_percentage=np.array([111.83333333333333, 82.66666666666667, 159.83333333333334,
+              64.33333333333333, 221.83333333333334, 166.66666666666666])/2016
+        time_imbalance=np.array([0.03622623814081403,0.03621102423495699,0.0349909850250855,0.03095974326429853,0.033733005486304764,0.03788071561319924])
+        space_imbalance=np.array([0.1200575987980531,0.10568487420150532,0.1287005151871276,0.10853242793751935,0.15128735030819715,0.13193675052702228])
+        if soft_percentile:
+            standardp95 = self.softpercentile(standard_duration, 0.95)
+            standardp99 = self.softpercentile(standard_duration, 0.99)
+            p95=np.array([self.softpercentile(overload_duration1, 0.95) ,self.softpercentile(overload_duration2, 0.95) ,self.softpercentile(overload_duration3, 0.95) ,self.softpercentile(overload_duration4, 0.95) ,self.softpercentile(overload_duration5, 0.95) ,self.softpercentile(overload_duration6, 0.95) ])
+            p99=np.array([self.softpercentile(overload_duration1, 0.99) ,self.softpercentile(overload_duration2, 0.99) ,self.softpercentile(overload_duration3, 0.99) ,self.softpercentile(overload_duration4, 0.99) ,self.softpercentile(overload_duration5, 0.99) ,self.softpercentile(overload_duration6, 0.99) ])
+        else:
+            standardp95 = self.hardpercentile(standard_duration, 0.95)
+            standardp99 = self.hardpercentile(standard_duration, 0.99)
+            p95 = np.array([self.hardpercentile(overload_duration1, 0.95) ,self.hardpercentile(overload_duration2, 0.95) ,self.hardpercentile(overload_duration3, 0.95) ,self.hardpercentile(overload_duration4, 0.95) ,self.hardpercentile(overload_duration5, 0.95) ,self.hardpercentile(overload_duration6, 0.95) ])
+            p99 = np.array([self.hardpercentile(overload_duration1, 0.99) ,self.hardpercentile(overload_duration2, 0.99) ,self.hardpercentile(overload_duration3, 0.99) ,self.hardpercentile(overload_duration4, 0.99) ,self.hardpercentile(overload_duration5, 0.99) ,self.hardpercentile(overload_duration6, 0.99) ])  
+        mean_overload_duration=[np.mean(overload_duration1),np.mean(overload_duration2),np.mean(overload_duration3),np.mean(overload_duration4),np.mean(overload_duration5),np.mean(overload_duration6)]
+        # p95=p95/np.max(p95)
+        # p99=p99/np.max(p99)
+        # overload_count=overload_count/np.max(overload_count)
+        # time_imbalance=time_imbalance/np.max(time_imbalance)
+        # space_imbalance=space_imbalance/np.max(space_imbalance)
+        X = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+        degradation_ratio = np.array([62, 230, 485, 767, 1094, 1568])/6048
+        fig, axes1 = plt.subplots(figsize=(10, 6))
+        # fig.suptitle('Normalized all metrics To Tela', fontsize=16)
+        color=["#33c5b2","#5f78b6","#ffcd4e","#fc644c","#4fb283","#024e52"]
+        axes1.set_xlabel(r'$\tau$', fontsize=16)
+        axes1.plot(X, overload_percentage/standard_overload_percentage, color=color[0], label='OTF')
+        axes1.plot(X, degradation_ratio, color=color[1], label='Generic Unknown (%)')
+        axes1.plot(X, time_imbalance/standard_time_imbalance, color=color[2], label='Temporal Imbalance')
+        axes1.plot(X, space_imbalance/standard_space_imbalance, color=color[3], label='Spatial Imbalance')
+        axes1.plot(X, mean_overload_duration/standard_mean_overload_duration, color=color[4], label='Mean Overload Duration')
+        df=pd.DataFrame()
+        df["X"]=X
+        df["OTF"]=overload_percentage/standard_overload_percentage
+        df["Generic Unknown (%)"]=degradation_ratio
+        df["Temporal Imbalance"]=time_imbalance/standard_time_imbalance
+        df["Spatial Imbalance"]=space_imbalance/standard_space_imbalance
+        df["Mean Overload Duration"]=mean_overload_duration/standard_mean_overload_duration
+        df.to_csv("fig9.csv")
+        # axes1.plot(X, p95/standardp95, color=color[4], label='P95')
+        # axes1.plot(X, p99/standardp99, color=color[5], label='P99')
+        axes1.tick_params(axis='both', which='major', labelsize=14)
+        axes1.legend(loc='upper left', fontsize=14,bbox_to_anchor=(0, 1.1),ncol=3)
+        fig.savefig(os.path.join(save_dir, f'figure_9.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_9.svg saved to {os.path.join(save_dir, f'figure_9.svg')}")
+        plt.close(fig)
+
+    def plot_figure_10(self, save_dir: str) -> None:
+        soft_percentile=True
+        percentile1 = 95
+        percentile2 = 99
+        K = np.array([3,6,12,24])
+        X=range(len(K))
+        standard_overload_percentage = 0.15269510582010581
+        standard_time_imbalance=0.038996385101335566
+        standard_space_imbalance=0.20212043471978977
+        standard_duration = [1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3]
+        standard_mean_overload_duration=np.mean(standard_duration)
+        overload_percentage=np.array([151.16666666666666,61.333333333333336,64.33333333333333,202.33333333333334])/2016
+        overload_duration1 = [2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 2, 1, 1, 3, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 3, 2, 4, 2, 2, 2, 1, 1, 3, 4, 1, 1, 3, 1, 2, 1, 1, 1, 3, 1, 2, 2, 1, 1, 1, 2, 1, 1, 1, 5, 8, 1, 7, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 3, 22, 1, 3, 2, 1, 3, 3, 2, 14, 4, 3, 2, 1, 1, 3, 3, 3, 5, 1, 5, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 6, 1, 1, 4, 1, 2, 10, 3, 19, 6, 2, 10, 2, 5, 4, 1, 1, 1, 1, 11, 1, 12, 1, 2, 1, 9, 9,
+                      1, 1, 1, 1, 1, 1, 2, 1, 4, 4, 3, 1, 1, 3, 1, 2, 1, 2, 7, 3, 1, 3, 4, 2, 5, 1, 1, 4, 1, 13, 6, 12, 16, 2, 8, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 3, 3, 7, 9, 1, 4, 5, 12, 2, 1, 5, 9, 2, 1, 1, 1, 1, 1, 2, 3, 24, 3, 2, 1, 1, 3, 4, 25, 2, 1, 3, 6, 1, 1, 6, 3, 2, 1, 1, 2, 1, 1, 93, 1, 21, 2, 5, 18, 4, 3, 6, 12, 4, 2, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 3, 3, 2, 2, 2, 2, 3, 4, 1, 4, 1, 4, 4, 4, 4, 4]
+        overload_duration2 = [1, 1, 1, 2, 1, 3, 2, 1, 1, 5, 5, 2, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 3, 2, 1, 1, 1, 3, 1, 93, 5, 3, 3, 1, 9, 18, 2, 38, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 4, 1, 2, 1, 1, 1, 1, 1,
+                      1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 2, 2, 2, 3, 7, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 4, 1, 2, 1, 4, 4, 3, 4, 1, 1, 3, 4, 1, 4, 4, 4, 4, 1, 1, 4, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1]
+        overload_duration3 = [1, 5, 1, 4, 1, 1, 1, 4, 4, 4, 1, 1, 4, 1, 1, 4, 1, 2, 1, 3, 3, 1, 1, 1, 1, 1, 2, 1, 5, 1, 3, 2, 1, 31, 54, 1, 1, 12, 1, 1, 3, 3, 17, 1, 3, 3, 2, 3, 3, 3, 1, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 20, 1, 1, 2, 1, 2,
+                      1, 3, 2, 1, 1, 2, 2, 1, 3, 3, 2, 1, 2, 1, 2, 1, 1, 2, 2, 2, 1, 2, 1, 1, 1, 3, 5, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 2, 1, 6, 1, 1, 1, 3, 1, 2, 1, 2, 1, 1, 4, 1, 1, 1, 1, 2, 1, 3, 4, 1, 5, 1, 1, 2, 1, 1, 1, 2, 4, 1, 1]
+        overload_duration4 = [1, 1, 1, 5, 1, 3, 3, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 3, 1, 1, 1, 1, 2, 5, 4, 1, 2, 2, 1, 1, 1, 3, 1, 1, 4, 4, 1, 3, 4, 1, 1, 1, 1, 2, 1, 1, 1, 7, 1, 3, 1, 1, 4, 1, 2, 3, 1, 4, 2, 8, 11, 17, 18, 1, 1, 2, 2, 1, 2, 1, 2, 1, 1, 6, 2, 3, 1, 4, 5, 1, 2, 2, 1, 1, 1, 1, 2, 1, 1, 3, 2, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 6, 2, 1, 3, 2, 2, 10, 3, 7, 3, 4, 1, 1, 1, 2, 2, 1, 14, 1, 3, 2, 1, 1, 1, 6, 2, 3, 3, 3, 4, 4, 2, 1, 1, 1, 1, 1, 1, 1, 3, 3, 1, 2, 4, 3, 1, 2, 6, 1, 13, 8, 6, 1, 2, 86, 4, 1, 7, 1, 5,
+                      1, 1, 1, 10, 2, 1, 1, 2, 7, 12, 11, 35, 2, 50, 3, 61, 3, 2, 1, 6, 2, 1, 1, 1, 2, 1, 2, 1, 8, 2, 1, 2, 1, 8, 2, 1, 3, 6, 2, 3, 2, 1, 2, 8, 2, 6, 1, 14, 2, 2, 23, 26, 4, 6, 2, 1, 1, 2, 1, 1, 4, 4, 1, 2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 4, 2, 1, 1, 6, 2, 4, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 16, 4, 1, 1, 1, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 2, 4, 2, 1, 1, 1, 1, 1, 6, 6, 1, 2, 3, 2, 1, 51, 2, 8, 3, 5, 1, 8, 4, 15, 1, 1, 7, 17, 1, 1, 20, 3, 3, 1, 2, 1, 3, 3, 3, 2, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        standard_duration = np.array(standard_duration)
+        overload_duration1 = np.array(overload_duration1)
+        overload_duration2 = np.array(overload_duration2)
+        overload_duration3 = np.array(overload_duration3)
+        overload_duration4 = np.array(overload_duration4)
+        time_imbalance=np.array([0.03503478001752369,0.03465298554224872,0.03095974326429853,0.03679765620390361])
+        space_imbalance=np.array([0.14006204484426787,0.09014481896382653,0.10853242793751935,0.13257569241864994])
+        if soft_percentile:
+            standardp95 = self.softpercentile(standard_duration, 0.95)
+            standardp99 = self.softpercentile(standard_duration, 0.99)
+            p95=np.array([self.softpercentile(overload_duration1, 0.95) ,self.softpercentile(overload_duration2, 0.95) ,self.softpercentile(overload_duration3, 0.95) ,self.softpercentile(overload_duration4, 0.95)  ])
+            p99=np.array([self.softpercentile(overload_duration1, 0.99) ,self.softpercentile(overload_duration2, 0.99) ,self.softpercentile(overload_duration3, 0.99) ,self.softpercentile(overload_duration4, 0.99)  ])
+        else:
+            standardp95 = self.hardpercentile(standard_duration, 0.95)
+            standardp99 = self.hardpercentile(standard_duration, 0.99)
+            p95 = np.array([self.hardpercentile(overload_duration1, 0.95) ,self.hardpercentile(overload_duration2, 0.95) ,self.hardpercentile(overload_duration3, 0.95) ,self.hardpercentile(overload_duration4, 0.95)])
+            p99 = np.array([self.hardpercentile(overload_duration1, 0.99) ,self.hardpercentile(overload_duration2, 0.99) ,self.hardpercentile(overload_duration3, 0.99) ,self.hardpercentile(overload_duration4, 0.99)])  
+        mean_overload_duration=[np.mean(overload_duration1),np.mean(overload_duration2),np.mean(overload_duration3),np.mean(overload_duration4)]
+        fig, axes1 = plt.subplots(figsize=(8, 6))
+        fig.suptitle('Normalized all metrics To Tela', fontsize=16)
+        color=["#33c5b2","#5f78b6","#ffcd4e","#fc644c","#4fb283","#024e52"]
+        axes1.set_xlabel(r'$K$', fontsize=16)
+        axes1.set_xticks(X, labels=K)
+        axes1.plot(X, overload_percentage/standard_overload_percentage, color=color[0], label='OTF')
+        axes1.plot(X, time_imbalance/standard_time_imbalance, color=color[1], label='Temporal Imbalance')
+        axes1.plot(X, space_imbalance/standard_space_imbalance, color=color[2], label='Spatial Imbalance')
+        axes1.plot(X, mean_overload_duration/standard_mean_overload_duration, color=color[3], label='Mean Overload Duration')
+        df=pd.DataFrame()
+        df["X"]=X
+        df["OTF"]=overload_percentage/standard_overload_percentage
+        df["Temporal Imbalance"]=time_imbalance/standard_time_imbalance
+        df["Spatial Imbalance"]=space_imbalance/standard_space_imbalance
+        df["Mean Overload Duration"]=mean_overload_duration/standard_mean_overload_duration
+        df.to_csv("fig10.csv")
+        # axes1.plot(X, p95/standardp95, color=color[3], label='P95')
+        # axes1.plot(X, p99/standardp99, color=color[4], label='P99')
+        axes1.tick_params(axis='both', which='major', labelsize=14)
+        axes1.legend(loc='upper left', fontsize=14,bbox_to_anchor=(0, 1.1),ncol=3)
+        fig.savefig(os.path.join(save_dir, f'figure_10.svg'),
+                    bbox_inches='tight')
+        plt.close(fig)
+        logger.info(
+            f'figure_10.svg saved to {os.path.join(save_dir, "figure_10.svg")}')
+
+    def plot_figure_11(self,  save_dir: str):
+        soft_percentile=True
+        percentile1 = 95
+        percentile2 = 99
+        noise_ratio = [0, 0.1, 0.2, 0.3]
+        X=range(len(noise_ratio))
+        standard_overload_percentage = 0.15269510582010581
+        standard_time_imbalance=0.038996385101335566
+        standard_space_imbalance=0.20212043471978977
+        standard_duration = [1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3]
+        standard_mean_overload_duration=np.mean(standard_duration)
+        overload_percentage=np.array([64.33333333333333,61.5,99.16666666666667,89.0])/2016
+        overload_duration1 = [1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1]
+        overload_duration2 = [1,1,1,1,1,4,1,1,2,3,2,1,3,1,2,1,1,2,1,2,1,1,1,1,1,1,1,4,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,2,1,1,2,2,1,2,1,1,2,1,1,2,3,1,1,2,1,1,1,1,2,2,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,3,3,1,1,1,1,1,1,3,1,1,1,3,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,2,1,1,1,1,2,3,1,1,1,1,1,1,1,3,3,1,1,1,1,1,2,1,3,1,2,1,1,1,1,1,2,2,3,4,3,2,1,1,1,1,1,1,1,1,3,1,2,1,5,3,2,2,1,8,9,1,1,1,1,2,1,16,1,1,2,4,2,1,1,1,1,4,1,1,2,2,2,1,2,2,3,1,1,1,1,1,1,1,1,3,1,3,2,1,1,7,2,1,1,1,2,5,1,3,1,1,1]
+        overload_duration3 = [2,4,4,4,4,4,4,1,1,5,2,1,4,1,2,1,2,1,1,3,5,2,1,3,5,1,4,1,1,4,1,2,3,3,1,5,3,2,1,3,7,2,9,1,1,2,3,1,2,1,1,1,2,2,17,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,2,2,2,1,2,7,3,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,2,1,1,2,1,2,1,1,3,3,2,1,2,2,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,3,1,3,3,8,2,1,1,2,1,1,3,2,1,1,1,3,2,13,2,17,1,1,2,1,1,1,1,3,2,3,3,1,1,1,1,1,1,3,2,1,3,1,3,1,1,3,1,2,1,1,1,4,1,3,1,1,1,4,1,1,3,3,4,1,2,13,7,1,1,1,1,1,1,3,1,1,1,1,1,2,1,2,2,1,5,1,1,3,1,1,1,3,1,1,1,4,1,2,1,1,2,4,1,5,1,6,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1,1,4,2,1,1,1,1,1,1,1,1,1,1,4,1,1,6,1,1,2,1,1,1,1,1,1,1,1,3,1,1,1,1,2,1]
+        overload_duration4 = [1,1,4,2,1,1,1,1,2,2,1,1,1,1,1,1,3,2,2,1,4,5,1,5,3,2,3,31,3,1,1,3,1,1,2,1,1,1,1,1,2,1,2,17,3,7,5,3,4,2,1,2,1,3,1,4,1,2,1,3,3,1,1,4,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,5,11,13,5,2,1,1,7,5,2,4,4,7,1,3,3,3,4,4,1,1,2,2,2,1,4,1,2,1,1,4,4,2,1,2,2,2,2,1,7,1,1,1,1,1,1,1,1,2,1,1,1,2,2,1,1,3,2,3,2,4,2,1,1,1,1,1,1,1,1,1,1,1,1,7,2,2,3,1,4,2,3,5,3,1,2,1,1,1,2,2,3,9,1,1,1,3,1,2,1,1,1,5,1,1,2,1,1,1,1,1,9,1,2,2,3,2,6,6,1,1,1,2,1,1,1,1,3,1,1,1,2,2,1,4,1,1,1,4,1,1,1,1,1,1,1,1,2,4,5,1,2]
+        standard_duration = np.array(standard_duration)
+        overload_duration1 = np.array(overload_duration1)
+        overload_duration2 = np.array(overload_duration2)
+        overload_duration3 = np.array(overload_duration3)
+        overload_duration4 = np.array(overload_duration4)
+        time_imbalance=np.array([0.03095974326429853,0.038070760096871735,0.034569235635083656,0.03446083793766785])
+        space_imbalance=np.array([0.10853242793751935,0.11652372784861278,0.12499107662945605,0.10438802869834411])
+        if soft_percentile:
+            standardp95 = self.softpercentile(standard_duration, 0.95)
+            standardp99 = self.softpercentile(standard_duration, 0.99)
+            p95=np.array([self.softpercentile(overload_duration1, 0.95) ,self.softpercentile(overload_duration2, 0.95) ,self.softpercentile(overload_duration3, 0.95) ,self.softpercentile(overload_duration4, 0.95)  ])
+            p99=np.array([self.softpercentile(overload_duration1, 0.99) ,self.softpercentile(overload_duration2, 0.99) ,self.softpercentile(overload_duration3, 0.99) ,self.softpercentile(overload_duration4, 0.99)  ])
+            print("Tela p99:",standardp99) 
+            print("Tela p95:",standardp95)  
+            print("TITAL p99:",p99[0])
+            print("TITAL p95:",p95[0]) 
+        else:
+            standardp95 = self.hardpercentile(standard_duration, 0.95)
+            standardp99 = self.hardpercentile(standard_duration, 0.99)
+            p95 = np.array([self.hardpercentile(overload_duration1, 0.95) ,self.hardpercentile(overload_duration2, 0.95) ,self.hardpercentile(overload_duration3, 0.95) ,self.hardpercentile(overload_duration4, 0.95)])
+            p99 = np.array([self.hardpercentile(overload_duration1, 0.99) ,self.hardpercentile(overload_duration2, 0.99) ,self.hardpercentile(overload_duration3, 0.99) ,self.hardpercentile(overload_duration4, 0.99)])  
+            print("Tela p99:",standardp99) 
+            print("Tela p95:",standardp95)  
+            print("TITAL p99:",p99[0])
+            print("TITAL p95:",p95[0]) 
+        mean_overload_duration=[np.mean(overload_duration1),np.mean(overload_duration2),np.mean(overload_duration3),np.mean(overload_duration4)]
+        fig, axes1 = plt.subplots(figsize=(8, 6))
+        fig.suptitle('Normalized all metrics To Tela', fontsize=16)
+        color=["#33c5b2","#5f78b6","#ffcd4e","#fc644c","#4fb283","#024e52"]
+        axes1.set_xlabel(r'Noise Ratio', fontsize=16)
+        axes1.set_xticks(X, labels=noise_ratio)
+        axes1.plot(X, overload_percentage/standard_overload_percentage, color=color[0],label='OTF')
+        axes1.plot(X, time_imbalance/standard_time_imbalance, color=color[1], label='Temporal Imbalance')
+        axes1.plot(X, space_imbalance/standard_space_imbalance, color=color[2], label='Spatial Imbalance')
+        axes1.plot(X, mean_overload_duration/standard_mean_overload_duration, color=color[3], label='Mean Overload Duration')
+        df=pd.DataFrame()
+        df["X"]=X
+        df["OTF"]=overload_percentage/standard_overload_percentage
+        df["Temporal Imbalance"]=time_imbalance/standard_time_imbalance
+        df["Spatial Imbalance"]=space_imbalance/standard_space_imbalance
+        df["Mean Overload Duration"]=mean_overload_duration/standard_mean_overload_duration
+        df.to_csv("fig11.csv")
+        # axes1.plot(X, p95/standardp95, color=color[3], label='P95')
+        # axes1.plot(X, p99/standardp99, color=color[4], label='P99')
+
+        axes1.tick_params(axis='both', which='major', labelsize=14)
+        axes1.legend(loc='upper left', fontsize=14,bbox_to_anchor=(0, 1.13),ncol=2)
+        plt.savefig(os.path.join(save_dir, f'figure_11.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f'figure_11.svg saved to {os.path.join(save_dir, "figure_11.svg")}')
+        plt.close(fig)
+    def plot_figure_11_test(self,  save_dir: str,otf: list, time_imbalance: list, space_imbalance: list, mean_duration: list):
+        noise_ratio = [0,0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+        X=range(len(noise_ratio))
+        standard_overload_percentage = 0.15269510582010581
+        standard_time_imbalance=0.038996385101335566
+        standard_space_imbalance=0.20212043471978977
+        standard_duration = np.array([1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3])
+        standard_mean_duration=np.mean(standard_duration)
+
+
+        fig, axes1 = plt.subplots(figsize=(8, 6))
+        fig.suptitle('Normalized all metrics To Tela', fontsize=16)
+        color=["#33c5b2","#5f78b6","#ffcd4e","#fc644c","#4fb283","#024e52"]
+        axes1.set_xlabel(r'Noise Ratio', fontsize=16)
+        axes1.set_xticks(X, labels=noise_ratio)
+        axes1.plot(X, otf/standard_overload_percentage, color=color[0],label='Overload Percentage')
+        axes1.plot(X, time_imbalance/standard_time_imbalance, color=color[1], label='Time Imbalance')
+        axes1.plot(X, space_imbalance/standard_space_imbalance, color=color[2], label='Space Imbalance')
+        axes1.plot(X, mean_duration/standard_mean_duration, color=color[3], label='Mean Overload Duration')
+        df=pd.DataFrame()
+        df["X"]=X
+        df["OTF"]=otf/standard_overload_percentage
+        df["Temporal Imbalance"]=time_imbalance/standard_time_imbalance
+        df["Spatial Imbalance"]=space_imbalance/standard_space_imbalance
+        df["Mean Overload Duration"]=mean_duration/standard_mean_duration
+        df.to_csv("fig11.csv")
+        axes1.tick_params(axis='both', which='major', labelsize=14)
+        axes1.legend(loc='upper left', fontsize=14)
+        plt.savefig(os.path.join(save_dir, f'figure_11_random_state_mean.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f'figure_11_random_state_mean.svg saved to {os.path.join(save_dir, f"figure_11_random_state_mean.svg")}')
+        plt.close(fig)
+    # def plot_figure_11_test(self,  save_dir: str,overload_percentage_list: list, overload_duration_list: list, time_imbalance_list: list, space_imbalance_list: list,random_state: int):
+    #     soft_percentile=True
+    #     percentile1 = 95
+    #     percentile2 = 99
+    #     noise_ratio = [0,0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+    #     X=range(len(noise_ratio))
+    #     standard_overload_percentage = 0.15269510582010581
+    #     standard_time_imbalance=0.038996385101335566
+    #     standard_space_imbalance=0.20212043471978977
+    #     standard_duration = [1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3]
+    #     overload_percentage=np.array(overload_percentage_list)
+    #     standard_duration = np.array(standard_duration)
+    #     time_imbalance=np.array(time_imbalance_list)
+    #     space_imbalance=np.array(space_imbalance_list)
+    #     if soft_percentile:
+    #         standardp95 = self.softpercentile(standard_duration, 0.95)
+    #         standardp99 = self.softpercentile(standard_duration, 0.99)
+    #         p95=np.array([self.softpercentile(overload_duration, 0.95) for overload_duration in overload_duration_list])
+    #         p99=np.array([self.softpercentile(overload_duration, 0.99) for overload_duration in overload_duration_list])
+    #     else:
+    #         standardp95 = self.hardpercentile(standard_duration, 0.95)
+    #         standardp99 = self.hardpercentile(standard_duration, 0.99)
+    #         p95 = np.array([self.hardpercentile(overload_duration, 0.95) for overload_duration in overload_duration_list])
+    #         p99 = np.array([self.hardpercentile(overload_duration, 0.99) for overload_duration in overload_duration_list])  
+        
+    #     fig, axes1 = plt.subplots(figsize=(8, 6))
+    #     fig.suptitle('Normalized all metrics To Tela', fontsize=16)
+    #     color=["#33c5b2","#5f78b6","#ffcd4e","#fc644c","#4fb283","#024e52"]
+    #     axes1.set_xlabel(r'Noise Ratio', fontsize=16)
+    #     axes1.set_xticks(X, labels=noise_ratio)
+    #     axes1.plot(X, overload_percentage/standard_overload_percentage, color=color[0],label='Overload Percentage')
+    #     axes1.plot(X, time_imbalance/standard_time_imbalance, color=color[1], label='Time Imbalance')
+    #     axes1.plot(X, space_imbalance/standard_space_imbalance, color=color[2], label='Space Imbalance')
+    #     axes1.plot(X, p95/standardp95, color=color[3], label='P95')
+    #     axes1.plot(X, p99/standardp99, color=color[4], label='P99')
+
+    #     axes1.tick_params(axis='both', which='major', labelsize=14)
+    #     axes1.legend(loc='upper left', fontsize=14)
+    #     plt.savefig(os.path.join(save_dir, f'figure_11_random_state_{random_state}.svg'),
+    #                 bbox_inches='tight')
+    #     logger.info(
+    #         f'figure_11_random_state_{random_state}.svg saved to {os.path.join(save_dir, f"figure_11_random_state_{random_state}.svg")}')
+        # plt.close(fig)
+    def plot_figure_12(self,  save_dir: str):
+        soft_percentile=True
+        percentile1 = 95
+        percentile2 = 99
+        M=[2,3,4,5,6]
+        X=range(len(M))
+        standard_overload_percentage = 0.15269510582010581
+        standard_time_imbalance=0.038996385101335566
+        standard_space_imbalance=0.20212043471978977
+        standard_duration = [1, 1, 1, 1, 3, 1, 1, 10, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 3, 2, 6, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 4, 13, 1, 1, 1, 3, 1, 2, 1, 1, 1, 2, 2, 1, 193, 1, 1, 1, 4, 3, 5, 1, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 3, 1, 1, 6, 2, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 2, 4, 4, 4, 3, 4, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 2, 1, 1, 1, 2, 2, 8, 4, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 15, 2, 19, 2, 2, 1, 5, 1, 1, 12, 31, 190, 7, 1, 1, 5, 2, 1, 1, 1, 2, 1, 4, 1, 68, 2, 2, 1, 1, 1, 1, 6, 6, 11, 5, 1, 6, 1, 3, 2, 1, 7, 2, 2, 1, 4, 1, 1, 4, 4, 19, 9, 3, 21, 35, 21, 13, 29, 3, 7, 1, 15, 9, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 3, 4, 3, 3, 8, 1, 2, 1, 9, 3, 3, 5, 3, 1, 3, 4, 5, 6, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 8, 7, 2, 3, 2, 12, 1, 4, 16, 1, 1, 27, 1, 5, 2, 1, 23, 19, 8, 26, 8, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 28, 82, 20, 74, 1, 1, 4, 1, 1, 3, 3, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 2, 41, 9, 1, 23, 59, 1, 7, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 4, 1, 3, 1, 3, 4, 1, 4, 3]
+        standard_mean_overload_duration=np.mean(standard_duration)
+        overload_percentage=np.array([219.66666666666666,57.833333333333336,64.33333333333333,66.0,66.66666666666667])/2016
+        overload_duration1 = [1,1,1,2,1,1,1,1,2,1,2,1,1,1,2,2,1,1,1,2,1,2,1,2,3,6,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,2,1,5,1,1,1,1,1,1,1,1,2,1,2,6,3,3,4,1,7,1,2,1,3,1,2,1,1,1,1,5,1,1,1,1,1,1,1,2,1,1,1,2,2,4,4,4,2,3,1,1,1,1,6,1,1,1,1,1,2,7,2,6,1,2,2,2,1,1,1,1,1,5,1,2,1,3,1,3,2,4,1,4,1,2,3,1,1,1,1,1,1,1,4,10,3,2,1,3,1,1,2,1,1,1,5,1,2,1,1,4,1,1,1,1,1,6,1,6,1,1,1,1,1,1,1,1,6,2,1,2,1,1,1,1,1,2,1,3,1,1,1,7,1,3,10,3,13,6,9,1,8,9,12,49,13,9,17,7,1,3,2,3,2,1,3,1,9,2,1,2,3,212,10,7,7,2,1,4,4,3,2,3,1,1,1,3,31,1,2,1,2,1,1,14,3,1,1,3,4,1,5,2,1,11,9,5,8,5,1,1,5,1,2,4,1,2,1,1,2,1,1,9,3,1,1,1,1,1,1,2,1,1,1,1,1,22,1,2,1,2,10,3,17,1,6,1,1,5,1,1,2,1,2,15,5,5,1,1,1,8,2,6,2,5,3,1,2,1,4,1,5,12,3,2,2,3,1,1,1,3,11,16,1,1,1,1,2,1,2,2,1,2,1,1,2,2,1,1,1,2,1,2,1,3,1,1,1,4,1,1,1,3,1,3,3,3,3,2,1,3,5,1,9,2,1,1,1,1,1,2,4,7,1,1,1,1,1,3,1,4,3,2,4,1,1,1,1,1,1,2,4]
+        overload_duration2 = [1,1,1,2,2,1,1,5,1,2,2,1,4,2,1,1,4,4,1,7,3,2,1,1,1,5,1,3,2,1,1,1,2,1,1,3,1,2,2,2,1,1,1,2,4,5,2,1,2,1,3,1,1,11,7,3,5,2,2,4,1,1,3,1,1,1,2,1,1,1,1,3,2,1,1,1,1,1,2,1,1,4,1,1,1,1,1,1,1,5,1,1,4,2,1,1,3,2,1,2,1,1,1,1,1,3,1,1,1,1,1,1,5,7,5,2,2,2,1,1,1,2,5,3,1,1,1,1,4,4,3,5,1,2,1,4,4,1,1,1,1,1,2,2,6,1,1,1,1,1,1,1,1,1,4,4,1,1,1,1,4,2,3,4,1,4,1,2,1,4,1,1]
+        overload_duration3 = [1,5,1,4,1,1,1,4,4,4,1,1,4,1,1,4,1,2,1,3,3,1,1,1,1,1,2,1,5,1,3,2,1,31,54,1,1,12,1,1,3,3,17,1,3,3,2,3,3,3,1,3,2,1,1,1,1,1,2,1,1,1,1,1,20,1,1,2,1,2,1,3,2,1,1,2,2,1,3,3,2,1,2,1,2,1,1,2,2,2,1,2,1,1,1,3,5,3,1,1,1,1,1,1,3,1,1,1,1,1,3,2,1,6,1,1,1,3,1,2,1,2,1,1,4,1,1,1,1,2,1,3,4,1,5,1,1,2,1,1,1,2,4,1,1]
+        overload_duration4 = [1,1,2,1,1,2,2,1,1,2,3,1,1,1,1,1,1,1,2,1,1,4,1,1,1,1,3,1,1,1,1,1,2,1,5,2,1,2,1,2,5,1,2,4,1,3,1,1,5,1,5,4,1,3,6,1,1,1,1,1,6,6,1,1,1,2,2,1,1,1,1,3,4,2,1,1,148,43,1,1,1,1,1,1,2,1,1,1,1,1,2,1,5,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,4,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        overload_duration5 = [3,1,2,2,1,1,2,3,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,4,1,2,1,4,1,1,7,5,2,1,1,1,1,5,1,1,3,1,1,1,1,1,1,2,3,6,1,6,2,1,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,2,1,1,1,1,1,1,1,3,1,1,1,5,1,3,2,1,1,1,2,1,2,1,1,1,1,1,4,1,1,1,2,3,2,16,1,1,1,5,1,2,8,3,8,1,2,1,1,1,2,1,2,1,5,1,1,5,1,1,1,1,1,1,1,2,1,5,1,1,1,1,5,1,2,1,4,2,4,1,5,1,4,5,1,4,1,4,1,1,7,1,1,1,1,1,1,3,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,3,1,1,4,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,2,2,2,1,2,1,2,1,1,1,1,1]
+        standard_duration = np.array(standard_duration)
+        overload_duration1 = np.array(overload_duration1)
+        overload_duration2 = np.array(overload_duration2)
+        overload_duration3 = np.array(overload_duration3)
+        overload_duration4 = np.array(overload_duration4)
+        overload_duration5 = np.array(overload_duration5)
+        time_imbalance=np.array([0.03899697605121318,0.035993468180723916,0.03095974326429853,0.03532845049399811,0.036746506033317396])
+        space_imbalance=np.array([0.14299820920749962,0.09571901936982648,0.10853242793751935,0.1131545366227148,0.14482087102674704])
+        if soft_percentile:
+            standardp95 = self.softpercentile(standard_duration, 0.95)
+            standardp99 = self.softpercentile(standard_duration, 0.99)
+            p95=np.array([self.softpercentile(overload_duration1, 0.95) ,self.softpercentile(overload_duration2, 0.95) ,self.softpercentile(overload_duration3, 0.95) ,self.softpercentile(overload_duration4, 0.95),self.softpercentile(overload_duration5, 0.95)  ])
+            p99=np.array([self.softpercentile(overload_duration1, 0.99) ,self.softpercentile(overload_duration2, 0.99) ,self.softpercentile(overload_duration3, 0.99) ,self.softpercentile(overload_duration4, 0.99),self.softpercentile(overload_duration5, 0.99)  ])
+        else:
+            standardp95 = self.hardpercentile(standard_duration, 0.95)
+            standardp99 = self.hardpercentile(standard_duration, 0.99)
+            p95 = np.array([self.hardpercentile(overload_duration1, 0.95) ,self.hardpercentile(overload_duration2, 0.95) ,self.hardpercentile(overload_duration3, 0.95) ,self.hardpercentile(overload_duration4, 0.95),self.hardpercentile(overload_duration5, 0.95)])
+            p99 = np.array([self.hardpercentile(overload_duration1, 0.99) ,self.hardpercentile(overload_duration2, 0.99) ,self.hardpercentile(overload_duration3, 0.99) ,self.hardpercentile(overload_duration4, 0.99),self.hardpercentile(overload_duration5, 0.99)])  
+        mean_overload_duration=[np.mean(overload_duration1),np.mean(overload_duration2),np.mean(overload_duration3),np.mean(overload_duration4),np.mean(overload_duration5)]
+        fig, axes1 = plt.subplots(figsize=(8, 6))
+        fig.suptitle('Normalized all metrics To Tela', fontsize=16)
+        color=["#33c5b2","#5f78b6","#ffcd4e","#fc644c","#4fb283","#024e52"]
+        axes1.set_xlabel(r'$M$', fontsize=16)
+        axes1.set_xticks(X, labels=M)
+        axes1.plot(X, overload_percentage/standard_overload_percentage, color=color[0],label='OTF')
+        axes1.plot(X, time_imbalance/standard_time_imbalance, color=color[1], label='Temporal Imbalance')
+        axes1.plot(X, space_imbalance/standard_space_imbalance, color=color[2], label='Spatial Imbalance')
+        # axes1.plot(X, p95/standardp95, color=color[3], label='P95')
+        # axes1.plot(X, p99/standardp99, color=color[4], label='P99')
+        axes1.plot(X, mean_overload_duration/standard_mean_overload_duration, color=color[3], label='Mean Overload Duration')
+        df=pd.DataFrame()
+        df["X"]=M
+        df["OTF"]=overload_percentage/standard_overload_percentage
+        df["Temporal Imbalance"]=time_imbalance/standard_time_imbalance
+        df["Spatial Imbalance"]=space_imbalance/standard_space_imbalance
+        df["Mean Overload Duration"]=mean_overload_duration/standard_mean_overload_duration
+        df.to_csv("fig12.csv")
+        axes1.tick_params(axis='both', which='major', labelsize=14)
+        axes1.tick_params(axis='both', which='major', labelsize=14)
+        axes1.legend(loc='upper left', fontsize=14,bbox_to_anchor=(0, 1.13),ncol=2)
+        plt.savefig(os.path.join(save_dir, f'figure_12.svg'),
+                    bbox_inches='tight')
+        logger.info(
+            f"figure_12.svg saved to {os.path.join(save_dir, f'figure_12.svg')}")
+        plt.close()
 
 
 class DiskPlotter(BasePlotter):

@@ -11,6 +11,45 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def sort_test_items(df: pd.DataFrame) -> pd.DataFrame:
+    sorted_df = df.sort_values(by="avg_bandwidth", ascending=False)
+    # 0.08
+    top_items = sorted_df[:int(len(sorted_df)*0.08)].copy()
+    top1_items = top_items[:int(len(top_items)*0.5)].copy()
+    top2_items = top_items[int(len(top_items)*0.5):].copy()
+    normal_items = df.loc[~df.index.isin(top_items.index)].copy()
+    result_list = normal_items.to_dict('records')
+    top_list = top_items.to_dict('records')
+    top1_list = top1_items.to_dict('records')
+    top2_list = top2_items.to_dict('records')
+    i = 0
+    # while i <= len(result_list):
+    #     if top1_list:
+    #         result_list.insert(i, top1_list.pop(0))
+    #     i += 2
+    #     if top2_list:
+    #         result_list.insert(i, top2_list.pop(0))
+    #     i += 4
+    # if top1_list:
+    #     result_list.extend(top1_list)
+    # if top2_list:
+    #     result_list.extend(top2_list)
+    while i <= len(result_list):
+        if top_list:
+            result_list.insert(i, top_list.pop(0))
+        i += 2
+        if top_list:
+            result_list.insert(i, top_list.pop(0))
+        i += 1
+        if top_list:
+            result_list.insert(i, top_list.pop(0))
+        i += 3
+    if top_list:
+        result_list.extend(top_list)
+    final_df = pd.DataFrame(result_list)
+    return final_df
+
+
 def select_disks_for_warehouse_trace():
     loader = DiskDataLoader()
     items = loader.load_items(

@@ -6,6 +6,7 @@ import numpy as np
 from typing import Any
 import os
 import joblib
+import time
 logger = logging.getLogger(__name__)
 
 
@@ -15,12 +16,13 @@ class Oracle(BaseAlgorithm):
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
+        self.start_time = time.perf_counter()
         return self.test_items.copy()
 
     def select_warehouse(self, item: pd.Series) -> int:
         selected_warehouse = -1
-        if self.current_time == 0:
-            return 0
+        # if self.current_time < 6:
+        #     return self.current_time
         disk_trace_bandwidth = self.disks_trace[item['cluster_index']
                                                 ][item['disk_ID']]
         first_day_line = self._iterate_first_day(
@@ -30,21 +32,32 @@ class Oracle(BaseAlgorithm):
         monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
         capacity_mask = (self.warehouses_resource_allocated[:, 0]+item["disk_capacity"] <=
                          self.warehouses_max[:, 0])
+        original_bandwidth = self.warehouses_trace[:DataConfig.DISK_NUMBER,
+                                                   :, 1]
+        original_bandwidth_util = original_bandwidth / \
+            self.warehouses_max[:, 1]
         after_placed_bandwidth = self.warehouses_trace[:DataConfig.DISK_NUMBER,
                                                        :, 1] + future_bandwidth[:, 1][:, np.newaxis]
         after_placed_bandwidth_util = after_placed_bandwidth / \
             self.warehouses_max[:, 1]
         overload_mask = self.check_warehouse_overload_after_placement(item)
         combined_mask = capacity_mask & overload_mask
-        eligible_warehouses_indices = np.where(combined_mask)[0]
-        if len(eligible_warehouses_indices) == 0:
-            return -1
-
+        if not combined_mask.any():
+            combined_mask = np.ones_like(capacity_mask, dtype=bool)
+            # return -1
+        warehouse_scores = np.sum(original_bandwidth_util, axis=0)
+        warehouse_scores[~combined_mask] = np.inf
+        candidate_indices = np.argsort(warehouse_scores)[:3]
+        eligible_warehouses_indices = candidate_indices[warehouse_scores[candidate_indices] != np.inf]
+        # eligible_warehouses_indices = np.where(combined_mask)[0]
         # absolute_deviation = np.sum(np.abs(after_placed_bandwidth_util[:, eligible_warehouses_indices]-np.mean(
         #     after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)), axis=0)/np.mean(after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)
-        absolute_deviation = np.std(after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)/np.mean(
+        original_bandwidth_util_deviation = np.var(
+            original_bandwidth_util[:, eligible_warehouses_indices], axis=0)
+        absolute_deviation = np.var(
             after_placed_bandwidth_util[:, eligible_warehouses_indices], axis=0)
-        min_absolute_deviation_index = np.argmin(absolute_deviation)
+        delta_deviation = absolute_deviation-original_bandwidth_util_deviation
+        min_absolute_deviation_index = np.argmin(delta_deviation)
         selected_warehouse = eligible_warehouses_indices[min_absolute_deviation_index]
         return selected_warehouse
 

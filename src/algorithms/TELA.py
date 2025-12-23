@@ -18,6 +18,7 @@ from .SCDA import SCDA
 from config.settings import DataConfig, WarehouseConfig, ModelConfig, DirConfig
 import joblib
 from tqdm import tqdm
+import time
 logger = logging.getLogger(__name__)
 
 
@@ -28,13 +29,14 @@ class TELA(BaseAlgorithm):
         super().__init__("TELA")
         self.warehouse_burst_type_counts = np.zeros(
             (WarehouseConfig.WAREHOUSE_NUMBER, ModelConfig.TELA_CLUSTER_K), dtype=int)
+        self.overload_duration = None
+        self.violation_count = []
 
     def load_and_preprocess_items(self):
         """加载和预处理数据"""
         # 加载预测数据
-        items_encoded = self.encode_item(self.test_items.copy())
         # 预测磁盘类型和负载
-        return self.predict_disk_types_and_loads(items_encoded)
+        return self.predict_disk_types_and_loads(self.test_items.copy())
 
     def train_models(self):
         """训练TELA所需的所有模型"""
@@ -227,7 +229,8 @@ class TELA(BaseAlgorithm):
         """预测磁盘类型和负载"""
         # 加载训练好的模型
         type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler, self.peak_bandwidth_model, self.avg_bandwidth_model = self.load_item_predict_models()
-
+        self.start_time = time.perf_counter()
+        items = self.encode_item(items.copy())
         # 决策树分类磁盘类型，区分稳定型和突发型
         logger.info("开始决策树分类磁盘类型，区分稳定型和突发型")
         type_classify_features = items[[
@@ -238,39 +241,39 @@ class TELA(BaseAlgorithm):
             f"稳定突发区分决策树预测准确率: {np.mean(type_classify_labels == items['burst_label']):.4f}")
         # 突发型和稳定型磁盘分别分类到对应聚类中的某一簇
         logger.info("开始突发型和稳定型磁盘分别分类到对应聚类中的某一簇")
-        burst_items = items[items["pre_burst_label"]
-                            == 1].copy().reset_index(drop=True)
-        stable_items = items[items["pre_burst_label"]
-                             == 0].copy().reset_index(drop=True)
-        burst_items_belong_to_cluster = classify_burst.predict(burst_items[[
+        burst_mask = (items["pre_burst_label"]
+                      == 1)
+        stable_mask = (items["pre_burst_label"]
+                       == 0)
+        burst_items_belong_to_cluster = classify_burst.predict(items.loc[burst_mask][[
             "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]])
-        stable_items_belong_to_cluster = classify_stable.predict(stable_items[[
+        stable_items_belong_to_cluster = classify_stable.predict(items.loc[stable_mask][[
             "disk_capacity", "disk_type", "vm_cpu", "vm_memory"]])
         # 将磁盘特征与所属簇序号拼接
-        burst_items["belong_to_cluster"] = burst_items_belong_to_cluster
-        stable_items["belong_to_cluster"] = stable_items_belong_to_cluster
+        items.loc[burst_mask, "belong_to_cluster"] = burst_items_belong_to_cluster
+        items.loc[stable_mask,
+                  "belong_to_cluster"] = stable_items_belong_to_cluster
         # 反缩放聚类中心到原有尺度
         burst_items_belong_to_cluster_centers = burst_scaler.inverse_transform(
             cluster_burst.cluster_centers_[burst_items_belong_to_cluster])
         stable_items_belong_to_cluster_centers = stable_scaler.inverse_transform(
             cluster_stable.cluster_centers_[stable_items_belong_to_cluster])
         # 将聚类中心与磁盘特征拼接
-        # 对于稳定型磁盘来说，pre_rbw和pre_wbw是平均负载，对于突发型磁盘来说，pre_rbw和pre_wbw是预测的峰值负载
-        burst_items["pre_bandwidth"] = burst_items_belong_to_cluster_centers
-        stable_items["pre_bandwidth"] = stable_items_belong_to_cluster_centers
+        items.loc[burst_mask,
+                  "pre_bandwidth"] = burst_items_belong_to_cluster_centers
+        items.loc[stable_mask,
+                  "pre_bandwidth"] = stable_items_belong_to_cluster_centers
 
-        items_with_cluster_centers = pd.concat(
-            [burst_items, stable_items], axis=0, ignore_index=True)
-        items_with_cluster_centers.to_csv(os.path.join(
+        items.to_csv(os.path.join(
             DirConfig.TELA_DIR, "predict_items.csv"))
         logger.info("预测磁盘类型和负载完成")
-        return items_with_cluster_centers
+        return items
 
     def select_warehouse(self, item: pd.Series) -> int:
         """TELA的仓库选择策略：基于时间序列预测的负载均衡"""
         capacity_mask = (self.warehouses_resource_allocated[:, 0]+item["disk_capacity"] <=
                          self.warehouses_max[:, 0])
-        overload_mask = self.check_warehouse_overload_after_placement(item)
+        # overload_mask = self.check_warehouse_overload_after_placement(item)
         if item["pre_burst_label"] == 0:
             disk_capacity = item["disk_capacity"]
             disk_pre_bandwidth = item["pre_bandwidth"]
@@ -278,7 +281,7 @@ class TELA(BaseAlgorithm):
                 min_manhatten_distance = float('inf')
                 selected_warehouse = -1
                 monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
-                combined_mask = capacity_mask & monitor_mask
+                combined_mask = capacity_mask &monitor_mask
                 if not combined_mask.any():
                     combined_mask = np.ones_like(capacity_mask, dtype=bool)
                 eligible_warehouses_indices = np.where(combined_mask)[0]
@@ -303,51 +306,60 @@ class TELA(BaseAlgorithm):
                     if current_manhatten_distance < min_manhatten_distance:
                         min_manhatten_distance = current_manhatten_distance
                         selected_warehouse = warehouse
-                if not overload_mask[selected_warehouse]:
-                    if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
-                        break
-                    else:
-                        self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
-                        continue
-                else:
-                    break
+                # if not overload_mask[selected_warehouse]:
+                #     if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
+                #         break
+                #     else:
+                #         self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+                #         continue
+                # else:
+                #     break
+                return selected_warehouse
         else:
             while True:
                 min_peak_resource_usage = np.inf
                 selected_warehouse = -1
                 monitor_mask = (self.warehouses_cannot_use_by_monitor == 0)
-                combined_mask = capacity_mask & monitor_mask
+                train_X = self.warehouse_burst_type_counts+np.array(
+                    [1 if i == item["belong_to_cluster"] else 0 for i in range(ModelConfig.TELA_CLUSTER_K)])[np.newaxis, :]
+                predict_warehouse_peak_bandwidth = self.peak_bandwidth_model.predict(
+                    train_X)
+                protect_mask = predict_warehouse_peak_bandwidth + \
+                    self.warehouses_resource_allocated[:,
+                                                       1] <= self.warehouses_max[:, 1]
+                combined_mask = capacity_mask &monitor_mask
                 if not combined_mask.any():
                     combined_mask = np.ones_like(capacity_mask, dtype=bool)
                 eligible_warehouses_indices = np.where(combined_mask)[0]
                 # if len(eligible_warehouses_indices) == 0:
                 #     return -1
+
                 for warehouse in eligible_warehouses_indices:
                     train_X = self.warehouse_burst_type_counts[warehouse]+np.array(
                         [1 if i == item["belong_to_cluster"] else 0 for i in range(ModelConfig.TELA_CLUSTER_K)])
-                    train_X = np.array([train_X])
-                    predict_warehouse_peak_bandwidth = self.peak_bandwidth_model.predict(
-                        train_X)
-                    peak_resource_usage = predict_warehouse_peak_bandwidth / \
-                        WarehouseConfig.WAREHOUSE_MAX[warehouse, 1]
+
+                    peak_resource_usage = predict_warehouse_peak_bandwidth[warehouse] / \
+                        self.warehouses_max[warehouse, 1]
                     if peak_resource_usage < min_peak_resource_usage:
                         min_peak_resource_usage = peak_resource_usage
                         selected_warehouse = warehouse
-                if not overload_mask[selected_warehouse]:
-                    if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
-                        break
-                    else:
-                        self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
-                        continue
-                else:
-                    break
+                # if not overload_mask[selected_warehouse]:
+                #     if self.warehouses_cannot_use_by_monitor[selected_warehouse] == 1:
+                #         break
+                #     else:
+                #         self.warehouses_cannot_use_by_monitor[selected_warehouse] = 1
+                #         continue
+                # else:
+                #     break
+                return selected_warehouse
         return selected_warehouse
 
     def additional_state_update(self, selected_warehouse: int, item: pd.Series):
         if item["pre_burst_label"] == 0:
             self.warehouses_resource_allocated[selected_warehouse][1] += item["pre_bandwidth"]
         else:
-            self.warehouse_burst_type_counts[selected_warehouse][item["belong_to_cluster"]] += 1
+            belong_to_cluster = int(item["belong_to_cluster"])
+            self.warehouse_burst_type_counts[selected_warehouse][belong_to_cluster] += 1
         return
 
     def save_models(self, type_classifier, cluster_stable, cluster_burst, classify_stable, classify_burst, stable_scaler, burst_scaler, peak_bandwidth_model, avg_bandwidth_model):
