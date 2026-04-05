@@ -212,14 +212,6 @@ class UnifiedTransformerModel(business_type_classify):
             label2id=self.label2id
         )
 
-    def optuna_hp_space(self, trial):
-        return {
-            'learning_rate': trial.suggest_float("learning_rate", 1e-5, 1e-4, log=True),
-            'per_device_train_batch_size': trial.suggest_categorical("per_device_train_batch_size", [16, 32, 64, 128, 256]),
-            'weight_decay': trial.suggest_float("weight_decay", 0.0, 0.5),
-            'warmup_ratio': trial.suggest_categorical("warmup_ratio", [0.05, 0.1, 0.15]),
-        }
-
     def preprocess_data(self, items):
         items['labels'] = items['business_type'].apply(
             lambda x: self.business_type_list.index(
@@ -246,32 +238,6 @@ class UnifiedTransformerModel(business_type_classify):
             'f1_macro': f1_macro,
             'f1_weighted': f1_weighted
         }
-
-    def optuna_logging_callback(self, study: optuna.Study, trial: optuna.Trial):
-        """
-        Optuna 回调函数：在每次试验结束后被调用，用于记录参数和结果。
-        """
-        params = trial.params
-        value = trial.value
-        state = trial.state.name
-
-        log_line = (
-            f"[Trial {trial.number}] State: {state}, "
-            f"F1-Macro: {value:.4f}, "
-            f"Params: {params}\n"
-        )
-
-        with open(os.path.join(DirConfig.TEMP_DIR, "optuna_logging.txt"), "a") as f:
-            f.write(log_line)
-        logger.info("logging write success")
-        if value is not None and value == study.best_value:
-            best_params_path = os.path.join(
-                DirConfig.TEMP_DIR, "best_hpt_params.txt")
-            with open(best_params_path, "w") as f:
-                f.write(f"Best F1-Macro: {study.best_value:.4f}\n")
-                f.write(f"Best Trial: {study.best_trial.number}\n")
-                f.write(f"Parameters: {study.best_params}\n")
-        logger.info("best params write success")
 
     def search_best_hyperparameters(self, train_dataset, eval_dataset):
         training_args = TrainingArguments(

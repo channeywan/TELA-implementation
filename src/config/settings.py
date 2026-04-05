@@ -10,9 +10,9 @@ class DirConfig:
 
     # 数据目录
     TRACE_ROOT = "/data/Tencent_CVD/workload/0521"
-    CLUSTER_INFO_ROOT = "/home/wcl/cluster_info"
-    CLUSTER_INFO_BUSINESS_TYPE_ROOT = "/home/wcl/history_file/cluster_info_business_type"
-    CLUSTER_TRACE_DB_ROOT = "/home/wcl/cluster_trace_db"
+    CLUSTER_INFO_ROOT = "/data/tidal_info/cluster_info"
+    CLUSTER_INFO_BUSINESS_TYPE_ROOT = "/data/tidal_info/history_file/cluster_info_business_type"
+    CLUSTER_TRACE_DB_ROOT = "/data/tidal_info/cluster_trace_db"
     # 输出目录
     OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
     VISUALIZATION_TRACE_DIR = os.path.join(OUTPUT_DIR, "visualization_trace")

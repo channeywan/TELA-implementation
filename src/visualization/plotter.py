@@ -349,7 +349,28 @@ class TelaPlotter(BasePlotter):
         logger.info(
             f"business_type_vector saved to {os.path.join(save_dir, 'business_type_vector.png')}")
         plt.close()
-
+    def plot_certain_business_type_vector(self, tidal,items, save_dir: str):
+        business_type = items['business_type'].unique()[0]
+        trace_vectors = items.apply(lambda x: tidal.convert_trace_to_vector(
+            tidal.disks_trace[x['cluster_index']][x['disk_ID']]), axis=1)
+        mean=trace_vectors.mean(axis=0)
+        std=trace_vectors.std(axis=0)
+        x=np.arange(len(mean))
+        plt.figure(figsize=(10, 6))
+        plt.plot(x, mean, label='Mean', color='blue')
+        plt.fill_between(x, mean - std, mean + std, 
+                     alpha=0.25, color='steelblue', label='±1σ')
+        plt.fill_between(x, mean - 2*std, mean + 2*std, 
+                     alpha=0.10, color='steelblue', label='±2σ')
+        plt.xlabel('Hour')
+        plt.ylabel('Bandwidth')
+        plt.title(f'{business_type} Vector')
+        plt.legend()
+        plt.savefig(os.path.join(save_dir, f'{business_type}_vector.png'))
+        logger.info(
+            f"{business_type}_vector.png saved to {os.path.join(save_dir, f'{business_type}_vector.png')}")
+        plt.close()
+        return trace_vectors.mean(axis=0)
 
 class MotivationPlotter(BasePlotter):
     def __init__(self):

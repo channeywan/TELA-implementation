@@ -47,7 +47,7 @@ class TIDAL(BaseAlgorithm):
         self.time_imbalance=None
         self.space_imbalance=None
         self.overload_percentage=None
-        self.random_state=2
+        self.random_state=49
 
     def load_and_preprocess_items(self):
         predicted_items = self.predict(self.test_items.copy())
@@ -206,30 +206,26 @@ class TIDAL(BaseAlgorithm):
         model.eval()
         results = []
         descriptions = items['description'].tolist()
-        for i in range(0, len(items), batch_size):
-            batch_text = descriptions[i:i+batch_size]
-            inputs = tokenizer(batch_text, return_tensors="pt",
-                               padding="max_length", truncation=True, max_length=128).to(Device)
-            inputs = {k: v.to(Device) for k, v in inputs.items()}
-            with torch.no_grad():
+        with torch.no_grad():
+            for i in range(0, len(items), batch_size):
+                batch_text = descriptions[i:i+batch_size]
+                inputs = tokenizer(batch_text, return_tensors="pt",
+                                padding="max_length", truncation=True, max_length=128).to(Device)
                 probs = F.softmax(model(**inputs).logits, dim=-1)
                 max_probs, pred_ids = torch.max(probs, dim=-1)
-            batch_confs = max_probs.cpu().numpy()
-            batch_ids = pred_ids.cpu().numpy()
-            for conf, p_id in zip(batch_confs, batch_ids):
-                if conf < self.unknown_threshold:
-                    results.append("generic-unknown")
-                else:
-                    results.append(model.config.id2label[p_id])
-        # 手动加入noise
+                batch_confs = max_probs.detach().cpu().numpy()
+                batch_ids = pred_ids.detach().cpu().numpy()
+                unknown_mask = batch_confs < self.unknown_threshold
+                batch_labels = np.array([model.config.id2label[pid] for pid in batch_ids],dtype=object)
+                batch_labels[unknown_mask] = "generic-unknown"
+                results.extend(batch_labels)
+        # results = self.add_inference_noise(results, model)
+        return results
+    def add_inference_noise(self, results: List[str], model: AutoModelForSequenceClassification):
         if self.noise_ratio > 0:
             results = pd.Series(results)
             replacement_pool = pd.Series(
                 list(model.config.id2label.values())+['generic-unknown'])
-            # noise_indices=np.random.choice(results[results=='infra-node'].index, size=noise_num*0.5, replace=False, random_state=42)
-            # results[noise_indices]='generic-unknown'
-            # noise_indices=np.random.choice(results[results=='generic-unknown'].index, size=noise_num*0., replace=False, random_state=42)
-            # results[noise_indices]='infra-node'
             noise_indices = results.sample(
                 frac=self.noise_ratio, replace=False, random_state=self.random_state).index
             new_values = replacement_pool.sample(

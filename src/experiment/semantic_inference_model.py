@@ -122,64 +122,30 @@ def plot_error_heatmaps(report_df, model_name, min_error_count=0):
     plt.tight_layout()
     plt.savefig(os.path.join(DirConfig.TEMP_DIR,
                 model_name, "error_heatmaps.png"))
-def reference_model_performance(items, model_name):
-    model_path = os.path.join(
-            DirConfig.MODEL_DISTILL_DIR, model_name.split("/")[-1])
-    model_bert = AutoModelForSequenceClassification.from_pretrained(
-            model_path).to("cpu")
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model_bert.eval()
-    id2label = model_bert.config.id2label
-    bert_begin_time = time.perf_counter()
-    batch_size = 32
-    results = []
-    descriptions = items["description"].tolist()
-    with torch.no_grad():
-        for i in range(0, len(items), batch_size):
-            batch_text = descriptions[i:i+batch_size]
-            inputs = tokenizer(batch_text, return_tensors="pt",
-                            padding="longest", truncation=True, max_length=128).to("cpu")
-            logits = model_bert(**inputs).logits
-            probs = F.softmax(logits, dim=-1)
-            max_probs, pred_ids = torch.max(probs, dim=-1)
-            batch_confs = max_probs.detach().numpy() 
-            batch_ids = pred_ids.detach().numpy()
-            unknown_mask = batch_confs < 0.6
-            batch_labels = np.array([id2label[pid] for pid in batch_ids],dtype=object)
-            batch_labels[unknown_mask] = "generic-unknown"
-            results.extend(batch_labels)
-    bert_end_time = time.perf_counter()
-    logger.info(f"{model_name} predict business type time: {bert_end_time - bert_begin_time} seconds")
-    return results
 if __name__ == "__main__":
     model_name_list = ["bert-base-chinese", "distilbert-base-multilingual-cased", "Midsummra/CNMBert", "xlm-roberta-base",
                        "uer/chinese_roberta_L-2_H-128", "alibaba-pai/pai-bert-tiny-zh", "google/mobilebert-uncased",
                        "hfl/minirbt-h288", "hfl/rbt3", "hfl/rbtl3"]
-    # for model_name in model_name_list:
-    #     model_distill = UnifiedTransformerModel(model_name=model_name)
-    #     raw_items = pd.read_csv(os.path.join(
-    #         DirConfig.BUSINESS_TYPE_DIR, "combined_description_business_type.csv"))
-    #     # model_distill.run(raw_items)
-    #     # if torch.distributed.is_initialized():
-    #     #     torch.distributed.barrier()
-    #     # torch.cuda.synchronize()
-    #     # start_time = time.perf_counter()
-    #     train_items, test_items = train_test_split(
-    #         raw_items, test_size=0.2, random_state=42, shuffle=True, stratify=raw_items['business_type'])
-    #     # report_df, f1_macro, f1_weighted, acc = model_distill.predict(
-    #     #     test_items)
-    #     # torch.cuda.synchronize()
-    #     # end_time = time.perf_counter()
-    #     # with open(os.path.join(DirConfig.TIDAL_DIR, f"distill_models_performance.csv"), "a") as f:
-    #     #     f.write(
-    #     #         f"{model_name},{end_time-start_time:.4f}s,{f1_macro},{f1_weighted},{acc}\n")
-    #     best_threshold, best_f1_macro, best_acc = model_distill.try_best_threshold(
-    #         test_items)
-    #     with open(os.path.join(DirConfig.TIDAL_DIR, f"distill_models_performance.csv"), "a") as f:
-    #         f.write(
-    #             f"{model_name}: best_threshold: {best_threshold}, best_f1_macro: {best_f1_macro}, best_acc: {best_acc}\n")
-    items = pd.read_csv(os.path.join(
+    for model_name in model_name_list:
+        model_distill = UnifiedTransformerModel(model_name=model_name)
+        raw_items = pd.read_csv(os.path.join(
             DirConfig.BUSINESS_TYPE_DIR, "combined_description_business_type.csv"))
-    train_items, test_items = train_test_split(
-            items, test_size=0.3, random_state=42)
-    print(len(test_items))
+        # model_distill.run(raw_items)
+        # if torch.distributed.is_initialized():
+        #     torch.distributed.barrier()
+        # torch.cuda.synchronize()
+        # start_time = time.perf_counter()
+        train_items, test_items = train_test_split(
+            raw_items, test_size=0.2, random_state=42, shuffle=True, stratify=raw_items['business_type'])
+        # report_df, f1_macro, f1_weighted, acc = model_distill.predict(
+        #     test_items)
+        # torch.cuda.synchronize()
+        # end_time = time.perf_counter()
+        # with open(os.path.join(DirConfig.TIDAL_DIR, f"distill_models_performance.csv"), "a") as f:
+        #     f.write(
+        #         f"{model_name},{end_time-start_time:.4f}s,{f1_macro},{f1_weighted},{acc}\n")
+        best_threshold, best_f1_macro, best_acc = model_distill.try_best_threshold(
+            test_items)
+        with open(os.path.join(DirConfig.TIDAL_DIR, f"distill_models_performance.csv"), "a") as f:
+            f.write(
+                f"{model_name}: best_threshold: {best_threshold}, best_f1_macro: {best_f1_macro}, best_acc: {best_acc}\n")

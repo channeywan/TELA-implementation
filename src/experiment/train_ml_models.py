@@ -39,7 +39,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s,File "%(pathname)s", line %(lineno)d, %(message)s',
     handlers=[
-        logging.FileHandler('test2.log', encoding='utf-8'),
+        logging.FileHandler('train_ml_models.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
